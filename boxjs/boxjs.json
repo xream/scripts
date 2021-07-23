@@ -39,6 +39,41 @@
           "val": "",
           "type": "text",
           "desc": ""
+        },
+        {
+          "id": "10010_v2p_webhook_sync",
+          "name": "是否同步到 V2P",
+          "val": false,
+          "type": "boolean",
+          "desc": "默认不同步"
+        },
+        {
+          "id": "10010_v2p_webhook_baseUrl",
+          "name": "V2P 地址",
+          "val": "https://",
+          "type": "text",
+          "desc": "形如 https://v2p.com"
+        },
+        {
+          "id": "10010_v2p_webhook_token",
+          "name": "V2P webhook token",
+          "val": "",
+          "type": "text",
+          "desc": ""
+        },
+        {
+          "id": "10010_v2p_webhook_username",
+          "name": "V2P Basic Auth 用户名",
+          "val": "",
+          "type": "text",
+          "desc": ""
+        },
+        {
+          "id": "10010_v2p_webhook_password",
+          "name": "V2P Basic Auth 密码",
+          "val": "",
+          "type": "text",
+          "desc": ""
         }
       ],
       "icons": [

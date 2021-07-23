@@ -8,7 +8,7 @@ $.url = 'https://m.client.10010.com/servicequerybusiness/operationservice/queryO
 $.open_url = 'chinaunicom://?open=%7B%22openType%22:%22url%22,%22title%22:%22%E4%BD%99%E9%87%8F%E6%9F%A5%E8%AF%A2%22,%22openUrl%22:%22https://m.client.10010.com/mobileService/openPlatform/openPlatLine.htm?to_url=https://img.client.10010.com/yuliangchaxun2/index.html?linkType=unicomNewShare&mobileA=https://m1.img.10010.com/resources/7188192A31B5AE06E41B64DA6D65A9B0/20201222/jpg/20201222114110.jpg&businessName=%E4%BD%99%E9%87%8F%E6%9F%A5%E8%AF%A2&businessCode=https://m1.img.10010.com/resources/7188192A31B5AE06E41B64DA6D65A9B0/20201222/jpg/20201222114110.jpg&shareType=1&mobileB=F8A34DFF6F9346E68343756DB268C5A5&duanlianjieabc=0tygAa4n%22%7D'
 
 function getData(Cookie) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         $.get({
           url: $.url,
           headers: {
@@ -176,7 +176,7 @@ function getData(Cookie) {
     }
     if (remainsUsedTxt || freeUsedTxt) {
       msgs.unshift(`${mins.toFixed(0)}分钟${remainsUsedTxt}${freeUsedTxt}`)
-    } else if(String($.getdata($.same_key)) !== 'true') {
+    } else if(!savedMaintain && String($.getdata($.same_key)) !== 'true') {
       $.log($.pkg, subTitles.join('\n'), msgs.join('\n'))
       $.log("无流量变化 不通知")
       return

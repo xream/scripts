@@ -1,6 +1,51 @@
 const $ = new Env('联通余量Cookie')
 $.cookie_key = '10010_query_cookie'
+$.v2p_webhook_sync_key = '10010_v2p_webhook_sync'
+$.v2p_webhook_baseUrl_key = '10010_v2p_webhook_baseUrl'
+$.v2p_webhook_token_key = '10010_v2p_webhook_token'
+$.v2p_webhook_username_key = '10010_v2p_webhook_username'
+$.v2p_webhook_password_key = '10010_v2p_webhook_password'
 $.open_url = 'chinaunicom://?open=%7B%22openType%22:%22url%22,%22title%22:%22%E4%BD%99%E9%87%8F%E6%9F%A5%E8%AF%A2%22,%22openUrl%22:%22https://m.client.10010.com/mobileService/openPlatform/openPlatLine.htm?to_url=https://img.client.10010.com/yuliangchaxun2/index.html?linkType=unicomNewShare&mobileA=https://m1.img.10010.com/resources/7188192A31B5AE06E41B64DA6D65A9B0/20201222/jpg/20201222114110.jpg&businessName=%E4%BD%99%E9%87%8F%E6%9F%A5%E8%AF%A2&businessCode=https://m1.img.10010.com/resources/7188192A31B5AE06E41B64DA6D65A9B0/20201222/jpg/20201222114110.jpg&shareType=1&mobileB=F8A34DFF6F9346E68343756DB268C5A5&duanlianjieabc=0tygAa4n%22%7D'
+// Create Base64 Object
+var Base64={_keyStr:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",encode:function(e){var t="";var n,r,i,s,o,u,a;var f=0;e=Base64._utf8_encode(e);while(f<e.length){n=e.charCodeAt(f++);r=e.charCodeAt(f++);i=e.charCodeAt(f++);s=n>>2;o=(n&3)<<4|r>>4;u=(r&15)<<2|i>>6;a=i&63;if(isNaN(r)){u=a=64}else if(isNaN(i)){a=64}t=t+this._keyStr.charAt(s)+this._keyStr.charAt(o)+this._keyStr.charAt(u)+this._keyStr.charAt(a)}return t},decode:function(e){var t="";var n,r,i;var s,o,u,a;var f=0;e=e.replace(/[^A-Za-z0-9\+\/\=]/g,"");while(f<e.length){s=this._keyStr.indexOf(e.charAt(f++));o=this._keyStr.indexOf(e.charAt(f++));u=this._keyStr.indexOf(e.charAt(f++));a=this._keyStr.indexOf(e.charAt(f++));n=s<<2|o>>4;r=(o&15)<<4|u>>2;i=(u&3)<<6|a;t=t+String.fromCharCode(n);if(u!=64){t=t+String.fromCharCode(r)}if(a!=64){t=t+String.fromCharCode(i)}}t=Base64._utf8_decode(t);return t},_utf8_encode:function(e){e=e.replace(/\r\n/g,"\n");var t="";for(var n=0;n<e.length;n++){var r=e.charCodeAt(n);if(r<128){t+=String.fromCharCode(r)}else if(r>127&&r<2048){t+=String.fromCharCode(r>>6|192);t+=String.fromCharCode(r&63|128)}else{t+=String.fromCharCode(r>>12|224);t+=String.fromCharCode(r>>6&63|128);t+=String.fromCharCode(r&63|128)}}return t},_utf8_decode:function(e){var t="";var n=0;var r=c1=c2=0;while(n<e.length){r=e.charCodeAt(n);if(r<128){t+=String.fromCharCode(r);n++}else if(r>191&&r<224){c2=e.charCodeAt(n+1);t+=String.fromCharCode((r&31)<<6|c2&63);n+=2}else{c2=e.charCodeAt(n+1);c3=e.charCodeAt(n+2);t+=String.fromCharCode((r&15)<<12|(c2&63)<<6|c3&63);n+=3}}return t}}
+
+function syncCookie({ key, value }) {
+  const v2p_webhook_url = $.getdata($.v2p_webhook_baseUrl_key)
+  const v2p_webhook_token = $.getdata($.v2p_webhook_token_key)
+  const v2p_webhook_username = $.getdata($.v2p_webhook_username_key)
+  const v2p_webhook_password = $.getdata($.v2p_webhook_password_key)
+    return new Promise((resolve, reject) => {
+        $.post({
+          url: `${v2p_webhook_url}/webhook`,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Basic ' + Base64.encode(v2p_webhook_username + ':' + v2p_webhook_password)
+          },
+          body: JSON.stringify({
+            token: v2p_webhook_token,
+            type: 'store',
+            op: 'put',
+            key,
+            value,
+          }),
+        }, (e, res, data) => {
+          if (e) {
+            reject(e)
+          } else {
+            let obj = data
+            try {
+              obj = JSON.parse(data)
+              if (obj.rescode !== 0) {
+                throw new Error(String(obj.message) || 'invalid res')
+              }
+              resolve(obj)
+            } catch (e) {
+              reject(e)
+            }
+          }
+        })
+    })
+}
 
 const { headers, method, url } = $request;
 const { Cookie } = headers
@@ -10,7 +55,20 @@ let result;
   $.log('🍪 Cookie', `${Cookie}`)
   if (method === 'POST' && Cookie && url.indexOf('queryOcsPackageFlowLeftContent') !== -1) {
     $.setdata(Cookie, $.cookie_key);
-    $.msg($.name, '🍪 Cookie已保存', Cookie, $.open_url);
+
+    const v2p_webhook_sync = $.getdata($.v2p_webhook_sync_key)
+    let v2pSyncTxt = ''
+    if (String(v2p_webhook_sync) === 'true') {
+      try {
+        await syncCookie({key: $.cookie_key, value: Cookie })
+        v2pSyncTxt = ' ✅ V2P 已同步'
+        $.log('✅ v2p sync cookie')
+      } catch (e) {
+        v2pSyncTxt = ' ❌ V2P 同步失败'
+        $.logErr('❌ v2p sync cookie', e)
+      }
+    }
+    $.msg($.name, `🍪 Cookie已保存 ${v2pSyncTxt}`, Cookie, $.open_url);
   } else {
     const savedCookie = $.getdata($.cookie_key);
     if (!savedCookie) {

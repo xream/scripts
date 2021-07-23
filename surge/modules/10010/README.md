@@ -40,6 +40,8 @@ cron "*/5 * * * *" script-path=https://raw.githubusercontent.com/xream/scripts/m
 
 - 当前时间段内无用量时, 也进行通知(默认不通知)
 
+- 获取 cookie 时, 自动通过 V2P webhook 同步 cookie
+
 ### 脚本
 
 依赖: [「小件件」开发环境.js](https://raw.githubusercontent.com/xream/scripts/main/scriptable/「小件件」开发环境.js)
