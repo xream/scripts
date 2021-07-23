@@ -32,11 +32,14 @@ function getData(Cookie) {
     return
   }
   let isWifi
-  if ($.isLoon()) {
-    const conf = JSON.parse($config.getConfig());
-    isWifi = conf.ssid
-  } else if ($.isSurge()) {
-    isWifi = $network.wifi.ssid
+  try{
+    if ($.isLoon()) {
+      const conf = JSON.parse($config.getConfig());
+      isWifi = conf.ssid
+    } else if ($.isSurge()) {
+      isWifi = $network.wifi.ssid
+    }} catch (e) {
+    $.logErr('wifi 判断出现错误', e)
   }
   // isWifi = false
   if (isWifi && String($.getdata($.wifi_key)) !== 'true') {
