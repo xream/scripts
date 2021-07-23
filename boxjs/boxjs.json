@@ -20,6 +20,20 @@
       "script": "",
       "settings": [
         {
+          "id": "10010_wifi",
+          "name": "使用 WiFi 时, 也进行检查",
+          "val": false,
+          "type": "boolean",
+          "desc": "Surge/Loon 默认不检查; 其他 app 总是检查"
+        },
+        {
+          "id": "10010_same",
+          "name": "当前时间段内无用量时, 也进行通知",
+          "val": false,
+          "type": "boolean",
+          "desc": "默认不通知"
+        },
+        {
           "id": "10010_query_cookie",
           "name": "Cookie",
           "val": "",
