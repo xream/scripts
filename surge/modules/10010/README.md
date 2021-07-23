@@ -6,8 +6,6 @@
 
 ## Scripts
 
-Surge 和 Loon 仅在 WiFi 下继续执行
-
 ```
 [MITM]
 hostname = m.client.10010.com
@@ -35,6 +33,12 @@ cron "*/5 * * * *" script-path=https://raw.githubusercontent.com/xream/scripts/m
 ### BoxJs 订阅(可跳过)
 
 使用 [BoxJs](https://chavyleung.gitbook.io/boxjs) 添加 [订阅](https://raw.githubusercontent.com/xream/scripts/main/boxjs/boxjs.json) 后, Scriptable 脚本可支持缓存 Cookie
+
+可设置:
+
+- 使用 WiFi 时, 也进行检查(Surge/Loon 默认不检查; 其他 app 总是检查)
+
+- 当前时间段内无用量时, 也进行通知(默认不通知)
 
 ### 脚本
 
