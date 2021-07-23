@@ -17,7 +17,7 @@
       ],
       "author": "@xream",
       "repo": "https://github.com/xream/scripts/tree/main/surge/modules/10010",
-      "script": "",
+      "script": "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/check.js",
       "settings": [
         {
           "id": "10010_wifi",
@@ -39,6 +39,13 @@
           "val": "",
           "type": "text",
           "desc": ""
+        },
+        {
+          "id": "10010_ignore_flow",
+          "name": "流量变化忽略阈值(单位 M)",
+          "val": 0,
+          "type": "number",
+          "desc": "忽略小于此数值的流量变化"
         },
         {
           "id": "10010_v2p_webhook_sync",

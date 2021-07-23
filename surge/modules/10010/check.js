@@ -4,6 +4,7 @@ $.wifi_key = '10010_wifi'
 $.same_key = '10010_same'
 $.last_check_key = '10010_last_check'
 $.maintain_key = '10010_maintain'
+$.ignore_flow_key = '10010_ignore_flow'
 $.url = 'https://m.client.10010.com/servicequerybusiness/operationservice/queryOcsPackageFlowLeftContent'
 $.open_url = 'chinaunicom://?open=%7B%22openType%22:%22url%22,%22title%22:%22%E4%BD%99%E9%87%8F%E6%9F%A5%E8%AF%A2%22,%22openUrl%22:%22https://m.client.10010.com/mobileService/openPlatform/openPlatLine.htm?to_url=https://img.client.10010.com/yuliangchaxun2/index.html?linkType=unicomNewShare&mobileA=https://m1.img.10010.com/resources/7188192A31B5AE06E41B64DA6D65A9B0/20201222/jpg/20201222114110.jpg&businessName=%E4%BD%99%E9%87%8F%E6%9F%A5%E8%AF%A2&businessCode=https://m1.img.10010.com/resources/7188192A31B5AE06E41B64DA6D65A9B0/20201222/jpg/20201222114110.jpg&shareType=1&mobileB=F8A34DFF6F9346E68343756DB268C5A5&duanlianjieabc=0tygAa4n%22%7D'
 
@@ -156,22 +157,24 @@ function getData(Cookie) {
   if (last) {
     last = JSON.parse(last)
     const mins = (now - last.time) / 1000 / 60
+    let ignore_flow = $.getdata($.ignore_flow_key) || 0
+    $.log(`忽略小于 ${ignore_flow}M 的变化`)
     let remainsUsed = last.remains - remains
     let remainsUsedTxt = ''
     if (remainsUsed>0) {
       if (remainsUsed > 1024) {
-        remainsUsedTxt = ` 消耗${(remainsUsed/1024).toFixed(2)}G`
-      } else {
-        remainsUsedTxt = ` 消耗${remainsUsed.toFixed(2)}M`
+        remainsUsedTxt = ` 消耗 ${(remainsUsed/1024).toFixed(2)}G`
+      } else if (remainsUsed >= ignore_flow){
+        remainsUsedTxt = ` 消耗 ${remainsUsed.toFixed(2)}M`
       }
     }
     let freeUsed = free - last.free
     let freeUsedTxt = ''
-    if (freeUsed>0) {
+    if (freeUsed > 0) {
       if (freeUsed > 1024) {
-        freeUsedTxt = ` 免流${(freeUsed/1024).toFixed(2)}G`
-      } else {
-        freeUsedTxt = ` 免流${freeUsed.toFixed(2)}M`
+        freeUsedTxt = ` 免流 ${(freeUsed/1024).toFixed(2)}G`
+      } else if (freeUsed >= ignore_flow){
+        freeUsedTxt = ` 免流 ${freeUsed.toFixed(2)}M`
       }
     }
     if (remainsUsedTxt || freeUsedTxt) {
