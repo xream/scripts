@@ -117,6 +117,13 @@ cron "*/5 * * * *" script-path=https://raw.githubusercontent.com/xream/scripts/m
   "val": false,
   "type": "boolean",
   "desc": "默认附加"
+},
+{
+  "id": "@10010_query.v2p.disabled",
+  "name": "V2P 禁止脚本执行",
+  "val": false,
+  "type": "boolean",
+  "desc": "开启后, V2P 端脚本将不会执行"
 }]
 ```
 

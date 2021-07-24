@@ -55,6 +55,13 @@
           "desc": "默认附加"
         },
         {
+          "id": "@10010_query.v2p.disabled",
+          "name": "V2P 禁止脚本执行",
+          "val": false,
+          "type": "boolean",
+          "desc": "开启后, V2P 端脚本将不会执行"
+        },
+        {
           "id": "@10010_query.v2p.sync_once",
           "name": "V2P 是否在直接执行脚本时同步一次",
           "val": false,
