@@ -24,13 +24,7 @@ cron "*/5 * * * *" script-path=https://raw.githubusercontent.com/xream/scripts/m
 */5 * * * * https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/check.js, tag=联通余量查询
 ```
 
-## 获取 Cookie
-
-登录中国联通 app, 打开余量查询, 获取 Cookie
-
-## Scriptable
-
-### BoxJs 订阅(可跳过)
+## BoxJs 订阅(可跳过)
 
 使用 [BoxJs](https://chavyleung.gitbook.io/boxjs) 添加 [订阅](https://raw.githubusercontent.com/xream/scripts/main/boxjs/boxjs.json) 后, Scriptable 脚本可支持缓存 Cookie
 
@@ -42,7 +36,47 @@ cron "*/5 * * * *" script-path=https://raw.githubusercontent.com/xream/scripts/m
 
 - 获取 cookie 时, 自动通过 V2P webhook 同步 cookie
 
-### 脚本
+## 获取 Cookie
+
+登录中国联通 app, 打开余量查询, 获取 Cookie
+
+## V2P
+
+在 `TASK(定时任务)` 中, 点击`添加单个任务`, 设置 `联通余量`, `cron定时`, `*/5 * * * *`, `运行JS`, `https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/check.js`
+
+### 配置
+
+正确设置 BoxJs 后, Cookie 会自动同步到 V2P
+
+其他配置可在 `JSMANAGE(JS 文件管理)` 中的 `store/cookie 常量储存管理` 中手动设置, 参考以下内容(摘自 BoxJs), 自行设置 KEY 和 VALUE 即可
+
+```JSON
+[{
+  "id": "10010_same",
+  "name": "当前时间段内无用量时, 也进行通知",
+  "val": false,
+  "type": "boolean",
+  "desc": "默认不通知"
+},
+{
+  "id": "10010_ignore_flow",
+  "name": "流量变化忽略阈值(单位 M)",
+  "val": 0,
+  "type": "number",
+  "desc": "忽略小于此数值的流量变化"
+},
+{
+  "id": "10010_no_url",
+  "name": "不在通知中附加 URL",
+  "val": false,
+  "type": "boolean",
+  "desc": "默认附加"
+}]
+```
+
+## Scriptable
+
+## 脚本
 
 依赖: [「小件件」开发环境.js](https://raw.githubusercontent.com/xream/scripts/main/scriptable/「小件件」开发环境.js)
 

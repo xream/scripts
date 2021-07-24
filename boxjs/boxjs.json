@@ -20,6 +20,13 @@
       "script": "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/check.js",
       "settings": [
         {
+          "id": "10010_query_cookie",
+          "name": "Cookie",
+          "val": "",
+          "type": "text",
+          "desc": ""
+        },
+        {
           "id": "10010_wifi",
           "name": "使用 WiFi 时, 也进行检查",
           "val": false,
@@ -32,13 +39,6 @@
           "val": false,
           "type": "boolean",
           "desc": "默认不通知"
-        },
-        {
-          "id": "10010_query_cookie",
-          "name": "Cookie",
-          "val": "",
-          "type": "text",
-          "desc": ""
         },
         {
           "id": "10010_ignore_flow",
