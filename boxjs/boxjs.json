@@ -6,6 +6,103 @@
   "repo": "https://github.com/xream/scripts/tree/main",
   "apps": [
     {
+      "id": "xream.10010_query",
+      "name": "联通余量(v2)",
+      "descs_html": [
+        "<a href=\"chinaunicom://?open=%7B%22openType%22:%22url%22,%22title%22:%22%E4%BD%99%E9%87%8F%E6%9F%A5%E8%AF%A2%22,%22openUrl%22:%22https://m.client.10010.com/mobileService/openPlatform/openPlatLine.htm?to_url=https://img.client.10010.com/yuliangchaxun2/index.html?linkType=unicomNewShare&mobileA=https://m1.img.10010.com/resources/7188192A31B5AE06E41B64DA6D65A9B0/20201222/jpg/20201222114110.jpg&businessName=%E4%BD%99%E9%87%8F%E6%9F%A5%E8%AF%A2&businessCode=https://m1.img.10010.com/resources/7188192A31B5AE06E41B64DA6D65A9B0/20201222/jpg/20201222114110.jpg&shareType=1&mobileB=F8A34DFF6F9346E68343756DB268C5A5&duanlianjieabc=0tygAa4n%22%7D\">打开中国联通/余量查询</a>",
+        "<a onClick=\"window.location.reload(true);\">刷新</a>"
+      ],
+      "keys": [
+        "@10010_query.cookie"
+      ],
+      "author": "@xream",
+      "repo": "https://github.com/xream/scripts/tree/main/surge/modules/10010",
+      "script": "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js",
+      "settings": [
+        {
+          "id": "@10010_query.cookie",
+          "name": "Cookie",
+          "val": "",
+          "type": "text",
+          "desc": ""
+        },
+        {
+          "id": "@10010_query.wifi",
+          "name": "(Surge/Loon Only) 在 WiFi 环境时, 也进行查询",
+          "val": false,
+          "type": "boolean",
+          "desc": "(Surge/Loon Only) 默认在 WiFi 环境时, 不进行查询"
+        },
+        {
+          "id": "@10010_query.ignore_flow",
+          "name": "流量变化忽略阈值(单位 M)",
+          "val": 0,
+          "type": "number",
+          "desc": "忽略小于此数值的流量变化"
+        },
+        {
+          "id": "@10010_query.same",
+          "name": "当前时间段内无用量变化时, 也进行通知",
+          "val": false,
+          "type": "boolean",
+          "desc": "默认当前时间段内有用量变化时才进行通知"
+        },
+        {
+          "id": "@10010_query.no_url",
+          "name": "不在通知中附加 URL",
+          "val": false,
+          "type": "boolean",
+          "desc": "默认附加"
+        },
+        {
+          "id": "@10010_query.v2p.sync_once",
+          "name": "V2P 是否在直接执行脚本时同步一次",
+          "val": false,
+          "type": "boolean",
+          "desc": "开启后, 在直接执行脚本时会同步一次, 然后自动关闭此项设置"
+        },
+        {
+          "id": "@10010_query.v2p.sync",
+          "name": "V2P 是否开启同步",
+          "val": false,
+          "type": "boolean",
+          "desc": "默认不同步. 开启后, Cookie 更新时将自动同步到 V2P"
+        },
+        {
+          "id": "@10010_query.v2p.baseURL",
+          "name": "V2P 地址",
+          "val": "https://",
+          "type": "text",
+          "desc": "形如 https://v2p.com"
+        },
+        {
+          "id": "@10010_query.v2p.webhook.token",
+          "name": "V2P webhook token",
+          "val": "",
+          "type": "text",
+          "desc": ""
+        },
+        {
+          "id": "@10010_query.v2p.webhook.username",
+          "name": "V2P Basic Auth 用户名",
+          "val": "",
+          "type": "text",
+          "desc": ""
+        },
+        {
+          "id": "@10010_query.v2p.webhook.password",
+          "name": "V2P Basic Auth 密码",
+          "val": "",
+          "type": "text",
+          "desc": ""
+        }
+      ],
+      "icons": [
+        "https://i.loli.net/2021/07/22/wHSEh17GkOIxJ3m.png",
+        "https://i.loli.net/2021/07/22/9ovr3FEMnGsyuhk.png"
+      ]
+    },
+    {
       "id": "xream.10010.query",
       "name": "联通余量",
       "descs_html": [

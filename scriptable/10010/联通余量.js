@@ -204,7 +204,7 @@ class Widget extends Base {
           boxjsReq.timeoutInterval = 3;
           boxjsReq.method = 'GET';
           const boxjsRes = await boxjsReq.loadJSON();
-          Cookie = boxjsRes.datas['10010_query_cookie'];
+          Cookie = boxjsRes.datas['@10010_query.cookie'] || boxjsRes.datas['10010_query_cookie'];
           console.log('✅ 从 boxjs 读取 Cookie')
           //           console.log(`🍪 ${Cookie}`)
         } catch (e) {

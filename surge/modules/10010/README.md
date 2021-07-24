@@ -13,9 +13,33 @@
 
 ## 懒人 Surge Module
 
+🆕 [联通余量(v2)](https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010v2.sgmodule)
+
 [联通余量](https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010.sgmodule)
 
 ## 手动设置 Scripts
+
+### 🆕 联通余量(v2)
+
+```
+[MITM]
+hostname = m.client.10010.com
+
+[Script]
+# Surge
+联通余量: Cookie = type=http-request,pattern=^https?:\/\/m\.client\.10010\.com\/servicequerybusiness,requires-body=1,max-size=0,timeout=30,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js,debug=true
+联通余量: 查询 = type=cron,cronexp=*/5 * * * *,timeout=30,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js,wake-system=true
+
+# Loon
+http-request ^https?:\/\/m\.client\.10010\.com\/servicequerybusiness script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js, tag=联通余量Cookie
+cron "*/5 * * * *" script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js
+
+# QuanX(未测试 不清楚如何判断当前网络是否为 WiFi)
+^https?:\/\/m\.client\.10010\.com\/servicequerybusiness url script-request-header https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js
+*/5 * * * * https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js, tag=联通余量查询
+```
+
+### 联通余量
 
 ```
 [MITM]
@@ -49,8 +73,8 @@ cron "*/5 * * * *" script-path=https://raw.githubusercontent.com/xream/scripts/m
 
 <table style="padding: 10px">
   <tr>
-    <td><img src="https://i.loli.net/2021/07/24/NIRaCkPWGOy2XAT.jpg" height="600px"></td>
-    <td><img src="https://i.loli.net/2021/07/24/ZHJ8ejLCDTOzbrp.jpg" height="600px"></td>
+    <td><img src="https://i.loli.net/2021/07/25/ApmGUxL5ujTwkBn.jpg" height="600px"></td>
+    <td><img src="https://i.loli.net/2021/07/25/ApmGUxL5ujTwkBn.jpg" height="600px"></td>
   </tr>
 </table>
 
@@ -60,15 +84,47 @@ cron "*/5 * * * *" script-path=https://raw.githubusercontent.com/xream/scripts/m
 
 ## V2P
 
+### 🆕 联通余量(v2)
+
+在 `TASK(定时任务)` 中, 点击`添加单个任务`, 设置 `联通余量`, `cron定时`, `30 */5 * * * *`, `运行JS`, `https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js`
+
+#### 配置
+
+正确设置 BoxJs 后, Cookie 更新时将自动同步数据到 V2P.
+
+通过启用 `V2P 是否在直接执行脚本时同步一次` 并保存, 再手动执行脚本实现单次同步
+
+也可在 `JSMANAGE(JS 文件管理)` 中的 `store/cookie 常量储存管理` 中手动设置, 参考以下内容(摘自 BoxJs), 自行设置 KEY 和 VALUE 即可
+
+```JSON
+[{
+  "id": "@10010_query.ignore_flow",
+  "name": "流量变化忽略阈值(单位 M)",
+  "val": 0,
+  "type": "number",
+  "desc": "忽略小于此数值的流量变化"
+},
+{
+  "id": "@10010_query.same",
+  "name": "当前时间段内无用量变化时, 也进行通知",
+  "val": false,
+  "type": "boolean",
+  "desc": "默认当前时间段内有用量变化时才进行通知"
+},
+{
+  "id": "@10010_query.no_url",
+  "name": "不在通知中附加 URL",
+  "val": false,
+  "type": "boolean",
+  "desc": "默认附加"
+}]
+```
+
+### 联通余量
+
 在 `TASK(定时任务)` 中, 点击`添加单个任务`, 设置 `联通余量`, `cron定时`, `30 */5 * * * *`, `运行JS`, `https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/check.js`
 
-<table style="padding: 10px">
-  <tr>
-    <td><img src="https://i.loli.net/2021/07/24/DgyX5KPFquhRMeZ.png" height="300px"></td>
-  </tr>
-</table>
-
-### 配置
+#### 配置
 
 正确设置 BoxJs 后, Cookie 会自动同步到 V2P
 
