@@ -1,10 +1,21 @@
 # 联通余量
 
-## Surge Module
+<table style="padding: 10px">
+ 
+  <tr>
+    <td><img src="https://i.loli.net/2021/07/24/XeZEUqbjJgC7RFV.jpg" width="400px"></td>
+    <td><img src="https://i.loli.net/2021/07/24/yYrJmK7znEwiDsT.jpg" width="400px"></td>
+  </tr>
+   <tr>
+    <td><img src="https://i.loli.net/2021/07/22/vFj9uLMp6BbZmWP.jpg" height="200px"></td>
+  </tr>
+</table>
+
+## 懒人 Surge Module
 
 [联通余量](https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010.sgmodule)
 
-## Scripts
+## 手动设置 Scripts
 
 ```
 [MITM]
@@ -36,6 +47,13 @@ cron "*/5 * * * *" script-path=https://raw.githubusercontent.com/xream/scripts/m
 
 - 获取 cookie 时, 自动通过 V2P webhook 同步 cookie
 
+<table style="padding: 10px">
+  <tr>
+    <td><img src="https://i.loli.net/2021/07/24/NIRaCkPWGOy2XAT.jpg" height="600px"></td>
+    <td><img src="https://i.loli.net/2021/07/24/ZHJ8ejLCDTOzbrp.jpg" height="600px"></td>
+  </tr>
+</table>
+
 ## 获取 Cookie
 
 登录中国联通 app, 打开余量查询, 获取 Cookie
@@ -43,6 +61,12 @@ cron "*/5 * * * *" script-path=https://raw.githubusercontent.com/xream/scripts/m
 ## V2P
 
 在 `TASK(定时任务)` 中, 点击`添加单个任务`, 设置 `联通余量`, `cron定时`, `*/5 * * * *`, `运行JS`, `https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/check.js`
+
+<table style="padding: 10px">
+  <tr>
+    <td><img src="https://i.loli.net/2021/07/24/DgyX5KPFquhRMeZ.png" height="300px"></td>
+  </tr>
+</table>
 
 ### 配置
 
@@ -82,12 +106,9 @@ cron "*/5 * * * *" script-path=https://raw.githubusercontent.com/xream/scripts/m
 
 [联通余量.js](https://raw.githubusercontent.com/xream/scripts/main/scriptable/10010/联通余量.js)
 
-![小组件设置](https://i.loli.net/2021/07/22/3mnxdtJ8TFMfazu.jpg)
-
-## 预览
-
-![小组件](https://i.loli.net/2021/07/22/vFj9uLMp6BbZmWP.jpg)
-
-![通知](https://i.loli.net/2021/07/22/n8JeRBoYXc51O97.jpg)
-
-![其他](https://i.loli.net/2021/07/22/MguJz9LR8QlDqok.jpg)
+<table style="padding: 10px">
+  <tr>
+    <td><img src="https://i.loli.net/2021/07/22/vFj9uLMp6BbZmWP.jpg" height="200px"></td>
+    <td><img src="https://i.loli.net/2021/07/22/3mnxdtJ8TFMfazu.jpg" height="200px"></td>
+  </tr>
+</table>
