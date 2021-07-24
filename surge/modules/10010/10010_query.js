@@ -19,9 +19,14 @@ var Base64={_keyStr:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456
 
 const $ = API($$.name, $$.debug)
 
+if (isV2P && (String($.read('v2p_disabled')) === 'true')) {
+  $.log('🈲 V2P 端禁止执行')
+  $.done()
+}
 const now = new Date().getTime()
 
 const v2p = $.read('v2p')
+
 const v2pSync = async () => {
   try {
     const value = { ...$.cache }
