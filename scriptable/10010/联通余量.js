@@ -193,7 +193,7 @@ class Widget extends Base {
       } else {
         shouldFetch = true
       }
-shouldFetch = true
+// shouldFetch = true
       if (shouldFetch) {
 
         let Cookie
@@ -275,7 +275,7 @@ shouldFetch = true
               details.map(detail => {
                 let { addUpItemName, feePolicyName, remain, use, usedPercent } = detail
                 remain = parseFloat(remain)
-                use = parseFloat(use)+648
+                use = parseFloat(use)
                 let useTxt
                 if (!isNaN(use)) {
                   if (use > 1024) {
@@ -290,7 +290,7 @@ shouldFetch = true
                 }
                 // 日租
                 if (/日租/.test(addUpItemName)) {
-                  if (usedPercent === 356) {
+                  if (usedPercent === 0) {
                     // 未用日租
                   } else {
                     this.list.push({
