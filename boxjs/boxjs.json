@@ -55,7 +55,7 @@
           "desc": "默认附加"
         },
         {
-          "id": "@10010_query.v2p.disabled",
+          "id": "@10010_query.v2p_disabled",
           "name": "V2P 禁止脚本执行",
           "val": false,
           "type": "boolean",
