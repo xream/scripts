@@ -7,7 +7,7 @@
     <td><img src="https://i.loli.net/2021/07/24/yYrJmK7znEwiDsT.jpg" width="400px"></td>
   </tr>
    <tr>
-    <td><img src="https://i.loli.net/2021/07/22/vFj9uLMp6BbZmWP.jpg" height="200px"></td>
+    <td><img src="https://i.loli.net/2021/07/24/JWC21sOSPrp3duR.jpg" height="200px"></td>
   </tr>
 </table>
 
@@ -60,7 +60,7 @@ cron "*/5 * * * *" script-path=https://raw.githubusercontent.com/xream/scripts/m
 
 ## V2P
 
-在 `TASK(定时任务)` 中, 点击`添加单个任务`, 设置 `联通余量`, `cron定时`, `*/5 * * * *`, `运行JS`, `https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/check.js`
+在 `TASK(定时任务)` 中, 点击`添加单个任务`, 设置 `联通余量`, `cron定时`, `30 */5 * * * *`, `运行JS`, `https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/check.js`
 
 <table style="padding: 10px">
   <tr>

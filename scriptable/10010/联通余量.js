@@ -193,7 +193,7 @@ class Widget extends Base {
       } else {
         shouldFetch = true
       }
-// shouldFetch = true
+shouldFetch = true
       if (shouldFetch) {
 
         let Cookie
@@ -267,51 +267,79 @@ class Widget extends Base {
         }, ];
 
         if (pkgRes.resources) {
-          pkgRes.resources.map(({
-            details,
-            type
-          }) => {
+          let remains = 0
+          
+          pkgRes.resources.map(resource => {
+            const { details, type } = resource
             if (type === 'flow') {
               details.map(detail => {
-                let {
-                  addUpItemName,
-                  feePolicyName,
-                  remain,
-                  use
-                } = detail
-                const name = feePolicyName || addUpItemName
+                let { addUpItemName, feePolicyName, remain, use, usedPercent } = detail
                 remain = parseFloat(remain)
-                use = parseFloat(use)
-                if (!isNaN(remain)) {
-                  if (remain > 0) {
-                    let remainTxt = remain.toFixed(2)
-                    if (remainTxt > 1024) {
-                      remainTxt = `${(remainTxt/1024).toFixed(2)}G`
-                    } else {
-                      remainTxt = `${remainTxt}M`
-                    }
+                use = parseFloat(use)+648
+                let useTxt
+                if (!isNaN(use)) {
+                  if (use > 1024) {
+                    useTxt = `${(use/1024).toFixed(2)}G`
+                  } else {
+                    useTxt = `${use}M`
+                  }
+                }
+                usedPercent = parseFloat(usedPercent)
+                if (!isNaN(usedPercent)) {
+                  usedPercent.toFixed(2)
+                }
+                // 日租
+                if (/日租/.test(addUpItemName)) {
+                  if (usedPercent === 356) {
+                    // 未用日租
+                  } else {
                     this.list.push({
-                      name,
+                      name: '已用日租',
                       color: 'FF0000',
-                      value: `${remainTxt}`
+                      value: `${useTxt}`
                     });
                   }
-                } else if (!isNaN(use)) {
-                  let useTxt = use.toFixed(2)
-                  if (useTxt > 1024) {
-                    useTxt = `${(useTxt/1024).toFixed(2)}G`
-                  } else {
-                    useTxt = `${useTxt}M`
-                  }
-                  this.list.push({
-                    name,
-                    color: '32CD32',
-                    value: `${useTxt}`
-                  });
+                } else if (!isNaN(remain) && remain > 0) {
+                  remains += remain
                 }
               })
             }
           });
+
+          if (remains > 0) {
+            let remainsTxt = remains.toFixed(2)
+            if (remainsTxt > 1024) {
+              remainsTxt = `${(remainsTxt/1024).toFixed(2)}G`
+            } else {
+              remainsTxt = `${remainsTxt}M`
+            }
+            if (remainsTxt) {
+                this.list.push({
+                name: '剩余流量',
+                color: 'FF0000',
+                value: `${remainsTxt}`
+              });
+            }
+          }
+
+          let freeTxt
+          if (pkgRes.summary) {
+            const free = parseFloat(pkgRes.summary.freeFlow)
+            if (!isNaN(free)) {
+              if (free > 1024) {
+                freeTxt = `${(free/1024).toFixed(2)}G`
+              } else {
+                freeTxt = `${free}M`
+              }
+            }
+          }
+          if (freeTxt) {
+            this.list.push({
+              name: "已用免流",
+              color: '32CD32',
+              value: `${freeTxt}`
+            });
+          }
         } else {
           this.list.push({
             name: '流量',
