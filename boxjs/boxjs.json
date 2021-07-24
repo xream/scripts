@@ -48,6 +48,13 @@
           "desc": "忽略小于此数值的流量变化"
         },
         {
+          "id": "10010_no_url",
+          "name": "不在通知中附加 URL",
+          "val": false,
+          "type": "boolean",
+          "desc": "默认附加"
+        },
+        {
           "id": "10010_v2p_webhook_sync",
           "name": "是否同步到 V2P",
           "val": false,

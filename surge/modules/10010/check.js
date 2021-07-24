@@ -5,8 +5,9 @@ $.same_key = '10010_same'
 $.last_check_key = '10010_last_check'
 $.maintain_key = '10010_maintain'
 $.ignore_flow_key = '10010_ignore_flow'
+$.no_url_key = '10010_no_url'
 $.url = 'https://m.client.10010.com/servicequerybusiness/operationservice/queryOcsPackageFlowLeftContent'
-$.open_url = 'chinaunicom://?open=%7B%22openType%22:%22url%22,%22title%22:%22%E4%BD%99%E9%87%8F%E6%9F%A5%E8%AF%A2%22,%22openUrl%22:%22https://m.client.10010.com/mobileService/openPlatform/openPlatLine.htm?to_url=https://img.client.10010.com/yuliangchaxun2/index.html?linkType=unicomNewShare&mobileA=https://m1.img.10010.com/resources/7188192A31B5AE06E41B64DA6D65A9B0/20201222/jpg/20201222114110.jpg&businessName=%E4%BD%99%E9%87%8F%E6%9F%A5%E8%AF%A2&businessCode=https://m1.img.10010.com/resources/7188192A31B5AE06E41B64DA6D65A9B0/20201222/jpg/20201222114110.jpg&shareType=1&mobileB=F8A34DFF6F9346E68343756DB268C5A5&duanlianjieabc=0tygAa4n%22%7D'
+$.open_url = String($.getdata($.no_url_key)) === 'true' ? '' : 'chinaunicom://?open=%7B%22openType%22:%22url%22,%22title%22:%22%E4%BD%99%E9%87%8F%E6%9F%A5%E8%AF%A2%22,%22openUrl%22:%22https://m.client.10010.com/mobileService/openPlatform/openPlatLine.htm?to_url=https://img.client.10010.com/yuliangchaxun2/index.html?linkType=unicomNewShare&mobileA=https://m1.img.10010.com/resources/7188192A31B5AE06E41B64DA6D65A9B0/20201222/jpg/20201222114110.jpg&businessName=%E4%BD%99%E9%87%8F%E6%9F%A5%E8%AF%A2&businessCode=https://m1.img.10010.com/resources/7188192A31B5AE06E41B64DA6D65A9B0/20201222/jpg/20201222114110.jpg&shareType=1&mobileB=F8A34DFF6F9346E68343756DB268C5A5&duanlianjieabc=0tygAa4n%22%7D'
 
 function getData(Cookie) {
     return new Promise((resolve, reject) => {
@@ -55,22 +56,31 @@ function getData(Cookie) {
   } catch (e) {
     throw new Error('数据解析失败')
   }
-  let savedMaintain
+  let isMaintain
   if (data.code !== "0000") {
     if (data.code === "9998") {
-      // $.setdata('', $.maintain_key);
-      savedMaintain = $.getdata($.maintain_key)
-      if (!savedMaintain) {
-        $.setdata(String(new Date().getTime()), $.maintain_key);
-        // throw new Error('🚧 联通维护开始 维护结束前将不会继续通知')
-        $.msg($.pkg, '🚧 联通维护开始', '维护结束前将不会继续通知')
-        return
-      } else {
-        $.log('🚧 联通维护中 维护结束前将不会继续通知', `持续 ${((new Date().getTime() - savedMaintain) / 1000 / 60).toFixed(2)}分钟`)
-        return
-      }
+      isMaintain = true
     } else {
       throw new Error(data.desc || '数据响应错误')
+    }
+  }
+  let savedMaintain  = $.getdata($.maintain_key)
+  // $.setdata('', $.maintain_key);
+
+  const resources = data.resources
+  if (!Array.isArray(resources) || resources.length === 0) {
+    isMaintain = true
+  }
+  
+  if (isMaintain) {
+    if (!savedMaintain) {
+      $.setdata(String(new Date().getTime()), $.maintain_key);
+      // throw new Error('🚧 联通维护开始 维护结束前将不会继续通知')
+      $.msg($.pkg, '🚧 联通维护开始', '维护结束前将不会继续通知')
+      return
+    } else {
+      $.log('🚧 联通维护中 维护结束前将不会继续通知', `持续 ${((new Date().getTime() - savedMaintain) / 1000 / 60).toFixed(2)}分钟`)
+      return
     }
   }
   
@@ -89,10 +99,6 @@ function getData(Cookie) {
   }
   $.setdata('', $.maintain_key);
 
-  const resources = data.resources
-  if (!Array.isArray(resources)) {
-    throw new Error('无流量包明细')
-  }
   resources.map(resource => {
     const { details, type } = resource
     if (type === 'flow') {
