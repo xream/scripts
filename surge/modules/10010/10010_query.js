@@ -47,7 +47,7 @@ const v2pSync = async () => {
         'Authorization': 'Basic ' + Base64.encode(`${_.get(v2p, 'webhook.username')}:${_.get(v2p, 'webhook.password')}`)
       },
     })
-    $.log(`ℹ️ V2P 同步响应: ${$.stringify(v2pSyncRes)}`)
+    $.log(`ℹ️ V2P 同步响应: ${$.stringify(v2pSyncRes.body)}`)
     if (JSON.parse(v2pSyncRes.body).rescode !== 0) {
       throw new Error('响应异常')
     }
@@ -122,8 +122,8 @@ let result
           'Accept-Encoding': 'gzip, deflate, br',
         },
       })
-      $.log(`ℹ️ 余量查询响应: ${$.stringify(queryRes)}`)
       queryBody = queryRes.body
+      $.log(`ℹ️ 余量查询响应: ${$.stringify(queryRes.body)}`)
       if (String(queryBody) === '999999') {
         throw new Error('Cookie 无效. 请打开中国联通/余量查询重新获取')
       }
