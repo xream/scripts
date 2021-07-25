@@ -7,6 +7,7 @@ if (isV2P && typeof __name !== "undefined") {
     console.log(`V2P 尝试从脚本名称中读取 store key: ${customName}`)
   }
 }
+
 const $$ = {
   debug: true, // 调试模式
   title: '联通余量',
@@ -64,7 +65,7 @@ const v2pSync = async () => {
     $$.notify(`✅ V2P 已同步: ${key}`, `${Object.keys(value).join(', ')}`)
   } catch (e) {
     e.message = `V2P 同步失败 ${e.message}`
-    throw new Error(e)
+    throw e
   }
 }
 
@@ -128,15 +129,23 @@ let result
       return
     }
     let queryBody
+    let isUndergoingMaintenance
     try {
-      const queryRes = await $.http.get({
-        url: $$.query_url,
-        headers: {
-          Cookie: savedCookie,
-          'Accept-Encoding': 'gzip, deflate, br',
-        },
-      })
-      queryBody = queryRes.body
+      let queryRes
+      try {
+        queryRes = await $.http.get({
+          url: $$.query_url,
+          headers: {
+            Cookie: savedCookie,
+            'Accept-Encoding': 'gzip, deflate, br',
+          },
+        })
+      } catch (e) {
+        e.message = `余量查询网络错误 ${e.message}`
+        isUndergoingMaintenance = true
+        throw e
+      }
+      queryBody = _.get(queryRes, 'body')
       $.log(`ℹ️ 余量查询响应: ${$.stringify(queryRes.body)}`)
       if (String(queryBody) === '999999') {
         throw new Error('Cookie 无效. 请打开中国联通/余量查询重新获取')
@@ -146,34 +155,40 @@ let result
       } catch (e) {
         throw new Error('响应解析失败')
       }
-      const queryCode = String(queryBody.code)
+      const queryCode = String(_.get(queryBody, 'code'))
       if (queryCode !== "0000") {
         let desc = _.get(queryBody, 'desc')
         if (queryCode === '9998') {
-          const maintenance = $.read('maintenance')
-          if (maintenance) {
-            let maintenanceDurationTxt
-            const maintenanceDuration = (now - parseFloat(_.get(maintenance, 'time'))) / 1000 / 60
-            if (!isNaN(maintenanceDuration) && maintenanceDuration > 0) {
-              if (maintenanceDuration > 60) {
-                maintenanceDurationTxt = `${(maintenanceDuration/60).toFixed(2)}小时`
-              } else {
-                maintenanceDurationTxt = `${maintenanceDuration.toFixed(2)}分钟`
-              }
-            }
-            $.log(`🚧 系统维护 不继续执行 时长 ${$.stringify(maintenanceDurationTxt)}`)
-            return
-          }
-          desc = `🚧 系统维护`
-          const currentMaintenance = { time: now }
-          $.log(`ℹ️ 保存系统维护开始时间: ${$.stringify(currentMaintenance)}`)
-          $.write(currentMaintenance, 'maintenance')
+          isUndergoingMaintenance = true
+        } else {
+          throw new Error(desc || '响应异常')
         }
-        throw new Error(desc || '响应异常')
       }
     } catch (e) {
       e.message = `余量查询失败 ${e.message}`
-      throw new Error(e)
+      if (isUndergoingMaintenance) {
+        const maintenance = $.read('maintenance')
+        if (maintenance) {
+          let maintenanceDurationTxt
+          const maintenanceDuration = (now - parseFloat(_.get(maintenance, 'time'))) / 1000 / 60
+          if (!isNaN(maintenanceDuration) && maintenanceDuration > 0) {
+            if (maintenanceDuration > 60) {
+              maintenanceDurationTxt = `${(maintenanceDuration/60).toFixed(2)}小时`
+            } else {
+              maintenanceDurationTxt = `${maintenanceDuration.toFixed(2)}分钟`
+            }
+          }
+          $.log(`🚧 系统维护 不继续执行 时长 ${$.stringify(maintenanceDurationTxt)}`)
+          return
+        }
+        desc = `🚧 系统维护`
+        const currentMaintenance = { time: now }
+        $.log(`ℹ️ 保存系统维护开始时间: ${$.stringify(currentMaintenance)}`)
+        $.write(currentMaintenance, 'maintenance')
+        throw new Error(desc)
+      } else {
+        throw e
+      }
     }
     const maintenance = $.read('maintenance')
     if (maintenance) {
