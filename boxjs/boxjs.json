@@ -27,6 +27,13 @@
           "desc": ""
         },
         {
+          "id": "@10010_query.name",
+          "name": "自定义名称(默认为套餐名)",
+          "val": "",
+          "type": "text",
+          "desc": ""
+        },
+        {
           "id": "@10010_query.wifi",
           "name": "(Surge/Loon Only) 在 WiFi 环境时, 也进行查询",
           "val": false,
@@ -55,13 +62,6 @@
           "desc": "默认附加"
         },
         {
-          "id": "@10010_query.v2p_disabled",
-          "name": "V2P 禁止脚本执行",
-          "val": false,
-          "type": "boolean",
-          "desc": "开启后, V2P 端脚本将不会执行"
-        },
-        {
           "id": "@10010_query.v2p.sync_once",
           "name": "V2P 是否在直接执行脚本时同步一次",
           "val": false,
@@ -69,11 +69,32 @@
           "desc": "开启后, 在直接执行脚本时会同步一次, 然后自动关闭此项设置"
         },
         {
+          "id": "@10010_query.client_query_disabled",
+          "name": "禁止客户端脚本执行查询",
+          "val": false,
+          "type": "boolean",
+          "desc": "开启后, 客户端脚本将不会执行查询(不影响同步)"
+        },
+        {
+          "id": "@10010_query.v2p_disabled",
+          "name": "V2P 禁止脚本执行",
+          "val": false,
+          "type": "boolean",
+          "desc": "开启后, V2P 端脚本将不会执行"
+        },
+        {
           "id": "@10010_query.v2p.sync",
           "name": "V2P 是否开启同步",
           "val": false,
           "type": "boolean",
           "desc": "默认不同步. 开启后, Cookie 更新时将自动同步到 V2P"
+        },
+        {
+          "id": "@10010_query.v2p.store.key",
+          "name": "V2P store/cookie 常量储存 key",
+          "val": "",
+          "type": "text",
+          "desc": "默认为 10010_query"
         },
         {
           "id": "@10010_query.v2p.baseURL",

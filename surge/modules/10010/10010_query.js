@@ -1,14 +1,22 @@
 const isV2P = typeof $evui !== "undefined"
-
+let customName
+if (isV2P && typeof __name !== "undefined") {
+  let matchedName = String(__name).match(/^__(.*)__10010_query/)
+  if (matchedName) {
+    customName = matchedName[1]
+    console.log(`V2P 尝试从脚本名称中读取 store key: ${customName}`)
+  }
+}
 const $$ = {
   debug: true, // 调试模式
   title: '联通余量',
-  name: '10010_query',
+  name: customName ? String(customName) : '10010_query',
   cookie_url_regex: /queryOcsPackageFlowLeftContent/,
   query_url: 'https://m.client.10010.com/servicequerybusiness/operationservice/queryOcsPackageFlowLeftContent',
   open_url: 'chinaunicom://?open=%7B%22openType%22:%22url%22,%22title%22:%22%E4%BD%99%E9%87%8F%E6%9F%A5%E8%AF%A2%22,%22openUrl%22:%22https://m.client.10010.com/mobileService/openPlatform/openPlatLine.htm?to_url=https://img.client.10010.com/yuliangchaxun2/index.html?linkType=unicomNewShare&mobileA=https://m1.img.10010.com/resources/7188192A31B5AE06E41B64DA6D65A9B0/20201222/jpg/20201222114110.jpg&businessName=%E4%BD%99%E9%87%8F%E6%9F%A5%E8%AF%A2&businessCode=https://m1.img.10010.com/resources/7188192A31B5AE06E41B64DA6D65A9B0/20201222/jpg/20201222114110.jpg&shareType=1&mobileB=F8A34DFF6F9346E68343756DB268C5A5&duanlianjieabc=0tygAa4n%22%7D',
   notify: (subTitle, content) => {
-    $.notify($$.title, isV2P ? '' : subTitle, isV2P ? `${subTitle}\n${content}` : content, String($.read('no_url')) === 'true' ? undefined : { 'open-url': $$.open_url })
+    const name = $.read('name')
+    $.notify(name ? String(name) : $$.title, isV2P ? '' : subTitle, isV2P ? `${subTitle}\n${content}` : content, String($.read('no_url')) === 'true' ? undefined : { 'open-url': $$.open_url })
   },
 }
 
@@ -28,17 +36,19 @@ const v2pSync = async () => {
   try {
     const value = { ...$.cache }
     delete value.v2p
+    let key = _.get(v2p, 'store.key')
+    key = key ? String(key) : $$.name
     const v2pSyncRes = await $.http.post({
       url: `${_.get(v2p, 'baseURL')}/webhook`,
       body: JSON.stringify({
         token: _.get(v2p, 'webhook.token'),
         type: 'store',
         op: 'put',
-        key: $$.name,
+        key,
         value,
         options: {
           type: 'object',
-          belong: '10010_query.js',
+          // belong: '10010_query.js',
           note: '联通余量 https://github.com/xream/scripts/tree/main/surge/modules/10010',
         }
       }),
@@ -51,7 +61,7 @@ const v2pSync = async () => {
     if (JSON.parse(v2pSyncRes.body).rescode !== 0) {
       throw new Error('响应异常')
     }
-    $$.notify("✅ V2P 已同步", Object.keys(value).join(', '))
+    $$.notify(`✅ V2P 已同步: ${key}`, `${Object.keys(value).join(', ')}`)
   } catch (e) {
     e.message = `V2P 同步失败 ${e.message}`
     throw new Error(e)
@@ -99,6 +109,10 @@ let result
       _.set(v2p, 'sync_once', 'false')
       $.write(v2p, 'v2p')
       $$.notify("下次直接执行时 将不会同步 V2P")
+    }
+    if (!isV2P && (String($.read('client_query_disabled')) === 'true')) {
+      $.log('🈲 客户端禁止进行查询')
+      return
     }
     let isWifi
     try{
