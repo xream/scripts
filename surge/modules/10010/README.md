@@ -11,6 +11,18 @@
   </tr>
 </table>
 
+> 🆕 联通余量(v2)
+
+v2 版本使用 [OpenAPI](https://github.com/Peng-YM/QuanX/tree/master/Tools/OpenAPI), so WORA.
+
+新特性:
+
+- 多账号
+
+- 同步配置至 V2P
+
+- 更多自定义项
+
 ## 懒人 Surge Module
 
 🆕 [联通余量(v2)](https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010v2.sgmodule)
