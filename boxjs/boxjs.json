@@ -55,6 +55,13 @@
           "desc": "默认当前时间段内有用量变化时才进行通知"
         },
         {
+          "id": "@10010_query.maintenance_disabled",
+          "name": "禁用维护通知",
+          "val": false,
+          "type": "boolean",
+          "desc": "默认在维护开始和维护结束时发送通知"
+        },
+        {
           "id": "@10010_query.no_url",
           "name": "不在通知中附加 URL",
           "val": false,

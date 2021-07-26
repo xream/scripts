@@ -181,11 +181,13 @@ let result
           $.log(`🚧 系统维护 不继续执行 时长 ${$.stringify(maintenanceDurationTxt)}`)
           return
         }
-        desc = `🚧 系统维护`
         const currentMaintenance = { time: now }
         $.log(`ℹ️ 保存系统维护开始时间: ${$.stringify(currentMaintenance)}`)
         $.write(currentMaintenance, 'maintenance')
-        throw new Error(desc)
+        if (String($.read('maintenance_disabled')) !== 'true') {
+          $$.notify('🚧 系统维护', '维护结束将不继续通知')  
+        }
+        return
       } else {
         throw e
       }
@@ -202,7 +204,9 @@ let result
         }
       }
       $.log(`🚧 系统维护结束 时长 ${$.stringify(maintenanceDurationTxt)}`)
-      $$.notify('🚧 系统维护结束', `时长 ${maintenanceDurationTxt}`)
+      if (String($.read('maintenance_disabled')) !== 'true') {
+        $$.notify('🚧 系统维护结束', `时长 ${maintenanceDurationTxt}`)  
+      }
       $.delete("maintenance")
     }
     // 套餐名
