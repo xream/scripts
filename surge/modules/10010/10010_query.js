@@ -40,6 +40,7 @@ const v2pSync = async () => {
     delete value.last
     delete value.wifi
     delete value.maintenance
+    delete value.client_query_disabled
     let key = _.get(v2p, 'store.key')
     key = key ? String(key) : $$.name
     const v2pSyncRes = await $.http.post({
