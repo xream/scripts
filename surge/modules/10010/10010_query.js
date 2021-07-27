@@ -329,7 +329,7 @@ let result
       if (freeFlowTxt) {
         freeFlowUsed = freeFlow - parseFloat(_.get(last, 'freeFlow'))
         if (!isNaN(freeFlowUsed) && freeFlowUsed >= 0) {
-          if (same || freeFlowUsed >= ignore_flow) {
+          if (same || freeFlowUsed > ignore_flow) {
             if (freeFlowUsed >= 1000) {
               freeFlowUsedTxt = `${(freeFlowUsed/1024).toFixed(2)}G`
             } else {
@@ -343,7 +343,7 @@ let result
       if (sumFlowTxt) {
         sumFlowUsed = sumFlow - parseFloat(_.get(last, 'sumFlow'))
         if (!isNaN(sumFlowUsed) && sumFlowUsed >= 0) {
-          if (same || sumFlowUsed >= ignore_flow) {
+          if (same || sumFlowUsed > ignore_flow) {
             if (sumFlowUsed >= 1000) {
               sumFlowUsedTxt = `${(sumFlowUsed/1024).toFixed(2)}G`
             } else {
@@ -356,7 +356,7 @@ let result
       if ((!isNaN(freeFlowUsed) && freeFlowUsed >= 0) && (!isNaN(sumFlowUsed) && sumFlowUsed >= 0)) {
         remainingFlowUsed = parseFloat(sumFlowUsed - freeFlowUsed)
         if (!isNaN(remainingFlowUsed) && remainingFlowUsed >= 0) {
-          if (same || remainingFlowUsed >= ignore_flow) {
+          if (same || remainingFlowUsed > ignore_flow) {
             if (remainingFlowUsed >= 1000) {
               remainingFlowUsedTxt = `${(remainingFlowUsed/1024).toFixed(2)}G`
             } else {
