@@ -3,7 +3,7 @@
 #!system=ios
 
 [Script]
-联通余量(v2): Cookie = type=http-request,pattern=^https?:\/\/m\.client\.10010\.com\/servicequerybusiness,requires-body=1,max-size=0,timeout=30,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js
+联通余量(v2): Cookie = type=http-request,pattern=^https?:\/\/m\.client\.10010\.com\/(servicequerybusiness\/operationservice\/queryOcsPackageFlowLeftContent|servicequerybusiness\/balancenew\/accountBalancenew\.htm|mobileService\/onLine\.htm),requires-body=1,max-size=0,timeout=30,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js
 联通余量(v2): 查询 = type=cron,cronexp=*/5 * * * *,timeout=30,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js
 
 [MITM]

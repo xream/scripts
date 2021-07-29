@@ -23,6 +23,12 @@ v2 版本使用 [OpenAPI](https://github.com/Peng-YM/QuanX/tree/master/Tools/Ope
 
 - 更多自定义项
 
+- 自动登录
+
+注意事项:
+
+- 设置中的 `加密接口` 用于加密手机号和密码, 可打开 [rsapublickeyencode](https://runkit.com/xream/rsapublickeyencode) 自己部署/Clone 后点击 endpoint 得到地址, 填入设置
+
 ## 懒人 Surge Module
 
 🆕 [联通余量(v2)](https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010v2.sgmodule)
@@ -39,15 +45,15 @@ hostname = m.client.10010.com
 
 [Script]
 # Surge
-联通余量: Cookie = type=http-request,pattern=^https?:\/\/m\.client\.10010\.com\/servicequerybusiness,requires-body=1,max-size=0,timeout=30,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js,debug=true
+联通余量: Cookie = type=http-request,pattern=^https?:\/\/m\.client\.10010\.com\/(servicequerybusiness\/operationservice\/queryOcsPackageFlowLeftContent|servicequerybusiness\/balancenew\/accountBalancenew\.htm|mobileService\/onLine\.htm),requires-body=1,max-size=0,timeout=30,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js,debug=true
 联通余量: 查询 = type=cron,cronexp=*/5 * * * *,timeout=30,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js,wake-system=true
 
 # Loon
-http-request ^https?:\/\/m\.client\.10010\.com\/servicequerybusiness script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js, tag=联通余量Cookie
+http-request ^https?:\/\/m\.client\.10010\.com\/(servicequerybusiness\/operationservice\/queryOcsPackageFlowLeftContent|servicequerybusiness\/balancenew\/accountBalancenew\.htm|mobileService\/onLine\.htm) script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js, tag=联通余量Cookie
 cron "*/5 * * * *" script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js
 
 # QuanX(未测试 不清楚如何判断当前网络是否为 WiFi)
-^https?:\/\/m\.client\.10010\.com\/servicequerybusiness url script-request-header https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js
+^https?:\/\/m\.client\.10010\.com\/(servicequerybusiness\/operationservice\/queryOcsPackageFlowLeftContent|servicequerybusiness\/balancenew\/accountBalancenew\.htm|mobileService\/onLine\.htm) url script-request-header https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js
 */5 * * * * https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js, tag=联通余量查询
 ```
 
@@ -71,7 +77,7 @@ cron "*/5 * * * *" script-path=https://raw.githubusercontent.com/xream/scripts/m
 */5 * * * * https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/check.js, tag=联通余量查询
 ```
 
-## BoxJs 订阅(可跳过)
+## BoxJs 订阅
 
 使用 [BoxJs](https://chavyleung.gitbook.io/boxjs) 添加 [订阅](https://raw.githubusercontent.com/xream/scripts/main/boxjs/boxjs.json) 后, Scriptable 脚本可支持缓存 Cookie
 

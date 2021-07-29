@@ -13,18 +13,63 @@
         "<a onClick=\"window.location.reload(true);\">刷新</a>"
       ],
       "keys": [
-        "@10010_query.cookie"
+        "@10010_query.cookie",
+        "@10010_query.mobile",
+        "@10010_query.password",
+        "@10010_query.appId"
       ],
       "author": "@xream",
       "repo": "https://github.com/xream/scripts/tree/main/surge/modules/10010",
       "script": "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js",
       "settings": [
         {
+          "id": "@10010_query.cookie_notification_disabled",
+          "name": "是否关闭获取 Cookie 信息时的通知",
+          "val": false,
+          "type": "boolean",
+          "desc": "默认始终显示通知. 嫌烦的话 可以关掉"
+        },
+        {
           "id": "@10010_query.cookie",
           "name": "Cookie",
           "val": "",
           "type": "text",
           "desc": ""
+        },
+        {
+          "id": "@10010_query.autoSign",
+          "name": "是否开启自动登录",
+          "val": false,
+          "type": "boolean",
+          "desc": "默认关闭. 开启后, 请设置手机号、密码、appId、加密接口"
+        },
+        {
+          "id": "@10010_query.mobile",
+          "name": "手机号",
+          "val": "",
+          "type": "text",
+          "desc": "联通客户端登录手机号"
+        },
+        {
+          "id": "@10010_query.password",
+          "name": "密码",
+          "val": "",
+          "type": "text",
+          "desc": "联通客户端登录密码"
+        },
+        {
+          "id": "@10010_query.appId",
+          "name": "appId",
+          "val": "",
+          "type": "text",
+          "desc": "联通客户端登录时抓取到的 appId"
+        },
+        {
+          "id": "@10010_query.rsapublicKeyEncodeAPI",
+          "name": "加密接口",
+          "val": "",
+          "type": "text",
+          "desc": "用于加密手机号和密码, 可以 clone https://runkit.com/xream/rsapublickeyencode 点击 endpoint 得到地址"
         },
         {
           "id": "@10010_query.name",
@@ -95,6 +140,13 @@
           "val": false,
           "type": "boolean",
           "desc": "默认不同步. 开启后, Cookie 更新时将自动同步到 V2P"
+        },
+        {
+          "id": "@10010_query.v2p.sync_notification_disabled",
+          "name": "V2P 是否关闭同步时的通知",
+          "val": false,
+          "type": "boolean",
+          "desc": "默认始终显示通知. 嫌烦的话 可以关掉"
         },
         {
           "id": "@10010_query.v2p.store.key",
