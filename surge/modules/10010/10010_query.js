@@ -521,7 +521,7 @@ let result
   })
 
 async function autoSign() {
-  let savedCookie
+  let signCookies
   $.log(`🔘 使用自动登录`)
   let mobile = $.read('mobile')
   let password = $.read('password')
@@ -660,14 +660,17 @@ async function autoSign() {
     if (_.get(signBody, 'code') !== '0') {
       throw new Error(_.get(signBody, 'dsc') || '响应异常')
     }
-    const signCookies = signRes.headers['set-cookie']
-    if (!Array.isArray(signCookies) || signCookies.length === 0) {
-      throw new Error(`set-cookie 错误`)
+    const signCookies = signRes.headers['set-cookie'] || signRes.headers['Set-Cookie']
+    if (Array.isArray(signCookies)) {
+      signCookies = signCookies.join('; ')
     }
-    savedCookie = signCookies.join('; ')
-    $.log(`🍪 登录 Cookie: ${savedCookie}`)
-    $.write(savedCookie, 'cookie')
-    return savedCookie
+    if (!signCookies) {
+      throw new Error(`登录 Cookie 为空`)
+    }
+
+    $.log(`🍪 登录 Cookie: ${signCookies}`)
+    $.write(signCookies, 'cookie')
+    return signCookies
   } catch (e) {
     e.message = `登录失败 ${e.message}`
     throw e
