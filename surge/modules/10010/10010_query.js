@@ -310,7 +310,7 @@ let result
     $.log(`🆓 非免流流量: ${paidFlowTxt}, ${paidFlow}`)
     // 流量包
     const otherPkgRegExpStr = $.read('other_pkg')
-    $.log(`需要单独显示的流量名正则 ${otherPkgRegExpStr}`)
+    $.log(`需要单独显示的流量包名正则 ${otherPkgRegExpStr}`)
     let otherPkgs = []
     let remainingFlow = 0
     let remainingFlowTxt
