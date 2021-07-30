@@ -103,34 +103,36 @@ let result
 
     $.log(`🌐 请求 [${method}] 🔗 ${url}`)
     if (method === 'POST' && Cookie && $$.get_cookie_url_regex.test(url)) {
-      let appId
-      try {
-        const bodyObj = getQueryStringParams(body)
-        $.log(`请求的 body: ${$.stringify(bodyObj)}`)
-        appId = bodyObj.appId
-        $.log(`请求的 appId: ${appId}`)
-      } catch (e) {
-        const msg = e.message || e
-        $.error(`❌ appId ${msg}`)
+      if (String($.read('cookie_disabled')) !== 'true') {
+        let appId
+        try {
+          const bodyObj = getQueryStringParams(body)
+          $.log(`请求的 body: ${$.stringify(bodyObj)}`)
+          appId = bodyObj.appId
+          $.log(`请求的 appId: ${appId}`)
+        } catch (e) {
+          const msg = e.message || e
+          $.error(`❌ appId ${msg}`)
+        }
+        if (!appId) {
+          throw new Error('未获取到 appId')
+        }
+        let mobile
+        try {
+          mobile = Cookie.match(/c_mobile=(\d{11})/)[1]
+          $.log(`Cookie中的 手机号: ${mobile}`)
+        } catch (e) {
+          const msg = e.message || e
+          $.error(`❌ 手机号 ${msg}`)
+        }
+        if (!mobile) {
+          throw new Error('未获取到 手机号')
+        }
+        $.write(Cookie, 'cookie')
+        $.write(appId, 'appId')
+        $.write(mobile, 'mobile')
+        $$.notify('Cookie, 手机号, appId 已保存', Cookie)
       }
-      if (!appId) {
-        throw new Error('未获取到 appId')
-      }
-      let mobile
-      try {
-        mobile = Cookie.match(/c_mobile=(\d{11})/)[1]
-        $.log(`Cookie中的 手机号: ${mobile}`)
-      } catch (e) {
-        const msg = e.message || e
-        $.error(`❌ 手机号 ${msg}`)
-      }
-      if (!mobile) {
-        throw new Error('未获取到 手机号')
-      }
-      $.write(Cookie, 'cookie')
-      $.write(appId, 'appId')
-      $.write(mobile, 'mobile')
-      $$.notify('Cookie, 手机号, appId 已保存', Cookie)
       if (String(_.get(v2p, 'sync')) === 'true') {
         await v2pSync()
       }

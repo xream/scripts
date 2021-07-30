@@ -30,6 +30,13 @@
           "desc": "默认始终显示通知. 嫌烦的话 可以关掉"
         },
         {
+          "id": "@10010_query.cookie_disabled",
+          "name": "是否关闭自动获取 Cookie 功能",
+          "val": false,
+          "type": "boolean",
+          "desc": "默认开启 关闭后将不会在打开 app 时自动获取 Cookie"
+        },
+        {
           "id": "@10010_query.cookie",
           "name": "Cookie",
           "val": "",
