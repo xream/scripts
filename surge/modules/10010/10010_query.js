@@ -332,6 +332,10 @@ let result
               let use = parseFloat(_.get(detail, 'use'))
               const usedPercent = parseFloat(_.get(detail, 'usedPercent'))
               $.log(`ℹ️ 剩余: ${remain}, 已用: ${use}, 已用率: ${usedPercent}`)
+              if (/日租/.test(pkgFullName) && use <= 1) {
+                use = 0
+                $.log(`ℹ️ 修正日租已用流量为 ${use}`)
+              }
               let otherPkgName
 
               if (otherPkgRegExpStr) {

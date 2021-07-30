@@ -257,9 +257,7 @@ class Widget extends Base {
                 }
                 // 日租
                 if (/日租/.test(addUpItemName)) {
-                  if (usedPercent === 0) {
-                    // 未用日租
-                  } else {
+                  if (use > 1) {
                     this.list.push({
                       name: '已用日租',
                       color: 'FF0000',
