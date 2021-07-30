@@ -81,10 +81,7 @@ const v2pSync = async () => {
     if (JSON.parse(v2pSyncRes.body).rescode !== 0) {
       throw new Error('响应异常')
     }
-    $.log(`✅ V2P 已同步: ${key}`, `${Object.keys(value).join(', ')}`)
-    if (String(_.get(v2p, 'sync_notification_disabled')) !== 'true') {
-      $$.notify(`✅ V2P 已同步: ${key}`, `${Object.keys(value).join(', ')}`)
-    }
+    $$.notify(`✅ V2P 已同步: ${key}`, `${Object.keys(value).join(', ')}`)
   } catch (e) {
     e.message = `V2P 同步失败 ${e.message}`
     throw e
@@ -133,10 +130,7 @@ let result
       $.write(Cookie, 'cookie')
       $.write(appId, 'appId')
       $.write(mobile, 'mobile')
-      $.log(`✅ Cookie, 手机号, appId 已保存`)
-      if (String('cookie_notification_disabled') !== 'true') {
-        $$.notify('Cookie, 手机号, appId 已保存', Cookie)
-      }
+      $$.notify('Cookie, 手机号, appId 已保存', Cookie)
       if (String(_.get(v2p, 'sync')) === 'true') {
         await v2pSync()
       }
@@ -210,8 +204,7 @@ let result
       if (String(queryBody) === '999999') {
         if (String($.read('autoSign')) === 'true') {
           $.delete('cookie')
-          $.log(`ℹ️ 删除 Cookie 等待下次自动登录`)
-          throw new Error('已删除无效 Cookie, 下次将自动登录')
+          $.log(`ℹ️ 删除cookie 等待下次自动登录`)
         } else {
           throw new Error('Cookie 无效. 请打开中国联通重新获取')
         }
@@ -316,10 +309,12 @@ let result
     }
     $.log(`🆓 非免流流量: ${paidFlowTxt}, ${paidFlow}`)
     // 流量包
-    let dailyFlowUsed
-    let dailyFlowUsedTxt
+    const otherPkgRegExpStr = $.read('other_pkg')
+    $.log(`需要单独显示的流量名正则 ${otherPkgRegExpStr}`)
+    let otherPkgs = []
     let remainingFlow = 0
     let remainingFlowTxt
+
     const resources = queryBody.resources
     if (Array.isArray(resources)) {
       resources.map(resource => {
@@ -327,30 +322,35 @@ let result
           const details = _.get(resource, 'details')
           if (Array.isArray(details)) {
             details.map(detail => {
-              const addUpItemName = _.get(detail, 'addUpItemName')
-              const feePolicyName = _.get(detail, 'feePolicyName')
-              $.log(`📦 包名: ${addUpItemName}, ${feePolicyName}`)
-              // 日租
-              if (/日租/.test(addUpItemName)) {
-                const usedPercent = parseFloat(_.get(detail, 'usedPercent'))
-                if (!isNaN(usedPercent) && usedPercent > 0) {
-                  const use = parseFloat(_.get(detail, 'use'))
-                  if (!isNaN(use) && use > 0) {
-                    dailyFlowUsed = use
-                    if (dailyFlowUsed >= 1000) {
-                      dailyFlowUsedTxt = `${(dailyFlowUsed / 1024).toFixed(2)}G`
-                    } else {
-                      dailyFlowUsedTxt = `${dailyFlowUsed.toFixed(2)}M`
-                    }
-                  }
+              let addUpItemName = _.get(detail, 'addUpItemName') || ''
+              let feePolicyName = _.get(detail, 'feePolicyName') || ''
+              const pkgFullName = addUpItemName ? `${feePolicyName}（${addUpItemName}）` : `${feePolicyName}`
+              $.log(`📦 包名: ${pkgFullName}`)
+              let remain = parseFloat(_.get(detail, 'remain'))
+              let use = parseFloat(_.get(detail, 'use'))
+              const usedPercent = parseFloat(_.get(detail, 'usedPercent'))
+              $.log(`ℹ️ 剩余: ${remain}, 已用: ${use}, 已用率: ${usedPercent}`)
+              let otherPkgName
+
+              if (otherPkgRegExpStr) {
+                const otherPkgMatchedArray = pkgFullName.match(new RegExp(otherPkgRegExpStr))
+                if (otherPkgMatchedArray) {
+                  otherPkgName = otherPkgMatchedArray[1]
                 }
-                $.log(`ℹ️ 日租包: ${dailyFlowUsedTxt}, ${dailyFlowUsed}`)
-              } else {
-                const remain = parseFloat(_.get(detail, 'remain'))
-                if (!isNaN(remain) && remain > 0) {
-                  remainingFlow += remain
+              }
+
+              if (otherPkgName) {
+                $.log(`ℹ️ 需要单独显示的流量包名: ${otherPkgName}`)
+                if (!isNaN(remain) && remain === 0) {
+                  // 有剩余且剩余为0 不显示
+                } else if (!isNaN(remain) && remain > 0) {
+                  otherPkgs.push({ name: otherPkgName, remain })
+                } else if (!isNaN(use) && use > 0) {
+                  otherPkgs.push({ name: otherPkgName, use })
                 }
-                $.log(`ℹ️ 剩余: ${remain}`)
+              }
+              if (!isNaN(remain) && remain > 0) {
+                remainingFlow += remain
               }
             })
           }
@@ -460,6 +460,27 @@ let result
     if (remainingFlowTxt) {
       totalMsgs.push(`剩余 ${remainingFlowTxt}`)
     }
+    if (otherPkgs.length > 0) {
+      otherPkgs.map(({ name, use, remain }) => {
+        if (remain) {
+          let remainTxt
+          if (remain >= 1000) {
+            remainTxt = `${(remain / 1024).toFixed(2)}G`
+          } else {
+            remainTxt = `${remain.toFixed(2)}M`
+          }
+          totalMsgs.push(`${name} ${remainTxt}`)
+        } else if (use) {
+          let useTxt
+          if (use >= 1000) {
+            useTxt = `${(use / 1024).toFixed(2)}G`
+          } else {
+            useTxt = `${use.toFixed(2)}M`
+          }
+          totalMsgs.push(`${name}已用 ${useTxt}`)
+        }
+      })
+    }
     if (freeFlowTxt) {
       totalMsgs.push(`免流 ${freeFlowTxt}`)
     }
@@ -494,7 +515,7 @@ let result
   })
 
 async function autoSign() {
-  let signCookies
+  let savedCookie
   $.log(`🔘 使用自动登录`)
   let mobile = $.read('mobile')
   let password = $.read('password')
@@ -633,16 +654,14 @@ async function autoSign() {
     if (_.get(signBody, 'code') !== '0') {
       throw new Error(_.get(signBody, 'dsc') || '响应异常')
     }
-    let signCookies = signRes.headers['set-cookie'] || signRes.headers['Set-Cookie']
-    if (Array.isArray(signCookies)) {
-      signCookies = signCookies.join('; ')
+    const signCookies = signRes.headers['set-cookie']
+    if (!Array.isArray(signCookies) || signCookies.length === 0) {
+      throw new Error(`set-cookie 错误`)
     }
-    if (!signCookies) {
-      throw new Error(`登录 Cookie 为空`)
-    }
-    $.log(`🍪 登录 Cookie: ${signCookies}`)
-    $.write(signCookies, 'cookie')
-    return signCookies
+    savedCookie = signCookies.join('; ')
+    $.log(`🍪 登录 Cookie: ${savedCookie}`)
+    $.write(savedCookie, 'cookie')
+    return savedCookie
   } catch (e) {
     e.message = `登录失败 ${e.message}`
     throw e
