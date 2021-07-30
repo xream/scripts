@@ -660,7 +660,7 @@ async function autoSign() {
     if (_.get(signBody, 'code') !== '0') {
       throw new Error(_.get(signBody, 'dsc') || '响应异常')
     }
-    const signCookies = signRes.headers['set-cookie'] || signRes.headers['Set-Cookie']
+    signCookies = signRes.headers['set-cookie'] || signRes.headers['Set-Cookie']
     if (Array.isArray(signCookies)) {
       signCookies = signCookies.join('; ')
     }
