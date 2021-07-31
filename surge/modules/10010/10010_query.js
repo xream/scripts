@@ -41,7 +41,9 @@ const _ = {get(a,b,c=void 0){const d=b.replace(/\[(\d+)\]/g,".$1").split(".");le
   set(a,b,c){return Object(a)===a?(Array.isArray(b)||(b=b.toString().match(/[^.[\]]+/g)||[]),b.slice(0,-1).reduce((d,a,c)=>Object(d[a])===d[a]?d[a]:d[a]=Math.abs(b[c+1])>>0==+b[c+1]?[]:{},a)[b[b.length-1]]=c,a):a}}
 // prettier-ignore
 var Base64={_keyStr:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",encode:function(e){var t="";var n,r,i,s,o,u,a;var f=0;e=Base64._utf8_encode(e);while(f<e.length){n=e.charCodeAt(f++);r=e.charCodeAt(f++);i=e.charCodeAt(f++);s=n>>2;o=(n&3)<<4|r>>4;u=(r&15)<<2|i>>6;a=i&63;if(isNaN(r)){u=a=64}else if(isNaN(i)){a=64}t=t+this._keyStr.charAt(s)+this._keyStr.charAt(o)+this._keyStr.charAt(u)+this._keyStr.charAt(a)}return t},decode:function(e){var t="";var n,r,i;var s,o,u,a;var f=0;e=e.replace(/[^A-Za-z0-9\+\/\=]/g,"");while(f<e.length){s=this._keyStr.indexOf(e.charAt(f++));o=this._keyStr.indexOf(e.charAt(f++));u=this._keyStr.indexOf(e.charAt(f++));a=this._keyStr.indexOf(e.charAt(f++));n=s<<2|o>>4;r=(o&15)<<4|u>>2;i=(u&3)<<6|a;t=t+String.fromCharCode(n);if(u!=64){t=t+String.fromCharCode(r)}if(a!=64){t=t+String.fromCharCode(i)}}t=Base64._utf8_decode(t);return t},_utf8_encode:function(e){e=e.replace(/\r\n/g,"\n");var t="";for(var n=0;n<e.length;n++){var r=e.charCodeAt(n);if(r<128){t+=String.fromCharCode(r)}else if(r>127&&r<2048){t+=String.fromCharCode(r>>6|192);t+=String.fromCharCode(r&63|128)}else{t+=String.fromCharCode(r>>12|224);t+=String.fromCharCode(r>>6&63|128);t+=String.fromCharCode(r&63|128)}}return t},_utf8_decode:function(e){var t="";var n=0;var r=c1=c2=0;while(n<e.length){r=e.charCodeAt(n);if(r<128){t+=String.fromCharCode(r);n++}else if(r>191&&r<224){c2=e.charCodeAt(n+1);t+=String.fromCharCode((r&31)<<6|c2&63);n+=2}else{c2=e.charCodeAt(n+1);c3=e.charCodeAt(n+2);t+=String.fromCharCode((r&15)<<12|(c2&63)<<6|c3&63);n+=3}}return t}}
-
+var userAgentTpl = {
+  p: 'Mozilla/5.0 (iPad; CPU OS 14_0_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 unicom{version:iphone_c@8.0600}{systemVersion:dis}{yw_code:}',
+}
 const $ = API($$.name, $$.debug)
 
 const now = new Date().getTime()
@@ -194,6 +196,7 @@ let result
           headers: {
             Cookie: savedCookie,
             'Accept-Encoding': 'gzip, deflate, br',
+            Accept: 'application/json',
           },
         })
       } catch (e) {
@@ -203,25 +206,33 @@ let result
       }
       queryBody = _.get(queryRes, 'body')
       $.log(`ℹ️ 余量查询响应: ${$.stringify(queryRes.body)}`)
-      if (String(queryBody) === '999999') {
-        if (String($.read('autoSign')) === 'true') {
-          $.delete('cookie')
-          $.log(`ℹ️ 删除cookie 等待下次自动登录`)
-        } else {
-          throw new Error('Cookie 无效. 请打开中国联通重新获取')
-        }
-      }
       try {
         queryBody = JSON.parse(queryBody)
-      } catch (e) {
-        throw new Error('响应解析失败')
-      }
+      } catch (e) {}
       const queryCode = String(_.get(queryBody, 'code'))
       if (queryCode !== '0000') {
         let desc = _.get(queryBody, 'desc')
         if (queryCode === '9998') {
           isUndergoingMaintenance = true
         } else {
+          let checkResBody
+          try {
+            const checkRes = await $.http.post({
+              url: 'https://m.client.10010.com/mobileService/customer/query/getMyUnicomDateTotle.htm',
+              headers: {
+                Cookie: savedCookie,
+                'User-Agent': userAgentTpl.p,
+              },
+            })
+            checkResBody = JSON.parse(checkRes.body)
+          } catch (e) {}
+          $.log(`ℹ️  检测 Cookie 接口响应: ${$.stringify(checkResBody)}`)
+          if (_.get(checkResBody, 'phone')) {
+            isUndergoingMaintenance = true
+          } else {
+            $.delete('cookie')
+            $.log(`ℹ️ 删除cookie 等待下次自动登录`)
+          }
           throw new Error(desc || '响应异常')
         }
       }
@@ -589,9 +600,7 @@ async function autoSign() {
       throw e
     }
   }
-  var userAgentTpl = {
-    p: 'Mozilla/5.0 (iPad; CPU OS 14_0_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 unicom{version:iphone_c@8.0600}{systemVersion:dis}{yw_code:}',
-  }
+
   var appInfo = {
     version: 8.0602,
     unicom_version: 'iphone_c@8.0602',
