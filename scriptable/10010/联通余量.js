@@ -25,8 +25,7 @@ class Widget extends Base {
     this.name = '联通余量'
     this.cacheKey = '10010_query'
     this.cookieCacheKey = '10010_query_cookie'
-    this.url =
-      'chinaunicom://?open=%7B%22openType%22:%22url%22,%22title%22:%22%E4%BD%99%E9%87%8F%E6%9F%A5%E8%AF%A2%22,%22openUrl%22:%22https://m.client.10010.com/mobileService/openPlatform/openPlatLine.htm?to_url=https://img.client.10010.com/yuliangchaxun2/index.html?linkType=unicomNewShare&mobileA=https://m1.img.10010.com/resources/7188192A31B5AE06E41B64DA6D65A9B0/20201222/jpg/20201222114110.jpg&businessName=%E4%BD%99%E9%87%8F%E6%9F%A5%E8%AF%A2&businessCode=https://m1.img.10010.com/resources/7188192A31B5AE06E41B64DA6D65A9B0/20201222/jpg/20201222114110.jpg&shareType=1&mobileB=F8A34DFF6F9346E68343756DB268C5A5&duanlianjieabc=0tygAa4n%22%7D'
+    this.url = 'chinaunicom://'
     this.setupGradient = async () => {
       // Requirements: sunrise
       // if (!sunData) { await setupSunrise() }
@@ -190,50 +189,78 @@ class Widget extends Base {
           }
         }
 
-        const balanceReq = async () => {
-          const req = new Request('https://m.client.10010.com/servicequerybusiness/balancenew/accountBalancenew.htm')
-          // req.timeoutInterval = 30;
-          req.method = 'GET'
-          req.headers = {
-            Cookie,
-            // 'Content-Type': 'application/x-www-form-urlencoded',
+        const checkCookieReq = async () => {
+          try {
+            const req = new Request('https://m.client.10010.com/mobileservicequery/order/serchUnreadcount')
+            // req.timeoutInterval = 30;
+            req.method = 'GET'
+            req.headers = {
+              Cookie,
+            }
+            // req.body = ``;
+            // return await req.loadJSON()
+            let res = await req.loadString()
+            console.log(res)
+            res = JSON.parse(res)
+            return res
+          } catch (e) {
+            console.error(e)
           }
-          // req.body = ``;
-          // return await req.loadJSON();
-          let res = await req.loadString()
-          console.log(res)
-          res = JSON.parse(res)
-          return res
+        }
+        const balanceReq = async () => {
+          try {
+            const req = new Request('https://m.client.10010.com/servicequerybusiness/balancenew/accountBalancenew.htm')
+            // req.timeoutInterval = 30;
+            req.method = 'GET'
+            req.headers = {
+              Cookie,
+              // 'Content-Type': 'application/x-www-form-urlencoded',
+            }
+            // req.body = ``;
+            // return await req.loadJSON();
+            let res = await req.loadString()
+            console.log(res)
+            res = JSON.parse(res)
+            return res
+          } catch (e) {
+            console.error(e)
+          }
         }
         const pkgReq = async () => {
-          const req = new Request(
-            'https://m.client.10010.com/servicequerybusiness/operationservice/queryOcsPackageFlowLeftContent'
-          )
-          // req.timeoutInterval = 30;
-          req.method = 'GET'
-          req.headers = {
-            Cookie,
-            // 'Content-Type': 'application/x-www-form-urlencoded',
+          try {
+            const req = new Request(
+              'https://m.client.10010.com/servicequerybusiness/operationservice/queryOcsPackageFlowLeftContent'
+            )
+            // req.timeoutInterval = 30;
+            req.method = 'GET'
+            req.headers = {
+              Cookie,
+              // 'Content-Type': 'application/x-www-form-urlencoded',
+            }
+            // req.body = ``;
+            // return await req.loadJSON();
+            let res = await req.loadString()
+            console.log(res)
+            res = JSON.parse(res)
+            return res
+          } catch (e) {
+            console.error(e)
           }
-          // req.body = ``;
-          // return await req.loadJSON();
-          let res = await req.loadString()
-          console.log(res)
-          res = JSON.parse(res)
-          return res
         }
         const [balanceRes, pkgRes] = await Promise.all([balanceReq(), pkgReq()])
-        this.name = pkgRes.packageName
-        const balanceResDesc = balanceRes.code === '9998' ? '🚧 联通维护' : '暂无数据'
-        this.list = [
-          {
-            name: '话费',
-            color: 'e2e2e2',
-            value: `¥${balanceRes.curntbalancecust || balanceResDesc}`,
-          },
-        ]
-
-        if (pkgRes.resources) {
+        let shouldCheckCookie
+        if (balanceRes && balanceRes.code === '0000') {
+          this.list = [
+            {
+              name: '话费',
+              color: 'e2e2e2',
+              value: `¥${balanceRes.curntbalancecust}`,
+            },
+          ]
+        } else {
+          shouldCheckCookie = true
+        }
+        if (pkgRes && pkgRes.code === '0000' && pkgRes.resources) {
           let remains = 0
 
           pkgRes.resources.map(resource => {
@@ -245,7 +272,7 @@ class Widget extends Base {
                 use = parseFloat(use)
                 let useTxt
                 if (!isNaN(use)) {
-                  if (use > 1024) {
+                  if (use >= 1000) {
                     useTxt = `${(use / 1024).toFixed(2)}G`
                   } else {
                     useTxt = `${use}M`
@@ -273,7 +300,7 @@ class Widget extends Base {
 
           if (remains > 0) {
             let remainsTxt = remains.toFixed(2)
-            if (remainsTxt > 1024) {
+            if (remainsTxt >= 1000) {
               remainsTxt = `${(remainsTxt / 1024).toFixed(2)}G`
             } else {
               remainsTxt = `${remainsTxt}M`
@@ -291,7 +318,7 @@ class Widget extends Base {
           if (pkgRes.summary) {
             const free = parseFloat(pkgRes.summary.freeFlow)
             if (!isNaN(free)) {
-              if (free > 1024) {
+              if (free >= 1000) {
                 freeTxt = `${(free / 1024).toFixed(2)}G`
               } else {
                 freeTxt = `${free}M`
@@ -306,12 +333,23 @@ class Widget extends Base {
             })
           }
         } else {
-          this.list.push({
-            name: '流量',
-            color: 'FF0000',
-            value: pkgRes.code === '9998' ? '🚧 联通维护' : '暂无数据',
-          })
+          shouldCheckCookie = true
         }
+        // shouldCheckCookie = true
+        if (shouldCheckCookie) {
+          const checkCookieRes = await checkCookieReq()
+          console.log(checkCookieRes)
+          if (checkCookieRes) {
+            this.list.push({
+              name: '状态',
+              color: 'e2e2e2',
+              value: `系统维护`,
+            })
+          } else {
+            throw new Error('Cookie 失效')
+          }
+        }
+
         this.list.push({
           name: '更新',
           color: 'e2e2e2',
@@ -335,7 +373,7 @@ class Widget extends Base {
       console.error(e)
       let notify = new Notification()
       notify.title = `❌ ${this.name}`
-      notify.subtitle = `可尝试点击通知登录中国联通 打开余量查询`
+      notify.subtitle = `可尝试点击通知打开中国联通 重新获取 Cookie`
       notify.openURL = this.url
       notify.body = String(e.message || e)
       await notify.schedule()
