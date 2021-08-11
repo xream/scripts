@@ -7,7 +7,7 @@
     <td><img src="https://i.loli.net/2021/07/24/yYrJmK7znEwiDsT.jpg" width="400px"></td>
   </tr>
    <tr>
-    <td><img src="https://i.loli.net/2021/07/24/JWC21sOSPrp3duR.jpg" height="200px"></td>
+    <td><img src="https://i.loli.net/2021/07/24/JWC21sOSPrp3duR.jpg" height="200px" width="200px"></td>
   </tr>
 </table>
 

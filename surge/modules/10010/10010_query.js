@@ -133,7 +133,10 @@ let result
         $.write(Cookie, 'cookie')
         $.write(appId, 'appId')
         $.write(mobile, 'mobile')
-        $$.notify('Cookie, 手机号, appId 已保存', Cookie)
+
+        if (String($.read('cookie_notification_disabled')) !== 'true') {
+          $$.notify('Cookie, 手机号, appId 已保存', Cookie)
+        }
       }
       if (String(_.get(v2p, 'sync')) === 'true') {
         await v2pSync()
@@ -218,20 +221,21 @@ let result
           let checkResBody
           try {
             const checkRes = await $.http.post({
-              url: 'https://m.client.10010.com/mobileService/customer/query/getMyUnicomDateTotle.htm',
+              url: 'https://m.client.10010.com/servicequerybusiness/query/myInformation',
               headers: {
                 Cookie: savedCookie,
-                'User-Agent': userAgentTpl.p,
               },
             })
             checkResBody = JSON.parse(checkRes.body)
           } catch (e) {}
           $.log(`ℹ️  检测 Cookie 接口响应: ${$.stringify(checkResBody)}`)
-          if (_.get(checkResBody, 'phone')) {
+          $.log(checkResBody)
+          if (_.get(checkResBody, 'code') === '0000') {
+            $.log(`ℹ️ 检测 Cookie 接口响应正常`)
             isUndergoingMaintenance = true
           } else {
             $.delete('cookie')
-            $.log(`ℹ️ 删除cookie 等待下次自动登录`)
+            $.log(`ℹ️ 检测 Cookie 接口响应异常 删除cookie 等待下次自动登录`)
           }
           throw new Error(desc || '响应异常')
         }
