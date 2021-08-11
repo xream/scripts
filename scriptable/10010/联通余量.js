@@ -191,7 +191,7 @@ class Widget extends Base {
 
         const checkCookieReq = async () => {
           try {
-            const req = new Request('https://m.client.10010.com/mobileservicequery/order/serchUnreadcount')
+            const req = new Request('https://m.client.10010.com/servicequerybusiness/query/myInformation')
             // req.timeoutInterval = 30;
             req.method = 'GET'
             req.headers = {
@@ -339,7 +339,7 @@ class Widget extends Base {
         if (shouldCheckCookie) {
           const checkCookieRes = await checkCookieReq()
           console.log(checkCookieRes)
-          if (checkCookieRes) {
+          if (checkCookieRes && checkCookieRes.code === '0000') {
             this.list.push({
               name: '状态',
               color: 'e2e2e2',
