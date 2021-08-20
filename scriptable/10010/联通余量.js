@@ -258,6 +258,13 @@ class Widget extends Base {
             },
           ]
         } else {
+          this.list = [
+            {
+              name: '话费',
+              color: 'e2e2e2',
+              value: `系统维护`,
+            },
+          ]
           shouldCheckCookie = true
         }
         if (pkgRes && pkgRes.code === '0000' && pkgRes.resources) {
