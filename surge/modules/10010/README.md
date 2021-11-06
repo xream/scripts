@@ -33,8 +33,6 @@ v2 版本使用 [OpenAPI](https://github.com/Peng-YM/QuanX/tree/master/Tools/Ope
 
 🆕 [联通余量(v2)](https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010v2.sgmodule)
 
-[联通余量(停止维护)](https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010.sgmodule)
-
 ## 手动设置 Scripts
 
 ### 🆕 联通余量(v2)
