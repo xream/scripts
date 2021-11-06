@@ -234,6 +234,9 @@ let result
             $.log(`ℹ️ 检测 Cookie 接口响应正常`)
             isUndergoingMaintenance = true
           } else {
+            if (!desc) {
+              desc = _.get(checkResBody, 'desc')
+            }
             $.delete('cookie')
             $.log(`ℹ️ 检测 Cookie 接口响应异常 删除cookie 等待下次自动登录`)
           }

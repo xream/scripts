@@ -33,7 +33,7 @@ v2 版本使用 [OpenAPI](https://github.com/Peng-YM/QuanX/tree/master/Tools/Ope
 
 🆕 [联通余量(v2)](https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010v2.sgmodule)
 
-[联通余量](https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010.sgmodule)
+[联通余量(停止维护)](https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010.sgmodule)
 
 ## 手动设置 Scripts
 
@@ -55,26 +55,6 @@ cron "*/5 * * * *" script-path=https://raw.githubusercontent.com/xream/scripts/m
 # QuanX(未测试 不清楚如何判断当前网络是否为 WiFi)
 ^https?:\/\/m\.client\.10010\.com\/(servicequerybusiness\/operationservice\/queryOcsPackageFlowLeftContent|servicequerybusiness\/balancenew\/accountBalancenew\.htm|mobileService\/onLine\.htm) url script-request-header https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js
 */5 * * * * https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js, tag=联通余量查询
-```
-
-### 联通余量
-
-```
-[MITM]
-hostname = m.client.10010.com
-
-[Script]
-# Surge
-联通余量: Cookie = type=http-request,pattern=^https?:\/\/m\.client\.10010\.com\/servicequerybusiness,requires-body=1,max-size=0,timeout=30,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/cookie.js,debug=true
-联通余量: 查询 = type=cron,cronexp=*/5 * * * *,timeout=30,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/check.js,wake-system=true
-
-# Loon
-http-request ^https?:\/\/m\.client\.10010\.com\/servicequerybusiness script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/cookie.js, tag=联通余量Cookie
-cron "*/5 * * * *" script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/check.js
-
-# QuanX(未测试 不清楚如何判断当前网络是否为 WiFi)
-^https?:\/\/m\.client\.10010\.com\/servicequerybusiness url script-request-header https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/cookie.js
-*/5 * * * * https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/check.js, tag=联通余量查询
 ```
 
 ## BoxJs 订阅
@@ -184,10 +164,6 @@ cron "*/5 * * * *" script-path=https://raw.githubusercontent.com/xream/scripts/m
 在 V2P 上, 上传或保存脚本 `10010_query.js` 的内容, 命名为 `__YAA__10010_query.js`.
 
 之后, 脚本 `__YAA__10010_query.js` 执行时, 会自动从脚本名中获取 store key 名 `YAA` 并使用.
-
-### 联通余量
-
-在 `TASK(定时任务)` 中, 点击`添加单个任务`, 设置 `联通余量`, `cron定时`, `30 */5 * * * *`, `运行JS`, `https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/check.js`
 
 #### 配置
 
