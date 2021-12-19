@@ -331,6 +331,8 @@ let result
     // 流量包
     const otherPkgRegExpStr = $.read('other_pkg')
     $.log(`需要单独显示的流量包名正则 ${otherPkgRegExpStr}`)
+    const excludeRemainPkgRegExpStr = $.read('exclude_remain_pkg')
+    $.log(`不计算剩余流量的流量包名正则 ${excludeRemainPkgRegExpStr}`)
     let otherPkgs = []
     let remainingFlow = 0
     let remainingFlowTxt
@@ -362,6 +364,17 @@ let result
                   otherPkgName = otherPkgMatchedArray[1]
                 }
               }
+              let excludeRemainPkgName
+
+              if (excludeRemainPkgRegExpStr) {
+                const excludeRemainPkgMatchedArray = pkgFullName.match(new RegExp(excludeRemainPkgRegExpStr))
+                if (excludeRemainPkgMatchedArray) {
+                  excludeRemainPkgName = excludeRemainPkgMatchedArray[1]
+                }
+              }
+              if (excludeRemainPkgName) {
+                $.log(`ℹ️ 不计算剩余流量的流量包名: ${excludeRemainPkgName}`)
+              }
 
               if (otherPkgName) {
                 $.log(`ℹ️ 需要单独显示的流量包名: ${otherPkgName}`)
@@ -374,7 +387,9 @@ let result
                 }
               }
               if (!isNaN(remain) && remain > 0) {
-                remainingFlow += remain
+                if (!excludeRemainPkgName) {
+                  remainingFlow += remain
+                }
               }
             })
           }

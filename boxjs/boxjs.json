@@ -93,6 +93,13 @@
           "desc": "例 设置 (加油包|福利), 将显示 剩余 536.98M 加油包 46.12M 福利 490.86M 免流 41.66G"
         },
         {
+          "id": "@10010_query.exclude_remain_pkg",
+          "name": "不计算剩余流量的流量包名正则",
+          "val": "",
+          "type": "text",
+          "desc": "例 设置 (头条系APP免流|套餐内专享免费流量), 符合的流量包将不进行剩余流量计算"
+        },
+        {
           "id": "@10010_query.wifi",
           "name": "(Surge/Loon Only) 在 WiFi 环境时, 也进行查询",
           "val": false,
