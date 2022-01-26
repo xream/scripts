@@ -1,7 +1,7 @@
 # 联通余量
 
 <table style="padding: 10px">
- 
+
   <tr>
     <td><img src="https://i.loli.net/2021/07/24/XeZEUqbjJgC7RFV.jpg" width="400px"></td>
     <td><img src="https://i.loli.net/2021/07/24/yYrJmK7znEwiDsT.jpg" width="400px"></td>
@@ -47,11 +47,11 @@ hostname = m.client.10010.com
 联通余量: 查询 = type=cron,cronexp=*/5 * * * *,timeout=30,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js,wake-system=true
 
 # Loon
-http-request ^https?:\/\/m\.client\.10010\.com\/(servicequerybusiness\/operationservice\/queryOcsPackageFlowLeftContent|servicequerybusiness\/balancenew\/accountBalancenew\.htm|mobileService\/onLine\.htm) script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js, tag=联通余量Cookie
+http-request ^https?:\/\/m\.client\.10010\.com\/(servicequerybusiness\/operationservice\/queryOcsPackageFlowLeftContent|servicequerybusiness\/balancenew\/accountBalancenew\.htm|mobileService\/onLine\.htm) script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js, requires-body=true, timeout=10, tag=联通余量Cookie
 cron "*/5 * * * *" script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js
 
 # QuanX(未测试 不清楚如何判断当前网络是否为 WiFi)
-^https?:\/\/m\.client\.10010\.com\/(servicequerybusiness\/operationservice\/queryOcsPackageFlowLeftContent|servicequerybusiness\/balancenew\/accountBalancenew\.htm|mobileService\/onLine\.htm) url script-request-header https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js
+^https?:\/\/m\.client\.10010\.com\/(servicequerybusiness\/operationservice\/queryOcsPackageFlowLeftContent|servicequerybusiness\/balancenew\/accountBalancenew\.htm|mobileService\/onLine\.htm) url script-request-body https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.jshttps://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js
 */5 * * * * https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js, tag=联通余量查询
 ```
 
