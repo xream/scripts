@@ -51,7 +51,7 @@ http-request ^https?:\/\/m\.client\.10010\.com\/(servicequerybusiness\/operation
 cron "*/5 * * * *" script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js
 
 # QuanX(未测试 不清楚如何判断当前网络是否为 WiFi)
-^https?:\/\/m\.client\.10010\.com\/(servicequerybusiness\/operationservice\/queryOcsPackageFlowLeftContent|servicequerybusiness\/balancenew\/accountBalancenew\.htm|mobileService\/onLine\.htm) url script-request-body https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.jshttps://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js
+^https?:\/\/m\.client\.10010\.com\/(servicequerybusiness\/operationservice\/queryOcsPackageFlowLeftContent|servicequerybusiness\/balancenew\/accountBalancenew\.htm|mobileService\/onLine\.htm) url script-request-body https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js
 */5 * * * * https://raw.githubusercontent.com/xream/scripts/main/surge/modules/10010/10010_query.js, tag=联通余量查询
 ```
 
