@@ -1,0 +1,39 @@
+name: GitHub 增强
+desc: |-
+  1. 允许使用私库 2. 支持禁用缓存(默认已禁用缓存)
+  📢 为避免冲突 使用方式已修改 具体说明看本覆写的注释
+
+# ❤️ 感谢 Peng-YM 佬的 https://raw.githubusercontent.com/Peng-YM/QuanX/master/Rewrites/GithubPrivate/github-private-repo.js
+
+# 🔧 设置方法
+# 使用 BoxJs 订阅: https://raw.githubusercontent.com/xream/scripts/main/boxjs/boxjs.json
+# 在 http://boxjs.net/#/app/xream.enhanced_github 中设置
+
+# 📃 使用方法
+# 在链接的末尾添加 enhanced-github
+# 如 https://raw.githubusercontent.com/1/2/master/3.txt
+# 应为 https://raw.githubusercontent.com/1/2/master/3.txtenhanced-github
+
+http:
+  force-http-engine:
+    - "raw.githubusercontent.com"
+    - "gist.githubusercontent.com"
+  mitm:
+    - "raw.githubusercontent.com"
+    - "gist.githubusercontent.com"
+
+  script:
+    - match: ^https?:\/\/(raw|gist)\.githubusercontent\.com/.*?enhanced-github$
+      name: "GitHub 增强"
+      type: request
+      require-body: false
+      timeout: 30
+      # max-size: 5242880 # 5M
+      # argument: ""
+      # debug: true
+
+script-providers:
+  "GitHub 增强":
+    url: "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/enhanced-github/enhanced-github.js"
+    # interval: 1
+    interval: 86400

@@ -1,0 +1,39 @@
+name: Gist 备份
+desc: https://github.com/xream/scripts/tree/main/surge/modules/gist
+
+http:
+  force-http-engine:
+    - "gist.json:80"
+    - "gist.json:443"
+  mitm:
+    - 10010.json
+  script:
+    - match: ^https?:\/\/gist\.json\/backup
+      name: "gist.backup"
+      type: request
+      require-body: true
+      timeout: 120
+      # debug: true
+    - match: ^https?:\/\/gist\.json\/restore
+      name: "gist.restore"
+      type: request
+      require-body: true
+      timeout: 120
+      # debug: true
+    - match: ^https?:\/\/gist\.json\/delete
+      name: "gist.delete"
+      type: request
+      require-body: true
+      timeout: 120
+      # debug: true
+
+script-providers:
+  "gist.restore":
+    url: https://raw.githubusercontent.com/xream/scripts/main/surge/modules/gist/restore.js
+    interval: 86400
+  "gist.backup":
+    url: https://raw.githubusercontent.com/xream/scripts/main/surge/modules/gist/backup.js
+    interval: 86400
+  "gist.delete":
+    url: https://raw.githubusercontent.com/xream/scripts/main/surge/modules/gist/delete.js
+    interval: 86400

@@ -1,0 +1,21 @@
+name: 记录有多余的 DNS 解析的请求
+desc: >-
+  不需要用这个了用 大佬的 https://raw.githubusercontent.com/RS0485/network-rules/main/rewrite/StashInsight.stoverride
+  默认1分钟取一次 请勿长时间开启 日志会超多
+  原脚本来自 RS0485/network-rules
+
+external-controller: "127.0.0.1:9090"
+secret:
+
+cron:
+  script:
+    - name: "记录有多余的 DNS 解析的请求"
+      # cron: "*/5 * * * *" # at every 5th minute
+      cron: "* * * * *" # at every minute
+      timeout: 60
+
+script-providers:
+  "记录有多余的 DNS 解析的请求":
+    url: "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/redundant-dns-log/index.js"
+    interval: 86400
+    # interval: 1

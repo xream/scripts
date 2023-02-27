@@ -1,0 +1,11 @@
+#!name=网络变化时打断请求
+#!desc=谨慎启用 目前逻辑: WiFi 断开时 打断请求
+
+[Script]
+网络变化时打断连接 = type=event,event-name=network-changed,timeout=30,script-update-interval=3600,debug=false,enable=true,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/kill-active-requests/index.js
+
+# Panel
+面板手动打断连接 = type=generic,timeout=30,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/kill-active-requests/index.js,argument=icon=xmark.circle&icon-color=#C5424A
+
+[Panel]
+面板手动打断连接 = script-name=面板手动打断连接,update-interval=-1

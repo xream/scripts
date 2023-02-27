@@ -1,0 +1,17 @@
+name: 策略检测 Tile 面板
+desc: 包含国内受限, 国内和国外. 自己设置对应域名的分流
+
+tiles:
+  - name: "策略检测"
+    interval: 300
+    title: "策略检测"
+    content: "..."
+    # argument: "icon=antenna.radiowaves.left.and.right.circle.fill&backgroundColor=#1CBB5E"
+    icon: "globe.asia.australia.fill"
+    backgroundColor: "#1CBB5E"
+    # debug: true
+
+script-providers:
+  "策略检测":
+    url: "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/policy-chain/index.js"
+    interval: 86400

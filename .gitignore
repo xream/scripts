@@ -1,0 +1,173 @@
+############################
+# OS X
+############################
+
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+.Spotlight-V100
+.Trashes
+._*
+
+
+############################
+# Linux
+############################
+
+*~
+
+
+############################
+# Windows
+############################
+
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+
+
+############################
+# Packages
+############################
+
+# *.7z
+# *.csv
+# *.dat
+# *.dmg
+# *.gz
+# *.iso
+# *.jar
+# *.rar
+# *.tar
+# *.zip
+# *.com
+# *.class
+# *.dll
+# *.exe
+# *.o
+# *.seed
+# *.so
+# *.swo
+# *.swp
+# *.swn
+# *.swm
+# *.out
+# *.pid
+
+
+############################
+# Logs and databases
+############################
+
+.tmp
+*.log
+*.sql
+*.sqlite
+*.sqlite3
+
+
+############################
+# Misc.
+############################
+
+*#
+ssl
+.idea
+nbproject
+public/uploads/*
+!public/uploads/.gitkeep
+
+############################
+# Node.js
+############################
+
+lib-cov
+lcov.info
+pids
+logs
+results
+node_modules
+.node_history
+
+
+############################
+# Tests
+############################
+testApp
+coverage
+report
+mochawesome-report
+
+############################
+# cache
+############################
+.stylelintcache
+.eslintcache
+
+############################
+# output
+############################
+
+.output
+dist
+out
+tmp.js
+tmp
+logs
+# frontEnd/.next
+
+############################
+# local config
+############################
+
+**/config/local-*.js
+
+############################
+# yarn https://yarnpkg.com/advanced/qa#which-files-should-be-gitignored
+############################
+# If you're using Zero-Installs:
+
+# .yarn/*
+# !.yarn/cache
+# !.yarn/releases
+# !.yarn/plugins
+
+# If you're not using Zero-Installs:
+
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+.pnp.*
+
+packages/api/build
+packages/api/payloadConfig.json
+.pnpm-store
+
+
+
+/*.json
+!package.json
+/*.yaml
+test.js
+
+ql.js
+sendNotify.js
+
+*-local.json
+*-local.js
+*-local.stoverride
+
+box.dat
+*box.dat
+tempCodeRunnerFile.js
+
+.env
+
+10010*.txt
+*cookie.txt

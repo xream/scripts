@@ -1,0 +1,395 @@
+{
+  "id": "xream.app.sub",
+  "name": "@xream 的应用订阅",
+  "author": "@xream",
+  "icon": "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/gist/asset/avatar.png",
+  "repo": "https://github.com/xream/scripts/tree/main",
+  "apps": [
+    {
+      "id": "xream.enhanced_github",
+      "name": "GitHub 增强",
+      "descs_html": [
+        "原脚本由 <a href='https://github.com/Peng-YM/QuanX' target='_blank'>@Peng-YM</a> 提供, 感谢!",
+        "<br />",
+        "<b>Token</b> 获取方式:",
+        "<span style='margin-left: 40px'>头像菜单 -></span>",
+        "<span style='margin-left: 40px'>Settings -></span>",
+        "<span style='margin-left: 40px'>Developer settings -></span>",
+        "<span style='margin-left: 40px'>Personal access tokens -></span>",
+        "<span style='margin-left: 40px'>Generate new token -></span>",
+        "<span style='margin-left: 40px'>在里面找到 repo 勾选提交</span>",
+        "<a href=\"https://github.com/settings/tokens\">GitHub Personal access tokens 页面</a>",
+        "<a onClick=\"window.location.reload(true);\">刷新</a>"
+      ],
+      "keys": [
+        "@xream.enhanced-github.username",
+        "@xream.enhanced-github.token",
+        "@xream.enhanced-github.cache",
+        "@xream.enhanced-github.log_disabled"
+      ],
+      "author": "@xream",
+      "repo": "https://github.com/xream/scripts/tree/main/surge/modules/enhanced-github",
+      "settings": [
+        {
+          "id": "@xream.enhanced-github.username",
+          "name": "用户名",
+          "val": "",
+          "type": "text",
+          "desc": "你的个人页面是 https://github.com/xream 那么 xream 就是你的用户名"
+        },
+        {
+          "id": "@xream.enhanced-github.token",
+          "name": "Personal access token",
+          "placeholder": "",
+          "val": "",
+          "type": "text",
+          "desc": "获取方式见👆🏻"
+        },
+        {
+          "id": "@xream.enhanced-github.cache",
+          "name": "允许缓存",
+          "val": false,
+          "type": "boolean",
+          "desc": "默认关闭, 表示禁用缓存. 开启后, 将恢复正常缓存逻辑"
+        },
+        {
+          "id": "@xream.enhanced-github.log_disabled",
+          "name": "禁用日志",
+          "val": false,
+          "type": "boolean",
+          "desc": "默认关闭, 表示不禁用日志. 开启后, 将禁用日志"
+        }
+      ],
+      "icons": [
+        "https://raw.githubusercontent.com/58xinian/icon/master/Github_mini.png",
+        "https://raw.githubusercontent.com/58xinian/icon/master/Github.png"
+      ]
+    },
+    {
+      "id": "xream.sub_store_mega",
+      "name": "Sub-Store Mega(请使用 Lite)",
+      "descs_html": [
+        "<a href=\"https://github.com/xream/scripts/tree/main/surge/modules/sub-store-scripts/mega\">查看文档</a>",
+        "Sub-Store 脚本使用方法: 打开 Sub-Store => 订阅 => 编辑 => 节点操作+ => 脚本操作 => 链接 => 粘贴<a href=\"https://raw.githubusercontent.com/xream/scripts/main/surge/modules/sub-store-scripts/mega/index.js\">脚本链接</a> => 保存",
+        "<a onClick=\"window.location.reload(true);\">刷新</a>"
+      ],
+      "keys": [
+        "@xream.sub_store_mega.disabled",
+        "@xream.sub_store_mega.concurrency",
+        "@xream.sub_store_mega.title",
+        "@xream.sub_store_mega.prefix",
+        "@xream.sub_store_mega.suffix",
+        "@xream.sub_store_mega.method",
+        "@xream.sub_store_mega.host",
+        "@xream.sub_store_mega.hostPrefix",
+        "@xream.sub_store_mega.hostSuffix",
+        "@xream.sub_store_mega.path",
+        "@xream.sub_store_mega.pathPrefix",
+        "@xream.sub_store_mega.pathSuffix",
+        "@xream.sub_store_mega.network",
+        "@xream.sub_store_mega.defaultNetworkPath",
+        "@xream.sub_store_mega.networkPrefix",
+        "@xream.sub_store_mega.networkSuffix",
+        "@xream.sub_store_mega.port",
+        "@xream.sub_store_mega.sort",
+        "@xream.sub_store_mega.resolve",
+        "@xream.sub_store_mega.resolver",
+        "@xream.sub_store_mega.ipPrefix",
+        "@xream.sub_store_mega.ipSuffix",
+        "@xream.sub_store_mega.sleep",
+        "@xream.sub_store_mega.expire",
+        "@xream.sub_store_mega.cacheMaxSize",
+        "@xream.sub_store_mega.notifyOnSuccessDisabled",
+        "@xream.sub_store_mega.mock",
+        "@xream.sub_store_mega.clearCache"
+      ],
+      "author": "@xream",
+      "repo": "https://github.com/xream/scripts/tree/main/surge/modules/sub-store-scripts/mega",
+      "settings": [
+        {
+          "id": "@xream.sub_store_mega.disabled",
+          "name": "是否禁用",
+          "val": false,
+          "type": "boolean",
+          "desc": "禁用后将返回原始节点数据"
+        },
+        {
+          "id": "@xream.sub_store_mega.concurrency",
+          "name": "并发数",
+          "val": 15,
+          "type": "number",
+          "desc": "默认 15. 若因为并发过多导致失败, 可将此值设小"
+        },
+        {
+          "id": "@xream.sub_store_mega.title",
+          "name": "通知标题",
+          "val": "",
+          "type": "text",
+          "desc": "默认为 Sub-Store Mega"
+        },
+        {
+          "id": "@xream.sub_store_mega.prefix",
+          "name": "节点名前缀",
+          "val": "",
+          "type": "text",
+          "desc": "默认为空. 例 [免流骚机场]"
+        },
+        {
+          "id": "@xream.sub_store_mega.suffix",
+          "name": "节点名后缀",
+          "val": "",
+          "type": "text",
+          "desc": "默认为空. 例 [全国停机]"
+        },
+        {
+          "id": "@xream.sub_store_mega.host",
+          "name": "Host 混淆",
+          "val": "",
+          "type": "text",
+          "desc": "默认为空 不修改. 例 a.189.cn"
+        },
+        {
+          "id": "@xream.sub_store_mega.hostPrefix",
+          "name": "为修改了 Host 的节点名添加前缀",
+          "val": "",
+          "type": "text",
+          "desc": "默认为空"
+        },
+        {
+          "id": "@xream.sub_store_mega.hostSuffix",
+          "name": "为修改了 Host 的节点名添加后缀",
+          "val": "",
+          "type": "text",
+          "desc": "默认为空. 例 [微博混淆]"
+        },
+        {
+          "id": "@xream.sub_store_mega.path",
+          "name": "Path 路径",
+          "val": "",
+          "type": "text",
+          "desc": "默认为空 不修改. 例 /TS/recharge/tzUrl.html"
+        },
+        {
+          "id": "@xream.sub_store_mega.pathPrefix",
+          "name": "为修改了 Path 的节点名添加前缀",
+          "val": "",
+          "type": "text",
+          "desc": "默认为空"
+        },
+        {
+          "id": "@xream.sub_store_mega.pathSuffix",
+          "name": "为修改了 Path 的节点名添加后缀",
+          "val": "",
+          "type": "text",
+          "desc": "默认为空. 例 [广停路径]"
+        },
+        {
+          "id": "@xream.sub_store_mega.network",
+          "name": "Network 网络(所谓的 vmess tcp 加混淆应该为 http)",
+          "type": "text",
+          "desc": "⚠️ Sub-Store 对非 ws 支持不完整. 但你可以设置一个新 host 和 path ⚠️ 默认为空 不修改. 例 ws"
+        },
+        {
+          "id": "@xream.sub_store_mega.defaultNetworkPath",
+          "name": "设置 Network 网络时 默认的 Path 路径",
+          "val": "/",
+          "type": "text",
+          "desc": "原始数据无 path 时, 默认设置为 / "
+        },
+        {
+          "id": "@xream.sub_store_mega.networkPrefix",
+          "name": "为节点名添加 network 前缀",
+          "val": false,
+          "type": "boolean",
+          "desc": "默认为空"
+        },
+        {
+          "id": "@xream.sub_store_mega.networkSuffix",
+          "name": "为节点名添加 network 后缀",
+          "val": false,
+          "type": "boolean",
+          "desc": "默认为空. 例: [WS]"
+        },
+        {
+          "id": "@xream.sub_store_mega.method",
+          "name": "method",
+          "type": "text",
+          "desc": "例 GET 网络为 http 时, 可能需要设置此项"
+        },
+        {
+          "id": "@xream.sub_store_mega.port",
+          "name": "端口",
+          "val": "",
+          "type": "number",
+          "desc": "默认为空 不修改. 例 443"
+        },
+        {
+          "id": "@xream.sub_store_mega.sort",
+          "name": "排序",
+          "val": false,
+          "type": "boolean",
+          "desc": "默认禁用. ⚠️ 脚本内部有一个我自用的根据节点名排序的逻辑 随时可能更改"
+        },
+        {
+          "id": "@xream.sub_store_mega.resolve",
+          "name": "域名 转 IP",
+          "val": false,
+          "type": "boolean",
+          "desc": "默认禁用. 使用网络请求解析域名 ⚠️ Sub-Store 已内置此功能 本脚本将放弃维护此功能"
+        },
+        {
+          "id": "@xream.sub_store_mega.resolver",
+          "name": "域名 转 IP 服务",
+          "type": "selects",
+          "items": [
+            {
+              "key": "cloudflare",
+              "label": "Cloudflare"
+            },
+            {
+              "key": "google",
+              "label": "Google"
+            },
+            {
+              "key": "ip-api",
+              "label": "IP-API(有频次限制)"
+            }
+          ],
+          "val": "cloudflare",
+          "desc": "默认 Cloudflare"
+        },
+        {
+          "id": "@xream.sub_store_mega.ipPrefix",
+          "name": "为 IP 节点添加前缀",
+          "val": false,
+          "type": "boolean",
+          "desc": "默认禁用"
+        },
+        {
+          "id": "@xream.sub_store_mega.ipSuffix",
+          "name": "为 IP 节点添加后缀",
+          "val": false,
+          "type": "boolean",
+          "desc": "默认禁用. 例 [1.1.1.1]"
+        },
+        {
+          "id": "@xream.sub_store_mega.sleep",
+          "name": "域名解析等待时间(单位 秒)",
+          "val": 0,
+          "type": "number",
+          "desc": "因为网络请求的接口一般有频次限制 默认每次查询间隔 0 秒"
+        },
+        {
+          "id": "@xream.sub_store_mega.expire",
+          "name": "域名解析结果缓存时间(单位 秒)",
+          "val": 1800,
+          "type": "number",
+          "desc": "默认 1800 秒(30 分钟). 若 <= 0 则不缓存"
+        },
+        {
+          "id": "@xream.sub_store_mega.cacheMaxSize",
+          "name": "域名解析结果缓存最大数",
+          "val": 100,
+          "type": "number",
+          "desc": "默认 100"
+        },
+        {
+          "id": "@xream.sub_store_mega.notifyOnSuccessDisabled",
+          "name": "禁用成功后的通知",
+          "val": false,
+          "type": "boolean",
+          "desc": "默认会在成功后发送通知"
+        },
+        {
+          "id": "@xream.sub_store_mega.clearCache",
+          "name": "下次清除缓存",
+          "val": false,
+          "type": "boolean",
+          "desc": "默认禁用. 启用后下次将清除缓存, 然后自动禁用"
+        }
+      ],
+      "icons": [
+        "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/sub-store-scripts/mega/assets/icon.png",
+        "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/sub-store-scripts/mega/assets/icon.png"
+      ]
+    },
+    {
+      "id": "xream.gist",
+      "name": "Gist 备份",
+      "descs_html": [
+        "原脚本由 <a href='https://github.com/dompling' target='_blank'>@dompling</a> 提供, 感谢!",
+        "本脚本涉及大量对 BoxJs 以及原脚本的复制粘贴 侵删",
+        "<br />",
+        "<b>Token</b> 获取方式:",
+        "<span style='margin-left: 40px'>头像菜单 -></span>",
+        "<span style='margin-left: 40px'>Settings -></span>",
+        "<span style='margin-left: 40px'>Developer settings -></span>",
+        "<span style='margin-left: 40px'>Personal access tokens -></span>",
+        "<span style='margin-left: 40px'>Generate new token -></span>",
+        "<span style='margin-left: 40px'>在里面找到 gist 勾选提交</span>",
+        "<a href=\"https://github.com/xream/scripts/tree/main/surge/modules/gist\">查看文档</a>",
+        "<a href=\"https://github.com/settings/tokens\">GitHub Personal access tokens 页面</a>",
+        "<a onClick=\"window.location.reload(true);\">刷新</a>"
+      ],
+      "keys": [
+        "@xream.gist.username",
+        "@xream.gist.token",
+        "@xream.gist.desc",
+        "@xream.gist.saveKey"
+      ],
+      "author": "@xream",
+      "repo": "https://github.com/xream/scripts/tree/main/surge/modules/gist",
+      "scripts": [
+        {
+          "name": "备份",
+          "script": "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/gist/backup.js"
+        },
+        {
+          "name": "恢复(谨慎操作)",
+          "script": "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/gist/restore.js"
+        },
+        {
+          "name": "删除(谨慎操作)",
+          "script": "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/gist/delete.js"
+        }
+      ],
+      "settings": [
+        {
+          "id": "@xream.gist.username",
+          "name": "用户名",
+          "val": "",
+          "type": "text",
+          "desc": "你的个人页面是 https://github.com/xream 那么 xream 就是你的用户名"
+        },
+        {
+          "id": "@xream.gist.token",
+          "name": "Personal access token",
+          "placeholder": "",
+          "val": "",
+          "type": "text",
+          "desc": "获取方式见👆🏻"
+        },
+        {
+          "id": "@xream.gist.desc",
+          "name": "Gist 描述",
+          "placeholder": "",
+          "val": "Auto Generated BoxJs Global Backup",
+          "type": "text",
+          "desc": "默认为 Auto Generated BoxJs Global Backup"
+        },
+        {
+          "id": "@xream.gist.saveKey",
+          "name": "Gist 文件名",
+          "placeholder": "",
+          "val": "backup.json",
+          "type": "text",
+          "desc": "默认为 backup.json"
+        }
+      ],
+      "icons": [
+        "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/gist/asset/icon.png",
+        "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/gist/asset/icon.png"
+      ]
+    }
+  ]
+}
