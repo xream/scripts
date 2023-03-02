@@ -1,0 +1,25 @@
+name: demo
+desc: 打开 http://httpbin.org/headers 能看到 headers.User-Agent 和 modifiedBy 两个变化
+
+http:
+  mitm:
+    - httpbin.org
+  script:
+    - match: ^https?:\/\/httpbin\.org
+      name: "demo"
+      type: request
+      require-body: true
+      timeout: 60
+      # debug: true
+    - match: ^https?:\/\/httpbin\.org
+      name: "demo"
+      type: response
+      require-body: true
+      timeout: 60
+      # debug: true
+
+script-providers:
+  "demo":
+    url: "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/demo/index.js"
+    # url: "http://127.0.0.1:5500/surge/modules/demo/index.js"
+    interval: 86400
