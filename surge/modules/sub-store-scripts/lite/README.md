@@ -88,9 +88,15 @@
 async function operator(proxies = []) {
     const _ = lodash
     return proxies.map((p = {}) => {
-        _.set(p, 'name', `${_.get(p, 'name')}-西瓜`) // 名称添加后缀
+        const name = _.get(p, 'name') || '' // 演示一下 可以用 lodash
+
+        _.set(p, 'name', name + '-后缀') // 名称 添加后缀 怕小白复制出问题 不使用反引号了
         _.set(p, 'port', 80)  // 改端口
         _.set(p, 'ws-opts.headers.Host', 'v9-dy.ixigua.com') // 改混淆
+
+        _.set(p, 'xudp', true) // 开 xudp
+        // _.set(p, 'udp', true) // 开 udp 可以界面上改
+        // _.set(p, 'tfo', true) // 开 tfo 可以界面上改
         return p
     })
 }
@@ -102,33 +108,51 @@ async function operator(proxies = []) {
 async function operator(proxies = []) {
     const _ = lodash
     return proxies.map((p = {}) => {
-        _.set(p, 'name', `${_.get(p, 'name')}-西瓜`) // 名称添加后缀
+      if(_.get(p, 'type') === 'trojan') {
+        const name = _.get(p, 'name') || '' // 演示一下 可以用 lodash
+
+        _.set(p, 'name', name + '-后缀') // 名称 添加后缀 怕小白复制出问题 不使用反引号了
         _.set(p, 'skip-cert-verify', true)  // 改跳过证书验证
         _.set(p, 'sni', 'v9-dy.ixigua.com') // 改混淆
-        return p
+
+        // _.set(p, 'udp', true) // 开 udp 可以界面上改
+        // _.set(p, 'tfo', true) // 开 tfo 可以界面上改
+      }
+      return p
     })
 }
 ```
 
 ### SS 脚本最简示例
 
+> 注意: 如果服务端没开 客户端开了没用
+
 ```JavaScript
 async function operator(proxies = []) {
     const _ = lodash
     return proxies.map((p = {}) => {
-        _.set(p, 'name', `${_.get(p, 'name')}-西瓜`) // 名称添加后缀
+      if(_.get(p, 'type') === 'ss') {
+        const name = _.get(p, 'name') || '' // 演示一下 可以用 lodash
+
+        _.set(p, 'name', name + '-后缀') // 名称 添加后缀 怕小白复制出问题 不使用反引号了
         _.set(p, 'plugin', 'obfs')  // 改混淆插件
         _.set(p, 'plugin-opts', { "mode": "http", "host": "v9-dy.ixigua.com" })  // 改混淆
 
         // _.set(p, 'plugin-opts.mode', 'http')  // 改混淆插件
         // _.set(p, 'plugin-opts.host', 'v9-dy.ixigua.com')  // 改混淆
 
-        return p
+        // _.set(p, 'udp', true) // 开 udp 可以界面上改
+        // _.set(p, 'tfo', true) // 开 tfo 可以界面上改
+      }
+      return p
     })
 }
 ```
 
-> 以下为完整脚本的举例 不一定会按最新代码更新
+> 以下为完整脚本的举例
+> 不一定会按最新代码更新 以实际脚本为准
+> 不一定会按最新代码更新 以实际脚本为准
+> 不一定会按最新代码更新 以实际脚本为准
 
 ```JavaScript
 async function operator(proxies = []) {
