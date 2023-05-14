@@ -150,6 +150,20 @@ async function operator(proxies = []) {
 }
 ```
 
+### 当你的来源是 QX 时, 把别的客户端不支持的 `chacha20-ietf-poly1305` 换成 `auto`
+
+```JavaScript
+async function operator(proxies = []) {
+    const _ = lodash
+    return proxies.map((p = {}) => {
+        if (_.get(p, 'cipher') === 'chacha20-ietf-poly1305') {
+            _.set(p, 'cipher', 'auto');
+        }
+        return p
+    })
+}
+```
+
 > 以下为完整脚本的举例
 > 不一定会按最新代码更新 以实际脚本为准
 > 不一定会按最新代码更新 以实际脚本为准
