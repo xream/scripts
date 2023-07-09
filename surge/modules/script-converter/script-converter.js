@@ -14,6 +14,8 @@ if (typeof $argument != 'undefined') {
 let result = {}
 let body = `
 // 转换时间: ${new Date().toLocaleString('zh')}
+var setInterval = () => {}
+var clearInterval = () => {}
 var $task = {
   fetch: url => {
     return new Promise((resolve, reject) => {
