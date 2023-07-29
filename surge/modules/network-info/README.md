@@ -6,6 +6,12 @@
 
 使用了 [chavyleung 大佬的 Env.js](https://github.com/chavyleung/scripts/blob/master/Env.js)
 
+包含国内和国外
+
+1. 在支持面板的 app 上将展示面板
+
+2. 在支持 `network-changed` 的 app 上将在网络环境发生变化 IP 变化时, 发送通知
+
 <table>
   <tr>
     <td valign="top"><img src="screenshots/1.jpg"></td>
