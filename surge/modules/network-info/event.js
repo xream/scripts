@@ -6,8 +6,23 @@ if (typeof $argument != 'undefined') {
 }
 
 !(async () => {
-  await $.wait(2000)
-  $.log($.toStr($network))
+  let primaryAddress
+  let ssid
+  if (typeof $network !== 'undefined') {
+    await $.wait(2000)
+    $.log($network)
+    primaryAddress = $.lodash_get($network, 'v4.primaryAddress')
+    ssid = $.lodash_get($network, 'wifi.ssid')
+  } else if (typeof $config !== 'undefined') {
+    await $.wait(3000)
+    try {
+      let conf = $config.getConfig()
+      $.log(conf)
+      conf = JSON.parse(conf)
+      ssid = $.lodash_get(conf, 'ssid')
+    } catch (e) {}
+  }
+
   // const $network = {
   //   finished: false,
   //   supportsIPv4: false,
@@ -27,11 +42,7 @@ if (typeof $argument != 'undefined') {
     PROXY_IP !== $.lodash_get(lastNetworkInfoEvent, 'PROXY_IP')
   ) {
     $.setjson({ CN_IP, PROXY_IP }, 'lastNetworkInfoEvent')
-    await notify(
-      `${CN_IP} | ${PROXY_IP}`,
-      `${CN_ADDR}`,
-      `${PROXY_ADDR}\n${$.lodash_get($network, 'v4.primaryAddress') || ''} ${$.lodash_get($network, 'wifi.ssid') || ''}`
-    )
+    await notify(`${CN_IP} | ${PROXY_IP}`, `${CN_ADDR}`, `${PROXY_ADDR}\n${ssid || ''} ${primaryAddress || ''}`)
   } else {
     $.log('IP 相同 不发送通知')
   }
