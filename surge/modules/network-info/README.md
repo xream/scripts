@@ -23,6 +23,10 @@
 
 [https://raw.githubusercontent.com/xream/scripts/main/surge/modules/network-info/network-info.rewrite.stash.stoverride](https://raw.githubusercontent.com/xream/scripts/main/surge/modules/network-info/network-info.rewrite.stash.stoverride)
 
+## Loon 使用插件
+
+[https://raw.githubusercontent.com/xream/scripts/main/surge/modules/network-info/network-info.plugin](https://raw.githubusercontent.com/xream/scripts/main/surge/modules/network-info/network-info.plugin)
+
 ```
 
 ```
