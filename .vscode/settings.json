@@ -8,4 +8,5 @@
     "source.fixAll.stylelint": false,
     "source.fixAll.eslint": false
   },
+  "liveServer.settings.port": 5501,
 }
