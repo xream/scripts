@@ -27,8 +27,10 @@ let result = {}
     let PROMPT = $.getval('BIE_PROMPT') ?? ''
     let TEMPERATURE = $.getval('BIE_TEMPERATURE') ?? 0.5
     let MAX_TOKENS = $.getval('BIE_MAX_TOKENS') ?? 10
+    let TIMEOUT = $.getval('BIE_TIMEOUT') ?? 5000
 
     const opts = {
+      timeout: TIMEOUT,
       url: API,
       headers: {
         'Content-Type': 'application/json',
