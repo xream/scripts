@@ -1,0 +1,21 @@
+#!name=百度输入法魔改
+#!desc=搜索第一项插入 ChatGPT, 链接 改为 Google
+#!author=@xream
+#!homepage=https://t.me/zhetengsha_group
+#!openurl=https://t.me/zhetengsha_group
+#!icon=https://raw.githubusercontent.com/limbopro/Zure/master/AI%20Platforms.png
+#!input=BIE_API
+#!input=BIE_KEY
+#!input=BIE_MODEL
+#!input=BIE_MAX_TOKENS
+#!input=BIE_TEMPERATURE
+
+[General]
+force-http-engine-hosts = mime.baidu.com
+
+[MITM]
+hostname = mime.baidu.com
+
+[Script]
+http-response https?:\/\/mime\.baidu\.com\/v5\/search\/data script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/baidu_input_enhanced/baidu_input_enhanced.js, timeout=120, requires-body=true, tag=百度输入法魔改, enable=true
+
