@@ -26,8 +26,8 @@ let result = {}
     let MODEL = $.getval('BIE_MODEL') ?? 'gpt-3.5-turbo'
     let PROMPT = $.getval('BIE_PROMPT') ?? ''
     let TEMPERATURE = $.getval('BIE_TEMPERATURE') ?? 0.5
-    let MAX_TOKENS = $.getval('BIE_MAX_TOKENS') ?? 10
-    let TIMEOUT = $.getval('BIE_TIMEOUT') ?? 5000
+    let MAX_TOKENS = parseInt($.getval('BIE_MAX_TOKENS') ?? 50)
+    let TIMEOUT = $.getval('BIE_TIMEOUT') ?? 30 * 1000
 
     const opts = {
       timeout: TIMEOUT,
