@@ -5,7 +5,7 @@ if (typeof $argument != 'undefined') {
   arg = Object.fromEntries($argument.split('&').map(item => item.split('=')))
 }
 
-const compareThreeParts = $.getdata('网络信息通知设置') === 'IP 前三位相同时不通知'
+const compareThreeParts = $.getdata('网络信息通知设置') === 'IP 前三段相同时不通知'
 
 function compareIPAddresses(ip1, ip2) {
   if (compareThreeParts) {
