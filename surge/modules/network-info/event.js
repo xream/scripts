@@ -7,7 +7,7 @@ if (typeof $argument != 'undefined') {
 
 const compareThreeParts = $.getdata('网络信息通知设置') === 'IP 前三段相同时不通知'
 
-function compareIPAddresses(ip1, ip2) {
+function compareIPAddresses(ip1 = '', ip2 = '') {
   if (compareThreeParts) {
     const parts1 = ip1.split('.')
     const parts2 = ip2.split('.')
