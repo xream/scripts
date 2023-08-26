@@ -19,9 +19,11 @@ function operator(proxies = []) {
     
     let network = _.get(p, 'network')
     const type = _.get(p, 'type')
+    const isReality = _.get(p, 'reality-opts')
+
     /* 只修改 vmess 和 vless */
     if (_.includes(['vmess', 'vless'], type)) {
-      if (!network) {
+      if (!network && !isReality) {
         network = defaultNetwork
         _.set(p, 'network', defaultNetwork)
       }
@@ -42,24 +44,27 @@ function operator(proxies = []) {
           _.set(p, 'sni', host)
         }
 
-        if (network === 'ws') {
-          _.set(p, 'ws-opts.headers.Host', host)
-        } else if (network === 'h2') {
-          _.set(p, 'h2-opts.host', array ? [host] : host)
-        } else if (network === 'http') {
-          _.set(p, 'http-opts.headers.Host', array ? [host] : host)
-        } else {
-          // 其他? 谁知道是数组还是字符串...先按数组吧
-          _.set(p, `${network}-opts.headers.Host`, array ? [host] : host)
+        if (!isReality) {
+          if (network === 'ws') {
+            _.set(p, 'ws-opts.headers.Host', host)
+          } else if (network === 'h2') {
+            _.set(p, 'h2-opts.host', array ? [host] : host)
+          } else if (network === 'http') {
+            _.set(p, 'http-opts.headers.Host', array ? [host] : host)
+          } else {
+            // 其他? 谁知道是数组还是字符串...先按字符串吧
+            _.set(p, `${network}-opts.headers.Host`, host)
+          }
+        }
+        if (network === 'http') {
+          if (!_.get(p, 'http-opts.method') && !method) {
+            method = defaultMethod
+          }
+          _.set(p, 'http-opts.method', method)
         }
       }
 
-      if (network === 'http') {
-        if (!_.get(p, 'http-opts.method') && !method) {
-          method = defaultMethod
-        }
-        _.set(p, 'http-opts.method', method)
-      }
+    
       if (port) {
         _.set(p, 'port', port)
         if (portPrefix) {
@@ -69,34 +74,36 @@ function operator(proxies = []) {
           _.set(p, 'name', `${p.name}${portSuffix}`)
         }
       }
-      if (network === 'http') {
-        let currentPath = _.get(p, 'http-opts.path')
-        if (_.isArray(currentPath)) {
-          currentPath = _.find(currentPath, i => _.startsWith(i, '/'))
-        } else {
-          path = currentPath
+      if (!isReality) {
+        if (network === 'http') {
+          let currentPath = _.get(p, 'http-opts.path')
+          if (_.isArray(currentPath)) {
+            currentPath = _.find(currentPath, i => _.startsWith(i, '/'))
+          } else {
+            path = currentPath
+          }
+          if (!_.startsWith(currentPath, '/') && !path) {
+            path = defaultPath
+          }
         }
-        if (!_.startsWith(currentPath, '/') && !path) {
-          path = defaultPath
-        }
-      }
-      if (path) {
-        if (pathPrefix) {
-          _.set(p, 'name', `${pathPrefix}${p.name}`)
-        }
-        if (pathSuffix) {
-          _.set(p, 'name', `${p.name}${pathSuffix}`)
-        }
-        if (network === 'ws') {
-          _.set(p, 'ws-opts.path', path)
-        } else if (network === 'h2') {
-          _.set(p, 'h2-opts.path', path)
-        } else if (network === 'http') {
-          _.set(p, 'http-opts.path', array ? [path] : path)
-        } else {
-          // 其他? 谁知道是数组还是字符串...先按字符串吧
-          _.set(p, `${network}-opts.path`, path)
-        }
+        if (path) {
+          if (pathPrefix) {
+            _.set(p, 'name', `${pathPrefix}${p.name}`)
+          }
+          if (pathSuffix) {
+            _.set(p, 'name', `${p.name}${pathSuffix}`)
+          }
+          if (network === 'ws') {
+            _.set(p, 'ws-opts.path', path)
+          } else if (network === 'h2') {
+            _.set(p, 'h2-opts.path', path)
+          } else if (network === 'http') {
+            _.set(p, 'http-opts.path', array ? [path] : path)
+          } else {
+            // 其他? 谁知道是数组还是字符串...先按字符串吧
+            _.set(p, `${network}-opts.path`, path)
+          }
+        } 
       }
     }
     return p
