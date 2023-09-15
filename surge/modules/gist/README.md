@@ -36,17 +36,7 @@ BoxJs v0.10.0 后 支持一键添加订阅 可点击尝试 [http://boxjs.com/#/s
 
 ## Stash
 
-Stash 目前不支持手动执行, 请在完成 BoxJs 配置后
-
 添加覆写 [https://raw.githubusercontent.com/xream/scripts/main/surge/modules/gist/gist.rewrite.stash.stoverride](https://raw.githubusercontent.com/xream/scripts/main/surge/modules/gist/gist.rewrite.stash.stoverride)
-
-在浏览器中 手动访问
-
-`http://gist.json/restore` 进行恢复
-
-`http://gist.json/backup` 进行备份
-
-`http://gist.json/delete` 进行删除
 
 ⚠️ 使用前, 请务必进行全局备份并复制粘贴到安全的地方
 
