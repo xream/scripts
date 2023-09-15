@@ -9,12 +9,10 @@
 - 支持修改 `host` 混淆, `path` 路径, `port` 端口, `method` 请求方式(网络为 `http` 时, 可能需要设置此项)
 
 - 兼容不同的 network(`vmess`, `vless` 的 `ws`, `h2`, `http` 和其他)
--
+
 - 兼容 `vless` `reality` 的 `servername`
 
 - 兼容 QuanX, Surge, Loon, Shadowrocket, Stash 等客户端和 Node.js 环境
-
-- Sub-Store 内部暂时并不支持 `http-opts` 里的 `host`, `path` 为数组. 本脚本增加了一个选择来控制数组的输出.
 
 ## Sub-Store 脚本使用方法
 
