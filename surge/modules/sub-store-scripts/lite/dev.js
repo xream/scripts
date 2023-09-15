@@ -1,91 +1,89 @@
 /**
  * @Sub-Store-Page
  * 混淆转换
+ *
  * - 支持修改 `host` 混淆, `path` 路径, `port` 端口, `method` 请求方式(网络为 `http` 时, 可能需要设置此项)
  * - 兼容不同的 network(`vmess`, `vless` 的 `ws`, `h2`, `http` 和其他)
  * - 兼容 `vless` `reality` 的 `servername`
  * - 兼容 QuanX, Surge, Loon, Shadowrocket, Stash 等客户端和 Node.js 环境
  */
 
-function operator(proxies = []) {
-  const SUB_STORE_SCHEMA = {
-    title: '混淆转换',
-    description: '支持修改 `host` 混淆, `path` 路径, `port` 端口, `method` 请求方式',
-    scope: ['Node', 'Surge', 'QX', 'Loon', 'Stash', 'ShadowRocket', 'Clash'],
-    author: '@xream',
-    update: '2023-09-15 17:12:00',
-    version: '1.0.0',
-    pageContent:
-      '- 支持修改 `host` 混淆, `path` 路径, `port` 端口, `method` 请求方式(网络为 `http` 时, 可能需要设置此项)\n- 兼容不同的 network(`vmess`, `vless` 的 `ws`, `h2`, `http` 和其他)\n- 兼容 `vless` `reality` 的 `servername`- 兼容 QuanX, Surge, Loon, Shadowrocket, Stash 等客户端和 Node.js 环境',
-    params: {
-      host: {
-        type: 'string',
-        description: '修改 Host 混淆',
-      },
-      hostPrefix: {
-        type: 'string',
-        description: '为修改了 Host 的节点名添加前缀',
-      },
-      hostSuffix: {
-        type: 'string',
-        description: '为修改了 Host 的节点名添加后缀',
-      },
-      path: {
-        type: 'string',
-        description: '修改 Path 路径',
-      },
-      pathPrefix: {
-        type: 'string',
-        description: '为修改了 Path 的节点名添加前缀',
-      },
-      pathSuffix: {
-        type: 'string',
-        description: '为修改了 Path 的节点名添加后缀',
-      },
-      port: {
-        type: 'number',
-        description: '修改 Port 端口',
-      },
-      portPrefix: {
-        type: 'string',
-        description: '为修改了 Port 的节点名添加前缀',
-      },
-      portSuffix: {
-        type: 'string',
-        description: '为修改了 Port 的节点名添加前缀',
-      },
-      method: {
-        type: 'string',
-        description: '修改 Method(例如 传输层为 HTTP 时)',
-      },
-      defaultMethod: {
-        type: 'string',
-        description: '默认的 `method`. 节点无 `method` 时, 将设置为此值',
-        default: 'GET',
-      },
-      defaultNetwork: {
-        type: 'string',
-        description: '默认的 `network`. 节点无 `network` 时, 将设置为此值',
-        default: 'http',
-      },
-      defaultPath: {
-        type: 'string',
-        description: '默认的 `path`. 节点无 `network` 时, 将设置为此值',
-        default: '/',
-      },
-      array: {
-        type: 'select',
-        description:
-          '是否把 `host`, `path` 设为数组(后端版本低于 2.14.15 且目标为 Clash/Stash/Shadowrocket 等 Clash 系格式时需要',
-        default: true,
-        options: [
-          { value: true, title: '是' },
-          { value: false, title: '否' },
-        ],
-      },
+const SUB_STORE_SCHEMA = {
+  title: '混淆转换',
+  description: '支持修改 `host` 混淆, `path` 路径, `port` 端口, `method` 请求方式',
+  scope: ['Node', 'Surge', 'QX', 'Loon', 'Stash', 'ShadowRocket', 'Clash'],
+  author: '@xream',
+  updateTime: '2023-09-15 17:12:00',
+  version: '1.0.0',
+  params: {
+    host: {
+      dataType: 'string',
+      description: '修改 Host 混淆',
     },
-  }
-
+    hostPrefix: {
+      dataType: 'string',
+      description: '为修改了 Host 的节点名添加前缀',
+    },
+    hostSuffix: {
+      dataType: 'string',
+      description: '为修改了 Host 的节点名添加后缀',
+    },
+    path: {
+      dataType: 'string',
+      description: '修改 Path 路径',
+    },
+    pathPrefix: {
+      dataType: 'string',
+      description: '为修改了 Path 的节点名添加前缀',
+    },
+    pathSuffix: {
+      dataType: 'string',
+      description: '为修改了 Path 的节点名添加后缀',
+    },
+    port: {
+      dataType: 'number',
+      description: '修改 Port 端口',
+    },
+    portPrefix: {
+      dataType: 'string',
+      description: '为修改了 Port 的节点名添加前缀',
+    },
+    portSuffix: {
+      dataType: 'string',
+      description: '为修改了 Port 的节点名添加前缀',
+    },
+    method: {
+      dataType: 'string',
+      description: '修改 Method(例如 传输层为 HTTP 时)',
+    },
+    defaultMethod: {
+      dataType: 'string',
+      description: '默认的 `method`. 节点无 `method` 时, 将设置为此值',
+      defaultValue: 'GET',
+    },
+    defaultNetwork: {
+      dataType: 'string',
+      description: '默认的 `network`. 节点无 `network` 时, 将设置为此值',
+      defaultValue: 'http',
+    },
+    defaultPath: {
+      dataType: 'string',
+      description: '默认的 `path`. 节点无 `network` 时, 将设置为此值',
+      defaultValue: '/',
+    },
+    array: {
+      dataType: 'select',
+      description:
+        '是否把 `host`, `path` 设为数组(后端版本低于 2.14.15 且目标为 Clash/Stash/Shadowrocket 等 Clash 系格式时需要',
+      defaultValue: true,
+      options: [
+        { value: true, label: '是' },
+        { value: false, label: '否' },
+      ],
+    },
+  },
+}
+function operator(proxies = []) {
   return proxies.map((p = {}) => {
     const _ = lodash
 
@@ -95,14 +93,14 @@ function operator(proxies = []) {
     const port = _.get($arguments, 'port')
     const portPrefix = _.get($arguments, 'portPrefix')
     const portSuffix = _.get($arguments, 'portSuffix')
-    const defaultPath = _.get($arguments, 'defaultPath') ?? SUB_STORE_SCHEMA.params.defaultPath
+    const defaultPath = _.get($arguments, 'defaultPath') ?? SUB_STORE_SCHEMA.params.defaultPath.defaultValue
     let path = _.get($arguments, 'path')
     const pathPrefix = _.get($arguments, 'pathPrefix')
     const pathSuffix = _.get($arguments, 'pathSuffix')
-    const defaultMethod = _.get($arguments, 'defaultMethod') || 'GET'
+    const defaultMethod = _.get($arguments, 'defaultMethod') ?? SUB_STORE_SCHEMA.params.defaultMethod.defaultValue
     let method = _.get($arguments, 'method')
     const array = _.get($arguments, 'array')
-    const defaultNetwork = _.get($arguments, 'defaultNetwork') || 'http'
+    const defaultNetwork = _.get($arguments, 'defaultNetwork') ?? SUB_STORE_SCHEMA.params.defaultNetwork.defaultValue
 
     let network = _.get(p, 'network')
     const type = _.get(p, 'type')
