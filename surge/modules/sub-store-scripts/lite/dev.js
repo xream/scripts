@@ -13,7 +13,7 @@ function operator(proxies = []) {
     description: '支持修改 `host` 混淆, `path` 路径, `port` 端口, `method` 请求方式',
     scope: ['Node', 'Surge', 'QX', 'Loon', 'Stash', 'ShadowRocket', 'Clash'],
     author: '@xream',
-    update: '2023-09-14 19:28:00',
+    update: '2023-09-15 17:12:00',
     version: '1.0.0',
     pageContent:
       '- 支持修改 `host` 混淆, `path` 路径, `port` 端口, `method` 请求方式(网络为 `http` 时, 可能需要设置此项)\n- 兼容不同的 network(`vmess`, `vless` 的 `ws`, `h2`, `http` 和其他)\n- 兼容 `vless` `reality` 的 `servername`- 兼容 QuanX, Surge, Loon, Shadowrocket, Stash 等客户端和 Node.js 环境',
