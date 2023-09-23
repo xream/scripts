@@ -13,65 +13,79 @@ const SUB_STORE_SCHEMA = {
   description: '支持修改 `host` 混淆, `path` 路径, `port` 端口, `method` 请求方式',
   scope: ['Node', 'Surge', 'QX', 'Loon', 'Stash', 'ShadowRocket', 'Clash'],
   author: '@xream',
-  updateTime: '2023-09-15 17:12:00',
-  version: '1.0.1',
+  updateTime: '2023-09-23 17:36:00',
+  version: '1.0.2',
   params: {
     host: {
+      name: '混淆',
       dataType: 'string',
       description: '修改 Host 混淆',
     },
     hostPrefix: {
+      name: '节点名混淆前缀',
       dataType: 'string',
       description: '为修改了 Host 的节点名添加前缀',
     },
     hostSuffix: {
+      name: '节点名混淆后缀',
       dataType: 'string',
       description: '为修改了 Host 的节点名添加后缀',
     },
     path: {
+      name: '路径',
       dataType: 'string',
       description: '修改 Path 路径',
     },
     pathPrefix: {
+      name: '节点名路径前缀',
       dataType: 'string',
       description: '为修改了 Path 的节点名添加前缀',
     },
     pathSuffix: {
+      name: '节点名路径后缀',
       dataType: 'string',
       description: '为修改了 Path 的节点名添加后缀',
     },
     port: {
+      name: '端口',
       dataType: 'number',
       description: '修改 Port 端口',
     },
     portPrefix: {
+      name: '节点名端口前缀',
       dataType: 'string',
       description: '为修改了 Port 的节点名添加前缀',
     },
     portSuffix: {
+      name: '节点名端口后缀',
       dataType: 'string',
-      description: '为修改了 Port 的节点名添加前缀',
+      description: '为修改了 Port 的节点名添加后缀',
     },
     method: {
+      name: '请求方式',
       dataType: 'string',
       description: '修改 Method(例如 传输层为 HTTP 时)',
     },
     defaultMethod: {
+      name: '默认请求方式',
       dataType: 'string',
       description: '默认的 `method`. 节点无 `method` 时, 将设置为此值',
       defaultValue: 'GET',
     },
     defaultNetwork: {
+      name: '默认传输方式',
       dataType: 'string',
       description: '默认的 `network`. 节点无 `network` 时, 将设置为此值',
       defaultValue: 'http',
     },
     defaultPath: {
+      name: '默认路径',
       dataType: 'string',
       description: '默认的 `path`. 节点无 `network` 时, 将设置为此值',
       defaultValue: '/',
     },
     array: {
+      name: '输出字段数组',
       dataType: 'boolean',
       description:
         '是否把 `host`, `path` 设为数组(后端版本低于 2.14.15 且目标为 Clash/Stash/Shadowrocket 等 Clash 系格式时需要',
