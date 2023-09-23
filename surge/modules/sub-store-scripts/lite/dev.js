@@ -14,7 +14,7 @@ const SUB_STORE_SCHEMA = {
   scope: ['Node', 'Surge', 'QX', 'Loon', 'Stash', 'ShadowRocket', 'Clash'],
   author: '@xream',
   updateTime: '2023-09-15 17:12:00',
-  version: '1.0.0',
+  version: '1.0.1',
   params: {
     host: {
       dataType: 'string',
@@ -72,15 +72,20 @@ const SUB_STORE_SCHEMA = {
       defaultValue: '/',
     },
     array: {
-      dataType: 'select',
+      dataType: 'boolean',
       description:
         '是否把 `host`, `path` 设为数组(后端版本低于 2.14.15 且目标为 Clash/Stash/Shadowrocket 等 Clash 系格式时需要',
-      defaultValue: true,
-      options: [
-        { value: true, label: '是' },
-        { value: false, label: '否' },
-      ],
     },
+    // array: {
+    //   dataType: 'select',
+    //   description:
+    //     '是否把 `host`, `path` 设为数组(后端版本低于 2.14.15 且目标为 Clash/Stash/Shadowrocket 等 Clash 系格式时需要',
+    //   defaultValue: true,
+    //   options: [
+    //     { value: true, label: '是' },
+    //     { value: false, label: '否' },
+    //   ],
+    // },
   },
 }
 function operator(proxies = []) {
