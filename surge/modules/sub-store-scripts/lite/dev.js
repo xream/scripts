@@ -20,6 +20,7 @@ const SUB_STORE_SCHEMA = {
       name: '混淆',
       dataType: 'string',
       description: '修改 Host 混淆',
+      placeholder: '如: tms.dingtalk.com',
     },
     hostPrefix: {
       name: '节点名混淆前缀',
@@ -50,6 +51,7 @@ const SUB_STORE_SCHEMA = {
       name: '端口',
       dataType: 'number',
       description: '修改 Port 端口',
+      placeholder: '如: 80',
     },
     portPrefix: {
       name: '节点名端口前缀',
