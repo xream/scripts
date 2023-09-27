@@ -4,7 +4,7 @@
 #!homepage=https://t.me/zhetengsha_group
 #!openurl=https://t.me/zhetengsha_group
 #!icon=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/apple-store-order-check/apple-store.png
-#!date=2023-09-27_17-12-17
+#!date=2023-09-27_17-47-06
 
 [General]
 force-http-engine-hosts = mobileapp.apple.com

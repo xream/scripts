@@ -162,6 +162,9 @@ sendNotify.js
 *-local.json
 *-local.js
 *-local.stoverride
+*-local.plugin
+*-local.stoverride
+*-local.sgmoudle
 
 box.dat
 *box.dat
