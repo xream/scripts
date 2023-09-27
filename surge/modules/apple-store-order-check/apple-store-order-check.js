@@ -54,6 +54,8 @@ let result = {}
     const firstGroupStatus = $.lodash_get(body, 'firstGroupStatus')
     const imageURL = $.lodash_get(body, 'sections.0.cells.0.imageURL')
     const pageUrl = $.lodash_get(body, 'sections.0.cells.0.pageUrl')
+    const lines = $.lodash_get(body, 'sections.0.cells.0.lines') || []
+    const text = lines.map(line => line.text).join(' ')
     $.log('ℹ️ 订单状态', firstGroupStatus)
     if (firstGroupStatus !== cache.status) {
       $.setjson(
@@ -64,10 +66,15 @@ let result = {}
         KEY_CACHE
       )
       $.log('💾 已缓存订单状态')
-      await notify(`Apple Store 订单查询`, `⚠️ 变化`, `${cache.firstGroupStatus || '🈚️'} -> ${firstGroupStatus}`, {
-        'open-url': pageUrl,
-        'media-url': imageURL,
-      })
+      await notify(
+        `⚠️ Apple Store 订单状态更新`,
+        `${text || ''}`,
+        `${cache.firstGroupStatus || '🈚️'} -> ${firstGroupStatus}`,
+        {
+          'open-url': pageUrl,
+          'media-url': imageURL,
+        }
+      )
     }
   }
   result = {}
