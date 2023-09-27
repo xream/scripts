@@ -1,0 +1,18 @@
+#!name=Apple Store 订单查询
+#!desc=打开 Apple Store App 订单详情抓包, 之后将定时查询
+#!author=@xream
+#!homepage=https://t.me/zhetengsha_group
+#!openurl=https://t.me/zhetengsha_group
+#!icon=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/apple-store-order-check/apple-store.png
+#!date=2023-09-27_17-12-17
+
+[General]
+force-http-engine-hosts = mobileapp.apple.com
+
+[MITM]
+hostname = mobileapp.apple.com
+
+[Script]
+http-request https?:\/\/mobileapp\.apple\.com\/orderstatus\/p\/.+?\/orderStatusItem script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/apple-store-order-check/apple-store-order-check.js, timeout=120, requires-body=true, tag=Apple Store 订单查询抓包, enable=true
+
+cron "*/5 * * * *" script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/apple-store-order-check/apple-store-order-check.js, timeout=120, tag=Apple Store 订单定时查询, enable=true
