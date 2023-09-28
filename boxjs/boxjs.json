@@ -345,7 +345,23 @@
           "script": "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/gist/backup.js"
         },
         {
+          "name": "备份(为防止悲剧发生)",
+          "script": "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/gist/backup.js"
+        },
+        {
+          "name": "备份(跟其他操作多隔开几行)",
+          "script": "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/gist/backup.js"
+        },
+        {
           "name": "恢复(谨慎操作)",
+          "script": "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/gist/restore.js"
+        },
+        {
+          "name": "恢复(为防止悲剧发生)",
+          "script": "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/gist/restore.js"
+        },
+        {
+          "name": "恢复(跟其他操作多隔开几行)",
           "script": "https://raw.githubusercontent.com/xream/scripts/main/surge/modules/gist/restore.js"
         },
         {
