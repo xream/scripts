@@ -56,14 +56,14 @@ function operator(proxies = []) {
             _.set(p, `${network}-opts.headers.Host`, host)
           }
         }
-        if (network === 'http') {
-          if (!_.get(p, 'http-opts.method') && !method) {
-            method = defaultMethod
-          }
-          _.set(p, 'http-opts.method', method)
-        }
       }
 
+      if (network === 'http') {
+        if (!_.get(p, 'http-opts.method') && !method) {
+          method = defaultMethod
+        }
+        _.set(p, 'http-opts.method', method)
+      }
     
       if (port) {
         _.set(p, 'port', port)
