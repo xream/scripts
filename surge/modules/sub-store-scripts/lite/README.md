@@ -48,6 +48,10 @@
 
 `https://ghproxy.com/https://raw.githubusercontent.com/xream/scripts/main/surge/modules/sub-store-scripts/lite/index.js`
 
+请先自己尝试一下是否能够拉取到脚本
+
+如果不行 请自行更换其他加速服务
+
 ## 参数列表
 
 `host` 修改 Host 混淆. 默认为空 不修改. 例 a.189.cn
