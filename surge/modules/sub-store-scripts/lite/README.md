@@ -46,7 +46,9 @@
 
 建议套一下 github 加速服务, 例如
 
-`https://ghproxy.com/https://raw.githubusercontent.com/xream/scripts/main/surge/modules/sub-store-scripts/lite/index.js`
+`https://mirror.ghproxy.com/https://raw.githubusercontent.com/xream/scripts/main/surge/modules/sub-store-scripts/lite/index.js`
+
+如果 mirror.ghproxy.com 寄了 可以自己换别的 github 加速服务
 
 请先自己尝试一下是否能够拉取到脚本
 
