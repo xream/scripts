@@ -1,5 +1,3 @@
-//  : { purpose: "panel", position: "policy-selection", panelName: "PanelB" }, $trigger: "button" // or "auto-interval"
-
 const isPanel = () => typeof $input != 'undefined' && $input.purpose === 'panel'
 
 let arg
@@ -11,9 +9,8 @@ let result = {}
 !(async () => {
   if (isPanel()) {
     console.log($input)
-    // 跟文档不一致...
-    // if ($input.$trigger === 'button') {
-    if (true) {
+    console.log($trigger)
+    if ($trigger === 'button') {
       const { requests = [] } = (await httpAPI('/v1/requests/active', 'GET')) || {}
       // console.log(requests.map(i => i.URL))
       for await (const { id } of requests) {
