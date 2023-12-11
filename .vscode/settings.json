@@ -3,10 +3,9 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "editor.codeActionsOnSave": {
-    // "source.fixAll": false,
-    "source.organizeImports": false,
-    "source.fixAll.stylelint": false,
-    "source.fixAll.eslint": false
+    "source.organizeImports": "never",
+    "source.fixAll.stylelint": "never",
+    "source.fixAll.eslint": "never"
   },
   "liveServer.settings.port": 5501,
 }
