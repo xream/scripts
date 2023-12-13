@@ -61,13 +61,16 @@ let result = {}
   .finally(() => $done(result))
 
 async function kill() {
+  await httpAPI('/v1/dns/flush', 'POST')
   // 原本出站规则
   const beforeMode = (await httpAPI('/v1/outbound', 'GET')).mode
   console.log(`当前出站规则: ${beforeMode}`)
-  const newMode = { direct: 'rule', proxy: 'rule', rule: 'direct' }
+  const newMode = { direct: 'proxy', proxy: 'direct', rule: 'proxy' }
   // 切换出站利用surge杀死所有活跃连接
   console.log(`切换出站: ${newMode[beforeMode]}`)
   await httpAPI('/v1/outbound', 'POST', { mode: `${newMode[beforeMode]}` })
+  await httpAPI('/v1/outbound', 'POST', { mode: `${newMode[newMode[beforeMode]]}` })
+  console.log(`切换出站: ${newMode[newMode[beforeMode]]}`)
   // 切换原本出站规则
   console.log(`切换原本出站: ${beforeMode}`)
   await httpAPI('/v1/outbound', 'POST', { mode: `${beforeMode}` })
