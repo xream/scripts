@@ -62,6 +62,9 @@ function compareIPAddresses(ip1 = '', ip2 = '') {
     } else {
       line = ''
     }
+    if (/^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){4}$/.test(CN_IPv6)) {
+      CN_IPv6 = ''
+    }
     if (CN_IPv6) {
       CN_IPv6 = `\n🄳 ${CN_IPv6}`
     }
