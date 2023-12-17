@@ -16,6 +16,9 @@ let content = ''
     await notify('网络信息', '面板', '开始查询')
   }
   let [{ CN_IP = '-', CN_ADDR = '-' }, { CN_IPv6 = '' }, { PROXY_IP = '-', PROXY_ADDR = '-' }, { PROXY_IPv6 = '' }] = await Promise.all([getDirectInfo(), getDirectInfoIPv6(), getProxyInfo(), getProxyInfoIPv6()])
+  if (/^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){4}$/.test(CN_IPv6)) {
+    CN_IPv6 = ''
+  }
   if (CN_IPv6) {
     CN_IPv6 = `${CN_IPv6}\n`
   }
