@@ -5,13 +5,12 @@
 hostname = %APPEND% kill-active-requests.com
 
 [Script]
+通过请求手动打断连接 = type=http-request,pattern=^https?:\/\/kill-active-requests\.com,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/kill-active-requests/beta.js
+
 网络变化时打断连接 = type=event,event-name=network-changed,timeout=30,script-update-interval=3600,debug=false,enable=true,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/kill-active-requests/beta.js
 
 # Panel
 面板手动打断连接 = type=generic,timeout=30,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/kill-active-requests/beta.js,argument=icon=xmark.circle&icon-color=#C5424A
-
-请求手动打断连接=type=http-request,pattern=^https?:\/\/kill-active-requests\.com,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/kill-active-requests/beta.js
-
 
 [Panel]
 面板手动打断连接 = script-name=面板手动打断连接,update-interval=1
