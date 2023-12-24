@@ -1,4 +1,5 @@
 const isPanel = () => typeof $input != 'undefined' && $input.purpose === 'panel'
+const isRequest = () => typeof $request !== 'undefined'
 
 let arg
 if (typeof $argument != 'undefined') {
@@ -25,6 +26,27 @@ let result = {}
     const { requests = [] } = (await httpAPI('/v1/requests/active', 'GET')) || {}
     // console.log(requests.map(i => i.URL))
     result = { title: `活跃请求数: ${requests.length}`, content: '点击一键打断', ...arg }
+  } else if (isRequest()) {
+    const { requests = [] } = (await httpAPI('/v1/requests/active', 'GET')) || {}
+    await kill()
+    $notification.post('找到', `${requests.length} 个活跃请求`, `已尝试打断`)
+    result = {
+      response: {
+        status: 200,
+        headers: { 'Content-Type': 'text/html' },
+        body: `<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script>
+        window.onload = () => {
+          const btn = document.getElementById("btn");
+          btn.disabled = true;
+          btn.innerHTML = "刷新中...";
+          setTimeout(function() {
+            btn.disabled = false;
+            btn.innerHTML = "刷新";
+          }, 1000);
+        }
+    </script></head><body><h1>找到 ${requests.length} 个活跃请求</h1><h2>已尝试打断</h2><button id="btn" onclick="location.reload()">刷新</button></body></html>`,
+      },
+    }
   } else {
     // console.log(JSON.stringify($network, null, 2))
     let wifi = $network.wifi && $network.wifi.bssid
