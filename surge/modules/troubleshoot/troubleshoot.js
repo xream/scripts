@@ -27,7 +27,21 @@ let result = {}
         }</pre></code><h2>MitM</h2><pre><code>${
           mitm ? '✅ enabled' : '❌ disabled'
         }</pre></code><h2>Hostname</h2><pre><code>${
-          hostname.length > 0 ? hostname.join('\n') : '❌ empty'
+          hostname.length > 0
+            ? hostname
+                .map(i =>
+                  i
+                    .split('')
+                    .map(j => (j === '*' ? '<i style="color: red">' + j + '</i>' : j))
+                    .join('')
+                )
+                .map(i =>
+                  !i.startsWith('-') && /(\.|^)(tiktokv|snssdk|icloud|apple|itunes)\./.test(i)
+                    ? '<i style="color: red">' + i + '</i>'
+                    : i
+                )
+                .join('\n')
+            : '❌ empty'
         }</pre></code><footer>Made With &hearts; By <a href="https://t.me/zhetengsha">@xream</a></footer></body></html>`,
       },
     }
