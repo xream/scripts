@@ -13,8 +13,8 @@ let result = {}
       httpAPI('/v1/profiles/current?sensitive=0', 'GET'),
     ])
     let hostname = profile.match(/\nhostname\s*=\s*(.*?)\n/)?.[1].split(/\s*,\s*/) || []
-    const hostname_disable = profile.match(/\nhostname-disabled\s*=\s*(.*?)\n/)?.[1].split(/\s*,\s*/) || []
-    hostname = hostname.filter(item => !hostname_disable.includes(item))
+    const hostname_disabled = profile.match(/\nhostname-disabled\s*=\s*(.*?)\n/)?.[1].split(/\s*,\s*/) || []
+    hostname = hostname.filter(item => !hostname_disabled.includes(item))
 
     result = {
       response: {
@@ -26,7 +26,7 @@ let result = {}
           scripting ? '✅ enabled' : '❌ disabled'
         }</pre></code><h2>MitM</h2><pre><code>${
           mitm ? '✅ enabled' : '❌ disabled'
-        }</pre></code><h2>Hostname</h2><pre><code>${
+        }</pre></code><h2>Hostname</h2><q>The parts marked in <span style="color: red">red</span> do not necessarily indicate a problem, but rather serve as a noteworthy reminder.</q><pre><code>${
           hostname.length > 0
             ? hostname
                 .map(i =>
