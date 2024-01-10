@@ -36,7 +36,7 @@ let result = {}
                     .join('')
                 )
                 .map(i =>
-                  !i.startsWith('-') && /(\.|^)(tiktokv|snssdk|icloud|apple|itunes)\./.test(i)
+                  !i.startsWith('-') && /(\.|^)(twitter|tiktokv|snssdk|icloud|apple|itunes)\./.test(i)
                     ? '<i style="color: red">' + i + '</i>'
                     : i
                 )
