@@ -20,13 +20,12 @@ let result = {}
       response: {
         status: 200,
         headers: { 'Content-Type': 'text/html' },
-        body: `<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><h1>Troubleshoot</h1><h2>Rewrite</h2><pre><code>${
-          rewrite ? '✅ enabled' : '❌ disabled'
-        }</pre></code><h2>Scripting</h2><pre><code>${
-          scripting ? '✅ enabled' : '❌ disabled'
-        }</pre></code><h2>MitM</h2><pre><code>${
-          mitm ? '✅ enabled' : '❌ disabled'
-        }</pre></code><h2>Hostname</h2><q>The parts marked in <span style="color: red">red</span> do not necessarily indicate a problem, but rather serve as a noteworthy reminder.</q><pre><code>${
+        body: `<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="https://unpkg.com/simpledotcss/simple.min.css"><style>pre { overflow: unset } h2, h3 { margin-top: 0 } blockquote { margin-inline-start: 0; margin-inline-end: 0; margin-block: 0 }</style></head><body><h1>Troubleshoot</h1>
+        <h2>Rewrite <small>${rewrite ? '✅' : '❌ '}</small></h2><h2>Scripting <small>${
+          scripting ? '✅' : '❌ '
+        }</small></h2><h2>MitM <small>${mitm ? '✅' : '❌ '}</small></h2><h3>Hostname<small>(${
+          hostname.length
+        })</small></h3><blockquote>The parts marked in <span style="color: red">red</span> do not necessarily indicate a problem, but rather serve as a noteworthy reminder.</blockquote><pre><code>${
           hostname.length > 0
             ? hostname
                 .map(i =>
@@ -57,9 +56,9 @@ let result = {}
       response: {
         status: 500,
         headers: { 'Content-Type': 'text/html' },
-        body: `<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><h1>错误</h1><pre><code>${
+        body: `<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="https://unpkg.com/simpledotcss/simple.min.css"><style>pre { overflow: unset } pre code { white-space: pre-line }</style></head><body><section><h1>错误</h1><pre><code>${
           e.message ?? e
-        }</pre></code></body></html>`,
+        }</pre></code></section></body></html>`,
       },
     }
   })
