@@ -29,7 +29,38 @@ config.outbounds.map(outbound => {
       outboundPattern.includes('ℹ️') ? 'i' : undefined
     )
     if (outboundRegex.test(outbound.tag)) {
+      if (!Array.isArray(outbound.outbounds)) {
+        outbound.outbounds = []
+      }
       outbound.outbounds.push(...getTags(proxies, tagRegex))
+    }
+  })
+})
+
+const compatible_outbound = {
+  tag: 'COMPATIBLE',
+  type: 'direct',
+}
+
+let compatible
+
+config.outbounds.map(outbound => {
+  outbounds.map(([outboundPattern, tagRegex]) => {
+    const outboundRegex = new RegExp(
+      outboundPattern.replace('ℹ️', ''),
+      outboundPattern.includes('ℹ️') ? 'i' : undefined
+    )
+    if (outboundRegex.test(outbound.tag)) {
+      if (!Array.isArray(outbound.outbounds)) {
+        outbound.outbounds = []
+      }
+      if (outbound.outbounds.length === 0) {
+        if (!compatible) {
+          config.outbounds.push(compatible_outbound)
+          compatible = true
+        }
+        outbound.outbounds.push(compatible_outbound.tag)
+      }
     }
   })
 })
