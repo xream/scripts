@@ -15,16 +15,23 @@ log(`传入参数 type: ${type}, name: ${name}, outbound: ${outbound}`)
 
 type = /^1$|col|组合/i.test(type) ? 'collection' : 'subscription'
 
+log(`① 解析配置文件`)
+let config
+try {
+  config = JSON.parse($files[0])
+} catch (e) {
+  log(`${e.message ?? e}`)
+  throw new Error('配置文件不是合法的 JSON')
+}
+log(`② 获取订阅`)
 log(`将读取名称为 ${name} 的 ${type === 'collection' ? '组合' : ''}订阅`)
-
-let config = JSON.parse($files[0])
 let proxies = await produceArtifact({
   name,
   type,
   platform: 'sing-box',
   produceType: 'internal',
 })
-log(`① outbound 规则解析`)
+log(`③ outbound 规则解析`)
 const outbounds = outbound
   .split('🕳')
   .filter(i => i)
@@ -35,7 +42,7 @@ const outbounds = outbound
     return [outboundPattern, tagRegex]
   })
 
-log(`② outbound 插入节点`)
+log(`④ outbound 插入节点`)
 config.outbounds.map(outbound => {
   outbounds.map(([outboundPattern, tagRegex]) => {
     const outboundRegex = createOutboundRegExp(outboundPattern)
@@ -56,7 +63,7 @@ const compatible_outbound = {
 }
 
 let compatible
-log(`③ 空 outbounds 检查`)
+log(`⑤ 空 outbounds 检查`)
 config.outbounds.map(outbound => {
   outbounds.map(([outboundPattern, tagRegex]) => {
     const outboundRegex = createOutboundRegExp(outboundPattern)
