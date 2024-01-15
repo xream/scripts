@@ -1,38 +1,51 @@
 // https://raw.githubusercontent.com/xream/scripts/main/surge/modules/sub-store-scripts/sing-box/template.js#type=组合订阅&name=机场&outbound=🕳ℹ️all|all-auto🕳ℹ️hk|hk-auto🏷ℹ️港|hk|hongkong|kong kong|🇭🇰🕳ℹ️tw|tw-auto🏷ℹ️台|tw|taiwan|🇹🇼🕳ℹ️jp|jp-auto🏷ℹ️日本|jp|japan|🇯🇵🕳ℹ️sg|sg-auto🏷ℹ️^(?!.*(?:us)).*(新|sg|singapore|🇸🇬)🕳ℹ️us|us-auto🏷ℹ️美|us|unitedstates|united states|🇺🇸
 
-// 示例表示:
-// 读取 名称为 机场 的组合订阅 中的节点
-// 把 所有节点插入 /all|all-auto/i 的 outbound 中
-// 把 /港|hk|hongkong|kong kong|🇭🇰/i 节点插入 /hk|hk-auto/i 的 outbound 中
+// 示例说明
+// 读取 名称为 "机场" 的 组合订阅 中的节点(单订阅不需要设置 type 参数)
+// 把 所有节点插入匹配 /all|all-auto/i 的 outbound 中(跟在 🕳 后面, ℹ️ 表示忽略大小写, 不筛选节点不需要给 🏷 )
+// 把匹配 /港|hk|hongkong|kong kong|🇭🇰/i  (跟在 🏷 后面, ℹ️ 表示忽略大小写) 的节点插入匹配 /hk|hk-auto/i 的 outbound 中
 // ...
 
-const { type, name, outbound } = $arguments
+// ⚠️ 如果 outbounds 为空, 自动创建 COMPATIBLE(direct) 并插入 防止报错
+log(`🚀 开始`)
+
+let { type, name, outbound } = $arguments
+
+log(`传入参数 type: ${type}, name: ${name}, outbound: ${outbound}`)
+
+type = /^1$|col|组合/i.test(type) ? 'collection' : 'subscription'
+
+log(`将读取名称为 ${name} 的 ${type === 'collection' ? '组合' : ''}订阅`)
 
 let config = JSON.parse($files[0])
 let proxies = await produceArtifact({
   name,
-  type: /^1$|col|组合/i.test(type) ? 'collection' : 'subscription',
+  type,
   platform: 'sing-box',
   produceType: 'internal',
 })
+log(`① outbound 规则解析`)
 const outbounds = outbound
   .split('🕳')
   .filter(i => i)
   .map(i => {
-    let [outbound, tag = '.*'] = i.split('🏷')
-    return [outbound, new RegExp(tag.replace('ℹ️', ''), tag.includes('ℹ️') ? 'i' : undefined)]
+    let [outboundPattern, tagPattern = '.*'] = i.split('🏷')
+    const tagRegex = createTagRegExp(tagPattern)
+    log(`匹配 🏷 ${tagRegex} 的节点将插入匹配 🕳 ${createOutboundRegExp(outboundPattern)} 的 outbound 中`)
+    return [outboundPattern, tagRegex]
   })
+
+log(`② outbound 插入节点`)
 config.outbounds.map(outbound => {
   outbounds.map(([outboundPattern, tagRegex]) => {
-    const outboundRegex = new RegExp(
-      outboundPattern.replace('ℹ️', ''),
-      outboundPattern.includes('ℹ️') ? 'i' : undefined
-    )
+    const outboundRegex = createOutboundRegExp(outboundPattern)
     if (outboundRegex.test(outbound.tag)) {
       if (!Array.isArray(outbound.outbounds)) {
         outbound.outbounds = []
       }
-      outbound.outbounds.push(...getTags(proxies, tagRegex))
+      const tags = getTags(proxies, tagRegex)
+      log(`🕳 ${outbound.tag} 匹配 ${outboundRegex}, 插入 ${tags.length} 个 🏷 匹配 ${tagRegex} 的节点`)
+      outbound.outbounds.push(...tags)
     }
   })
 })
@@ -43,13 +56,10 @@ const compatible_outbound = {
 }
 
 let compatible
-
+log(`③ 空 outbounds 检查`)
 config.outbounds.map(outbound => {
   outbounds.map(([outboundPattern, tagRegex]) => {
-    const outboundRegex = new RegExp(
-      outboundPattern.replace('ℹ️', ''),
-      outboundPattern.includes('ℹ️') ? 'i' : undefined
-    )
+    const outboundRegex = createOutboundRegExp(outboundPattern)
     if (outboundRegex.test(outbound.tag)) {
       if (!Array.isArray(outbound.outbounds)) {
         outbound.outbounds = []
@@ -59,6 +69,7 @@ config.outbounds.map(outbound => {
           config.outbounds.push(compatible_outbound)
           compatible = true
         }
+        log(`🕳 ${outbound.tag} 的 outbounds 为空, 自动插入 COMPATIBLE(direct)`)
         outbound.outbounds.push(compatible_outbound.tag)
       }
     }
@@ -72,6 +83,14 @@ $content = JSON.stringify(config, null, 2)
 function getTags(proxies, regex) {
   return (regex ? proxies.filter(p => regex.test(p.tag)) : proxies).map(p => p.tag)
 }
-function getTags(proxies, regex) {
-  return (regex ? proxies.filter(p => regex.test(p.tag)) : proxies).map(p => p.tag)
+function log(v) {
+  console.log(`[📦 sing-box 模板脚本] ${v}`)
 }
+function createTagRegExp(tagPattern) {
+  return new RegExp(tagPattern.replace('ℹ️', ''), tagPattern.includes('ℹ️') ? 'i' : undefined)
+}
+function createOutboundRegExp(outboundPattern) {
+  return new RegExp(outboundPattern.replace('ℹ️', ''), outboundPattern.includes('ℹ️') ? 'i' : undefined)
+}
+
+log(`🔚 结束`)
