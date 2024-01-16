@@ -413,10 +413,10 @@
         },
         {
           "id": "@xream.gist.testFlightAccountOnly",
-          "name": "仅操作 TestFlight 账户管理脚本的数据",
+          "name": "仅恢复 TestFlight 账户管理脚本的数据",
           "val": false,
           "type": "boolean",
-          "desc": "默认禁用. 启用后只会操作 TestFlight 账户管理脚本的数据. 安心"
+          "desc": "默认禁用. 启用后只会恢复 TestFlight 账户管理脚本的数据. 安心"
         }
       ],
       "icons": [
