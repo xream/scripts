@@ -6,6 +6,7 @@ const KEY_TOKEN = `@xream.gist.token`
 const KEY_DESC = `@xream.gist.desc`
 const KEY_SAVE_KEY = `@xream.gist.saveKey`
 const KEY_TESTFLIGHT_ACCOUNT_LOCAL_ID_KEY = `@xream.gist.testFlightAccountLocalId`
+const KEY_TESTFLIGHT_ACCOUNT_ONLY_KEY = `@xream.gist.testFlightAccountOnly`
 
 $.setdata(new Date().toLocaleString('zh'), KEY_INITED)
 
@@ -89,9 +90,9 @@ $.setdata(new Date().toLocaleString('zh'), KEY_INITED)
     throw new Error(`获取 Gist 内容失败: ${$.lodash_get(e, 'message') || e}`)
   }
   const testFlightAccountLocalId = $.getdata(KEY_TESTFLIGHT_ACCOUNT_LOCAL_ID_KEY)
+  const $BoxJs = new Env('BoxJs')
+  const testFlightData = $BoxJs.getjson('TESTFLIGHT-ACCOUNT')
   if (testFlightAccountLocalId) {
-    const $BoxJs = new Env('BoxJs')
-    const testFlightData = $BoxJs.getjson('TESTFLIGHT-ACCOUNT')
     $.log('TestFlight Account 合并更新前', $.toStr($.lodash_get(testFlightData, `AccountList`)))
     try {
       const testFlightAccountList = JSON.parse(backup['TESTFLIGHT-ACCOUNT']).AccountList
@@ -113,8 +114,12 @@ $.setdata(new Date().toLocaleString('zh'), KEY_INITED)
     $.log('要保留的本地 ID(s) 保持不变', testFlightAccountLocalId)
     backup[KEY_TESTFLIGHT_ACCOUNT_LOCAL_ID_KEY] = testFlightAccountLocalId
   }
-
-  setBoxJsData(backup)
+  if (String($.getdata(KEY_TESTFLIGHT_ACCOUNT_ONLY_KEY)) === 'true') {
+    $.log('仅操作 TestFlight 账户管理脚本的数据')
+    $BoxJs.setjson(JSON.parse(backup['TESTFLIGHT-ACCOUNT']), 'TESTFLIGHT-ACCOUNT')
+  } else {
+    setBoxJsData(backup)
+  }
 
   $.msg(`Gist 恢复`, `✅`, `${gist.url}`)
 })()
