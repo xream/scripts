@@ -337,7 +337,8 @@
         "@xream.gist.desc",
         "@xream.gist.saveKey",
         "@xream.gist.testFlightAccountLocalId",
-        "@xream.gist.testFlightAccountOnly"
+        "@xream.gist.testFlightAccountOnly",
+        "@xream.gist.testFlightAccountOnlyForBackup"
       ],
       "author": "@xream",
       "repo": "https://github.com/xream/scripts/tree/main/surge/modules/gist",
@@ -416,7 +417,14 @@
           "name": "仅恢复 TestFlight 账户管理脚本的数据",
           "val": false,
           "type": "boolean",
-          "desc": "默认禁用. 启用后只会恢复 TestFlight 账户管理脚本的数据. 安心"
+          "desc": "默认禁用. 启用后只会恢复 TestFlight 账户管理脚本的数据"
+        },
+        {
+          "id": "@xream.gist.testFlightAccountOnlyForBackup",
+          "name": "仅备份 TestFlight 账户管理脚本的数据",
+          "val": false,
+          "type": "boolean",
+          "desc": "默认禁用. 启用后只会备份 TestFlight 账户管理脚本的数据"
         }
       ],
       "icons": [
