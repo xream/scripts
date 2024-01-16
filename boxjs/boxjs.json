@@ -336,7 +336,8 @@
         "@xream.gist.token",
         "@xream.gist.desc",
         "@xream.gist.saveKey",
-        "@xream.gist.testFlightAccountLocalId"
+        "@xream.gist.testFlightAccountLocalId",
+        "@xream.gist.testFlightAccountOnly"
       ],
       "author": "@xream",
       "repo": "https://github.com/xream/scripts/tree/main/surge/modules/gist",
@@ -409,6 +410,13 @@
           "val": "",
           "type": "text",
           "desc": "多个 ID 逗号分隔"
+        },
+        {
+          "id": "@xream.gist.testFlightAccountOnly",
+          "name": "仅操作 TestFlight 账户管理脚本的数据",
+          "val": false,
+          "type": "boolean",
+          "desc": "默认禁用. 启用后只会操作 TestFlight 账户管理脚本的数据. 安心"
         }
       ],
       "icons": [
