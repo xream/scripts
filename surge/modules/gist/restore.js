@@ -965,7 +965,7 @@ function setBoxJsData(backup) {
   //#endregion
 
   if (backup) {
-    console.log(backup)
+    // console.log(backup)
     const {
       chavy_boxjs_sysCfgs,
       chavy_boxjs_sysApps,
@@ -975,18 +975,18 @@ function setBoxJsData(backup) {
       chavy_boxjs_app_subCaches,
       ...datas
     } = backup
-    console.log('chavy_boxjs_sysCfgs')
-    console.log(chavy_boxjs_sysCfgs)
-    console.log('chavy_boxjs_sysApps')
-    console.log(chavy_boxjs_sysApps)
-    console.log('chavy_boxjs_sessions')
-    console.log(chavy_boxjs_sessions)
-    console.log('chavy_boxjs_userCfgs')
-    console.log(chavy_boxjs_userCfgs)
-    console.log('chavy_boxjs_cur_sessions')
-    console.log(chavy_boxjs_cur_sessions)
-    console.log('chavy_boxjs_app_subCaches')
-    console.log(chavy_boxjs_app_subCaches)
+    // console.log('chavy_boxjs_sysCfgs')
+    // console.log(chavy_boxjs_sysCfgs)
+    // console.log('chavy_boxjs_sysApps')
+    // console.log(chavy_boxjs_sysApps)
+    // console.log('chavy_boxjs_sessions')
+    // console.log(chavy_boxjs_sessions)
+    // console.log('chavy_boxjs_userCfgs')
+    // console.log(chavy_boxjs_userCfgs)
+    // console.log('chavy_boxjs_cur_sessions')
+    // console.log(chavy_boxjs_cur_sessions)
+    // console.log('chavy_boxjs_app_subCaches')
+    // console.log(chavy_boxjs_app_subCaches)
     $.setdata(JSON.stringify(chavy_boxjs_sessions), $.KEY_sessions)
     $.setdata(JSON.stringify(chavy_boxjs_userCfgs), $.KEY_usercfgs)
     $.setdata(JSON.stringify(chavy_boxjs_cur_sessions), $.KEY_cursessions)
@@ -994,7 +994,7 @@ function setBoxJsData(backup) {
     const isNull = val => [undefined, null, 'null', 'undefined', ''].includes(val)
     Object.keys(datas).forEach(datkey => $.setdata(isNull(datas[datkey]) ? '' : `${datas[datkey]}`, datkey))
 
-    $.log(`⚠️ 恢复备份`)
+    // $.log(`⚠️ 恢复备份`)
   }
 }
 
