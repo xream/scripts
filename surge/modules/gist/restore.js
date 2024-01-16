@@ -5,6 +5,7 @@ const KEY_USERNAME = `@xream.gist.username`
 const KEY_TOKEN = `@xream.gist.token`
 const KEY_DESC = `@xream.gist.desc`
 const KEY_SAVE_KEY = `@xream.gist.saveKey`
+const KEY_TESTFLIGHT_ACCOUNT_LOCAL_ID_KEY = `@xream.gist.testFlightAccountLocalId`
 
 $.setdata(new Date().toLocaleString('zh'), KEY_INITED)
 
@@ -86,6 +87,29 @@ $.setdata(new Date().toLocaleString('zh'), KEY_INITED)
   } catch (e) {
     console.log(e)
     throw new Error(`获取 Gist 内容失败: ${$.lodash_get(e, 'message') || e}`)
+  }
+  const testFlightAccountLocalId = $.getdata(KEY_TESTFLIGHT_ACCOUNT_LOCAL_ID_KEY)
+  if (testFlightAccountLocalId) {
+    const $BoxJs = new Env('BoxJs')
+    const testFlightData = $BoxJs.getjson('TESTFLIGHT-ACCOUNT')
+    $.log('TestFlight Account 合并更新前', $.toStr($.lodash_get(testFlightData, `AccountList`)))
+    try {
+      const testFlightAccountList = JSON.parse(backup['TESTFLIGHT-ACCOUNT']).AccountList
+      testFlightAccountLocalId
+        .split(/,|，/)
+        .map(i => i.trim())
+        .filter(i => i.length)
+        .map(id => {
+          $.log('TestFlight Account 保留本地 ID', id)
+          testFlightAccountList[id] = $.lodash_get(testFlightData, `AccountList.${id}`)
+        })
+      backup['TESTFLIGHT-ACCOUNT'] = JSON.stringify({ AccountList: testFlightAccountList })
+      $.log('TestFlight Account 合并更新后', $.toStr(testFlightAccountList))
+    } catch (e) {
+      $.logErr(e)
+      $.log('TestFlight Account 合并更新异常 保留本地数据')
+      backup['TESTFLIGHT-ACCOUNT'] = JSON.stringify(testFlightData)
+    }
   }
 
   setBoxJsData(backup)
