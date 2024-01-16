@@ -110,6 +110,8 @@ $.setdata(new Date().toLocaleString('zh'), KEY_INITED)
       $.log('TestFlight Account 合并更新异常 保留本地数据')
       backup['TESTFLIGHT-ACCOUNT'] = JSON.stringify(testFlightData)
     }
+    $.log('要保留的本地 ID(s) 保持不变', testFlightAccountLocalId)
+    backup[KEY_TESTFLIGHT_ACCOUNT_LOCAL_ID_KEY] = testFlightAccountLocalId
   }
 
   setBoxJsData(backup)
