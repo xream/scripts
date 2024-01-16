@@ -139,7 +139,7 @@ $.setdata(new Date().toLocaleString('zh'), KEY_INITED)
       resBody = JSON.parse(resBody)
     } catch (e) {}
     console.log('↓ res body')
-    console.log($.toStr(resBody))
+    // console.log($.toStr(resBody))
     if (!String(status).startsWith(2)) {
       throw new Error($.lodash_get(resBody, 'message') || '未知错误')
     }
