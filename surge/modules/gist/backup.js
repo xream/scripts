@@ -5,7 +5,7 @@ const KEY_USERNAME = `@xream.gist.username`
 const KEY_TOKEN = `@xream.gist.token`
 const KEY_DESC = `@xream.gist.desc`
 const KEY_SAVE_KEY = `@xream.gist.saveKey`
-const KEY_TESTFLIGHT_ACCOUNT_ONLY_KEY = `@xream.gist.testFlightAccountOnlyForBackup`
+const KEY_TESTFLIGHT_ACCOUNT_ONLY_FOR_BACKUP_KEY = `@xream.gist.testFlightAccountOnlyForBackup`
 
 $.setdata(new Date().toLocaleString('zh'), KEY_INITED)
 
@@ -61,7 +61,7 @@ $.setdata(new Date().toLocaleString('zh'), KEY_INITED)
         })
       })
     let content
-    if (String($.getdata(KEY_TESTFLIGHT_ACCOUNT_ONLY_KEY)) === 'true') {
+    if (String($.getdata(KEY_TESTFLIGHT_ACCOUNT_ONLY_FOR_BACKUP_KEY)) === 'true') {
       $.log('仅备份 TestFlight 账户管理脚本的数据')
       if (gist) {
         $.log('先获取在线备份的数据')

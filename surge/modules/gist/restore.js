@@ -7,6 +7,7 @@ const KEY_DESC = `@xream.gist.desc`
 const KEY_SAVE_KEY = `@xream.gist.saveKey`
 const KEY_TESTFLIGHT_ACCOUNT_LOCAL_ID_KEY = `@xream.gist.testFlightAccountLocalId`
 const KEY_TESTFLIGHT_ACCOUNT_ONLY_KEY = `@xream.gist.testFlightAccountOnly`
+const KEY_TESTFLIGHT_ACCOUNT_ONLY_FOR_BACKUP_KEY = `@xream.gist.testFlightAccountOnlyForBackup`
 
 $.setdata(new Date().toLocaleString('zh'), KEY_INITED)
 
@@ -111,8 +112,10 @@ $.setdata(new Date().toLocaleString('zh'), KEY_INITED)
       $.log('TestFlight Account 合并更新异常 保留本地数据')
       backup['TESTFLIGHT-ACCOUNT'] = JSON.stringify(testFlightData)
     }
-    $.log('要保留的本地 ID(s) 保持不变', testFlightAccountLocalId)
+    $.log('要保留的本地 ID(s)/仅备份/仅恢复开关 保持不变')
     backup[KEY_TESTFLIGHT_ACCOUNT_LOCAL_ID_KEY] = testFlightAccountLocalId
+    backup[KEY_TESTFLIGHT_ACCOUNT_ONLY_KEY] = $.getdata(KEY_TESTFLIGHT_ACCOUNT_ONLY_KEY)
+    backup[KEY_TESTFLIGHT_ACCOUNT_ONLY_FOR_BACKUP_KEY] = $.getdata(KEY_TESTFLIGHT_ACCOUNT_ONLY_FOR_BACKUP_KEY)
   }
   if (String($.getdata(KEY_TESTFLIGHT_ACCOUNT_ONLY_KEY)) === 'true') {
     $.log('仅恢复 TestFlight 账户管理脚本的数据')
