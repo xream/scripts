@@ -335,7 +335,8 @@
         "@xream.gist.username",
         "@xream.gist.token",
         "@xream.gist.desc",
-        "@xream.gist.saveKey"
+        "@xream.gist.saveKey",
+        "@xream.gist.testFlightAccountLocalId"
       ],
       "author": "@xream",
       "repo": "https://github.com/xream/scripts/tree/main/surge/modules/gist",
@@ -400,6 +401,14 @@
           "val": "backup.json",
           "type": "text",
           "desc": "默认为 backup.json"
+        },
+        {
+          "id": "@xream.gist.testFlightAccountLocalId",
+          "name": "合并更新 TestFlight 账户管理脚本的数据时 要保留的本地 ID(s)",
+          "placeholder": "",
+          "val": "",
+          "type": "text",
+          "desc": "多个 ID 逗号分隔"
         }
       ],
       "icons": [
