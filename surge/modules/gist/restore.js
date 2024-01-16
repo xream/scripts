@@ -115,7 +115,7 @@ $.setdata(new Date().toLocaleString('zh'), KEY_INITED)
     backup[KEY_TESTFLIGHT_ACCOUNT_LOCAL_ID_KEY] = testFlightAccountLocalId
   }
   if (String($.getdata(KEY_TESTFLIGHT_ACCOUNT_ONLY_KEY)) === 'true') {
-    $.log('仅操作 TestFlight 账户管理脚本的数据')
+    $.log('仅恢复 TestFlight 账户管理脚本的数据')
     $BoxJs.setjson(JSON.parse(backup['TESTFLIGHT-ACCOUNT']), 'TESTFLIGHT-ACCOUNT')
   } else {
     setBoxJsData(backup)
