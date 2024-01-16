@@ -5,6 +5,7 @@ const KEY_USERNAME = `@xream.gist.username`
 const KEY_TOKEN = `@xream.gist.token`
 const KEY_DESC = `@xream.gist.desc`
 const KEY_SAVE_KEY = `@xream.gist.saveKey`
+const KEY_TESTFLIGHT_ACCOUNT_ONLY_KEY = `@xream.gist.testFlightAccountOnlyForBackup`
 
 $.setdata(new Date().toLocaleString('zh'), KEY_INITED)
 
@@ -59,6 +60,57 @@ $.setdata(new Date().toLocaleString('zh'), KEY_INITED)
           else resolve(resp)
         })
       })
+    let content
+    if (String($.getdata(KEY_TESTFLIGHT_ACCOUNT_ONLY_KEY)) === 'true') {
+      $.log('仅备份 TestFlight 账户管理脚本的数据')
+      if (gist) {
+        $.log('先获取在线备份的数据')
+        const rawUrl = $.lodash_get(gist.files[saveKey], 'raw_url')
+        if (!rawUrl) {
+          throw new Error('Gist 没有 raw_url')
+        }
+        let backup
+        try {
+          console.log(`开始获取 Gist 内容 ${rawUrl}`)
+          const res = await $.http.get({
+            url: rawUrl,
+            headers: {
+              Authorization: `token ${token}`,
+              Accept: 'application/vnd.github.v3+json',
+              'User-Agent':
+                'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1',
+            },
+          })
+          // console.log(res)
+          const status = $.lodash_get(res, 'status') || $.lodash_get(res, 'statusCode') || 200
+          console.log('↓ res status')
+          console.log(status)
+          let resBody = String($.lodash_get(res, 'body') || $.lodash_get(res, 'rawBody'))
+          try {
+            resBody = JSON.parse(resBody)
+          } catch (e) {}
+          console.log('↓ res body')
+          // console.log(resBody)
+          if (status !== 200) {
+            throw new Error($.lodash_get(resBody, 'message') || '未知错误')
+          }
+          backup = resBody
+        } catch (e) {
+          console.log(e)
+          throw new Error(`获取 Gist 内容失败: ${$.lodash_get(e, 'message') || e}`)
+        }
+        $.log('替换在线备份的数据中 TestFlight 账户管理脚本的数据')
+        backup['TESTFLIGHT-ACCOUNT'] = getBoxJsData()['TESTFLIGHT-ACCOUNT']
+        content = backup
+      } else {
+        $.log('生成一个仅包含 TestFlight 账户管理脚本数据的备份')
+        content = {
+          'TESTFLIGHT-ACCOUNT': getBoxJsData()['TESTFLIGHT-ACCOUNT'],
+        }
+      }
+    } else {
+      content = getBoxJsData()
+    }
     const res = await post({
       method: gist ? 'patch' : 'post',
       url: `https://api.github.com/gists${gist ? '/' + gist.id : ''}`,
@@ -73,7 +125,7 @@ $.setdata(new Date().toLocaleString('zh'), KEY_INITED)
         public: false,
         files: {
           [saveKey]: {
-            content: JSON.stringify(getBoxJsData()),
+            content: JSON.stringify(content),
           },
         },
       }),
@@ -87,7 +139,7 @@ $.setdata(new Date().toLocaleString('zh'), KEY_INITED)
       resBody = JSON.parse(resBody)
     } catch (e) {}
     console.log('↓ res body')
-    console.log(resBody)
+    console.log($.toStr(resBody))
     if (!String(status).startsWith(2)) {
       throw new Error($.lodash_get(resBody, 'message') || '未知错误')
     }
