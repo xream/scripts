@@ -15,6 +15,14 @@ let content = ''
   if($.isTile()) {
     await notify('网络信息', '面板', '开始查询')
   }
+  let LAN_IP = ''
+  if (typeof $network !== 'undefined') {
+    $.log($network)
+    const primaryAddress = $.lodash_get($network, 'v4.primaryAddress')
+    if (primaryAddress) {
+      LAN_IP = ` 🅻 ${primaryAddress}`
+    }
+  }
   let [{ CN_IP = '-', CN_ADDR = '-' }, { CN_IPv6 = '' }, { PROXY_IP = '-', PROXY_ADDR = '-' }, { PROXY_IPv6 = '' }] = await Promise.all([getDirectInfo(), getDirectInfoIPv6(), getProxyInfo(), getProxyInfoIPv6()])
   if (/^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){4}$/.test(CN_IPv6)) {
     CN_IPv6 = ''
@@ -26,7 +34,7 @@ let content = ''
     PROXY_IPv6 = `${PROXY_IPv6}\n`
   }
   title = `${CN_ADDR}`
-  content = `${CN_IP}\n${CN_IPv6}${PROXY_ADDR}\n${PROXY_IP}\n${PROXY_IPv6}执行时间: ${new Date().toTimeString().split(' ')[0]}`
+  content = `${CN_IP}${LAN_IP}\n${CN_IPv6}${PROXY_ADDR}\n${PROXY_IP}\n${PROXY_IPv6}执行时间: ${new Date().toTimeString().split(' ')[0]}`
   if ($.isTile()) {
     await notify('网络信息', '面板', '查询完成')
   } else if(!$.isPanel()) {
