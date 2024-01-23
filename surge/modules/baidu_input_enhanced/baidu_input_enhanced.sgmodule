@@ -1,15 +1,15 @@
 #!name=百度输入法魔改(β)
-#!desc=搜索第一项插入 ChatGPT, 链接 改为 Google
+#!desc=搜索第一项插入 ChatGPT/Gemini, 链接 改为 Google
 #!author=@xream
 #!category=xream
-#!arguments=API:https://api.openai.com/v1/chat/completions,KEY,MODEL:gpt-3.5-turbo,PROMPT:尽可能简短地回答,MAX_TOKENS:50,TEMPERATURE:0.5,TIMEOUT:30000
-#!arguments-desc=字面意思 应该能懂填啥\n\nAPI 部份应为完整的 URL, 例如: https://api.openai.com/v1/chat/completions
+#!arguments=TYPE:ChatGPT,KEY,API:https://api.openai.com/v1/chat/completions,PROMPT:尽可能简单且快速地回答,TIMEOUT:30000,MODEL:gpt-3.5-turbo,MAX_TOKENS:50,TEMPERATURE:0.5
+#!arguments-desc=字面意思 应该能懂填啥\n\nTYPE: 目前支持 ChatGPT 和 Gemini\n\nAPI 部份应为完整的 URL, 例如: https://api.openai.com/v1/chat/completions\n\nℹ️ TYPE 为 Gemini 时\nAPI 默认为 https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent
 
 [General]
 force-http-engine-hosts = %APPEND% mime.baidu.com
 
 [Script]
-百度输入法魔改 = type=http-response, pattern=https?:\/\/mime\.baidu\.com\/v5\/search\/data, script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/baidu_input_enhanced/baidu_input_enhanced.js, requires-body=true, timeout=120, argument="BIE_API={{{API}}}&BIE_KEY={{{KEY}}}&BIE_MODEL={{{MODEL}}}&BIE_PROMPT={{{PROMPT}}}&BIE_MAX_TOKENS={{{MAX_TOKENS}}}&BIE_TEMPERATURE={{{TEMPERATURE}}}&BIE_TIMEOUT={{{TIMEOUT}}}"
+百度输入法魔改 = type=http-response, pattern=https?:\/\/mime\.baidu\.com\/v5\/search\/data, script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/baidu_input_enhanced/baidu_input_enhanced.js, requires-body=true, timeout=120, argument="BIE_API={{{API}}}&BIE_KEY={{{KEY}}}&BIE_MODEL={{{MODEL}}}&BIE_PROMPT={{{PROMPT}}}&BIE_MAX_TOKENS={{{MAX_TOKENS}}}&BIE_TEMPERATURE={{{TEMPERATURE}}}&BIE_TIMEOUT={{{TIMEOUT}}}&BIE_TYPE={{{TYPE}}}"
 
 [MITM]
 hostname = %APPEND% mime.baidu.com

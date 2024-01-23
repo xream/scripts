@@ -10,6 +10,7 @@
 #!input=BIE_MAX_TOKENS
 #!input=BIE_TEMPERATURE
 #!input=BIE_TIMEOUT
+#!input=BIE_TYPE
 
 [General]
 force-http-engine-hosts = mime.baidu.com

@@ -23,43 +23,68 @@ if (typeof $argument != 'undefined') {
 
   const input = queryObject.s_qr
 
-  let answer = `ChatGPT 请求失败, 点击 "打开" 使用 Google 搜索`
+  let answer = `请求失败, 点击 "打开" 使用 Google 搜索`
   try {
-    let API = $.lodash_get(arg, 'BIE_API') || $.getval('BIE_API') || 'https://api.openai.com/v1/chat/completions'
     let KEY = $.lodash_get(arg, 'BIE_KEY') || $.getval('BIE_KEY') || ''
     let MODEL = $.lodash_get(arg, 'BIE_MODEL') || $.getval('BIE_MODEL') || 'gpt-3.5-turbo'
-    let PROMPT = $.lodash_get(arg, 'BIE_PROMPT') || $.getval('BIE_PROMPT') || ''
+    let PROMPT = $.lodash_get(arg, 'BIE_PROMPT') || $.getval('BIE_PROMPT') || '尽可能简单且快速地回答'
     let TEMPERATURE = parseFloat($.lodash_get(arg, 'BIE_TEMPERATURE') || $.getval('BIE_TEMPERATURE') || 0.5)
     let MAX_TOKENS = parseInt($.lodash_get(arg, 'BIE_MAX_TOKENS') || $.getval('BIE_MAX_TOKENS') || 50)
     let TIMEOUT = parseInt($.lodash_get(arg, 'BIE_TIMEOUT') || $.getval('BIE_TIMEOUT') || 30 * 1000)
+    let TYPE = $.lodash_get(arg, 'BIE_TYPE') || $.getval('BIE_TYPE') || 'ChatGPT'
+
+    let API = $.lodash_get(arg, 'BIE_API') || $.getval('BIE_API')
+    if (!API || API === 'https://api.openai.com/v1/chat/completions') {
+      if (TYPE === 'Gemini') {
+        API = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${encodeURIComponent(
+          KEY
+        )}`
+      } else {
+        API = 'https://api.openai.com/v1/chat/completions'
+      }
+    }
 
     $.log(
-      `API: ${API}, KEY: ${KEY}, MODEL: ${MODEL}, PROMPT: ${PROMPT}, TEMPERATURE: ${TEMPERATURE}, MAX_TOKENS: ${MAX_TOKENS}, TIMEOUT: ${TIMEOUT}`
+      `TYPE: ${TYPE}, API: ${API}, KEY: ${KEY}, MODEL: ${MODEL}, PROMPT: ${PROMPT}, TEMPERATURE: ${TEMPERATURE}, MAX_TOKENS: ${MAX_TOKENS}, TIMEOUT: ${TIMEOUT}`
     )
 
+    const headers = {
+      'Content-Type': 'application/json',
+    }
+    const params = {}
+    if (TYPE === 'Gemini') {
+      params.key = KEY
+    } else {
+      headers.Authorization = `Bearer ${KEY}`
+    }
     const opts = {
       timeout: TIMEOUT,
       url: API,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${KEY}`,
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: [
-          {
-            role: 'system',
-            content: `${PROMPT}`,
-          },
-          {
-            role: 'user',
-            content: `${input}`,
-          },
-        ],
-        max_tokens: MAX_TOKENS,
-        temperature: TEMPERATURE,
-      }),
+      headers,
+      params,
+      body: JSON.stringify(
+        TYPE === 'Gemini'
+          ? {
+              contents: [{ role: 'user', parts: [{ text: `${PROMPT}\n${input}` }] }],
+            }
+          : {
+              model: MODEL,
+              messages: [
+                {
+                  role: 'system',
+                  content: `${PROMPT}`,
+                },
+                {
+                  role: 'user',
+                  content: `${input}`,
+                },
+              ],
+              max_tokens: MAX_TOKENS,
+              temperature: TEMPERATURE,
+            }
+      ),
     }
+
     $.log('请求', $.toStr(opts))
 
     const res = await Promise.race([
@@ -74,7 +99,10 @@ if (typeof $argument != 'undefined') {
     try {
       body = JSON.parse(body)
     } catch (e) {}
-    answer = $.lodash_get(body, 'choices.0.message.content')
+    answer =
+      TYPE === 'Gemini'
+        ? $.lodash_get(body, 'candidates.0.content.parts.0.text')
+        : $.lodash_get(body, 'choices.0.message.content')
     $.log('ℹ️ answer', answer)
   } catch (e) {
     $.logErr(e)
@@ -111,9 +139,9 @@ if (typeof $argument != 'undefined') {
     $.logErr(e)
     const msg = `${$.lodash_get(e, 'message') || $.lodash_get(e, 'error') || e}`
     // if ($.isShadowrocket() && msg.includes(`未能完成操作`)) {
-    //   $.log(`百度输入法搜索插入 ChatGPT`, `⚠️`, msg, url)
+    //   $.log(`百度输入法魔改`, `⚠️`, msg)
     // } else {
-    await notify(`百度输入法搜索插入 ChatGPT`, `❌`, msg, url)
+    await notify(`百度输入法魔改`, `❌`, msg)
     // }
     result = {}
   })
