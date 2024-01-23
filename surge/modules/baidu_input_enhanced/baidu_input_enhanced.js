@@ -29,7 +29,7 @@ if (typeof $argument != 'undefined') {
     let KEY = $.lodash_get(arg, 'BIE_KEY') || $.getval('BIE_KEY') || ''
     let MODEL = $.lodash_get(arg, 'BIE_MODEL') || $.getval('BIE_MODEL') || 'gpt-3.5-turbo'
     let PROMPT = $.lodash_get(arg, 'BIE_PROMPT') || $.getval('BIE_PROMPT') || ''
-    let TEMPERATURE = $.lodash_get(arg, 'BIE_TEMPERATURE') || $.getval('BIE_TEMPERATURE') || 0.5
+    let TEMPERATURE = parseFloat($.lodash_get(arg, 'BIE_TEMPERATURE') || $.getval('BIE_TEMPERATURE') || 0.5)
     let MAX_TOKENS = parseInt($.lodash_get(arg, 'BIE_MAX_TOKENS') || $.getval('BIE_MAX_TOKENS') || 50)
     let TIMEOUT = parseInt($.lodash_get(arg, 'BIE_TIMEOUT') || $.getval('BIE_TIMEOUT') || 30 * 1000)
 
