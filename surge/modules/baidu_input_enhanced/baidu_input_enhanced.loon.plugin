@@ -1,5 +1,5 @@
 #!name=百度输入法魔改
-#!desc=搜索第一项插入 ChatGPT, 链接 改为 Google
+#!desc=搜索第一项插入 ChatGPT/Gemini, 链接 改为 Google. TYPE: 目前支持 ChatGPT 和 Gemini
 #!author=@xream
 #!homepage=https://t.me/zhetengsha_group
 #!openurl=https://t.me/zhetengsha_group
