@@ -6,6 +6,10 @@ $.isRequest = () => typeof $request !== 'undefined'
 $.isResponse = () => typeof $response !== 'undefined'
 
 let result = {}
+let arg
+if (typeof $argument != 'undefined') {
+  arg = Object.fromEntries($argument.split('&').map(item => item.split('=')))
+}
 !(async () => {
   if (!$.isResponse()) throw new Error('不是 response')
 
@@ -21,13 +25,17 @@ let result = {}
 
   let answer = `ChatGPT 请求失败, 点击 "打开" 使用 Google 搜索`
   try {
-    let API = $.getval('BIE_API') ?? 'https://api.openai.com/v1/chat/completions'
-    let KEY = $.getval('BIE_KEY') ?? ''
-    let MODEL = $.getval('BIE_MODEL') ?? 'gpt-3.5-turbo'
-    let PROMPT = $.getval('BIE_PROMPT') ?? ''
-    let TEMPERATURE = $.getval('BIE_TEMPERATURE') ?? 0.5
-    let MAX_TOKENS = parseInt($.getval('BIE_MAX_TOKENS') ?? 50)
-    let TIMEOUT = $.getval('BIE_TIMEOUT') ?? 30 * 1000
+    let API = $.lodash_get(arg, 'BIE_API') || $.getval('BIE_API') || 'https://api.openai.com/v1/chat/completions'
+    let KEY = $.lodash_get(arg, 'BIE_KEY') || $.getval('BIE_KEY') || ''
+    let MODEL = $.lodash_get(arg, 'BIE_MODEL') || $.getval('BIE_MODEL') || 'gpt-3.5-turbo'
+    let PROMPT = $.lodash_get(arg, 'BIE_PROMPT') || $.getval('BIE_PROMPT') || ''
+    let TEMPERATURE = $.lodash_get(arg, 'BIE_TEMPERATURE') || $.getval('BIE_TEMPERATURE') || 0.5
+    let MAX_TOKENS = parseInt($.lodash_get(arg, 'BIE_MAX_TOKENS') || $.getval('BIE_MAX_TOKENS') || 50)
+    let TIMEOUT = parseInt($.lodash_get(arg, 'BIE_TIMEOUT') || $.getval('BIE_TIMEOUT') || 30 * 1000)
+
+    $.log(
+      `API: ${API}, KEY: ${KEY}, MODEL: ${MODEL}, PROMPT: ${PROMPT}, TEMPERATURE: ${TEMPERATURE}, MAX_TOKENS: ${MAX_TOKENS}, TIMEOUT: ${TIMEOUT}`
+    )
 
     const opts = {
       timeout: TIMEOUT,
@@ -54,7 +62,10 @@ let result = {}
     }
     $.log('请求', $.toStr(opts))
 
-    const res = await $.http.post(opts)
+    const res = await Promise.race([
+      $.http.post(opts),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), TIMEOUT)),
+    ])
     $.log('ℹ️ res', $.toStr(res))
     const status = $.lodash_get(res, 'status') || $.lodash_get(res, 'statusCode') || 200
     $.log('ℹ️ res status', status)
