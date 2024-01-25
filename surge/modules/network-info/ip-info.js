@@ -27,11 +27,7 @@ let content = ''
   $.log($.toStr(info))
   const ip = $.lodash_get(info, 'ip') || ' - '
   title = `${ip}`
-  // const country = $.lodash_get(info, 'country') || ' - '
-  // const region = $.lodash_get(info, 'region') || ' - '
-  // const city = $.lodash_get(info, 'city') || ' - '
-  // const companyName = $.lodash_get(info, 'company.name') || ' - '
-  // const companyType = $.lodash_get(info, 'company.type') || ' - '
+
   const privacyObj = $.lodash_get(info, 'privacy') || {}
   let privacy = []
   const privacyMap = {
@@ -48,7 +44,12 @@ let content = ''
     geo.push(`${key.toUpperCase()}: ${$.lodash_get(info, key) || ' - '}`)
   })
   geo = geo.length > 0 ? `${geo.join('\n')}\n` : ''
-  content = `${geo}${privacy}执行时间: ${new Date().toTimeString().split(' ')[0]}`
+  let company = []
+  ;['name', 'type'].forEach(key => {
+    company.push(`COMPANY ${key.toUpperCase()}: ${$.lodash_get(info, `company.${key}`) || ' - '}`)
+  })
+  company = company.length > 0 ? `${company.join('\n')}\n` : ''
+  content = `${geo}${company}${privacy}执行时间: ${new Date().toTimeString().split(' ')[0]}`
   if ($.isTile()) {
     await notify('IP 信息', '面板', '查询完成')
   } else if (!$.isPanel()) {
