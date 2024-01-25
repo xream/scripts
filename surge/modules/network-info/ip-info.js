@@ -46,7 +46,9 @@ let content = ''
   geo = geo.length > 0 ? `${geo.join('\n')}\n` : ''
   let company = []
   ;['name', 'type'].forEach(key => {
-    company.push(`COMPANY ${key.toUpperCase()}: ${$.lodash_get(info, `company.${key}`) || ' - '}`)
+    company.push(
+      `COMPANY${key === 'name' ? '' : ` ${key.toUpperCase()}`}: ${$.lodash_get(info, `company.${key}`) || ' - '}`
+    )
   })
   company = company.length > 0 ? `${company.join('\n')}\n` : ''
   content = `${geo}${company}${privacy}执行时间: ${new Date().toTimeString().split(' ')[0]}`
