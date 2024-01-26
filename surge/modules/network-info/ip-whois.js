@@ -23,8 +23,8 @@ let content = ''
   //     LAN_IP = ` 🅻 ${primaryAddress}`
   //   }
   // }
-  const { PROXY_IP } = await getProxyInfo()
-  let info = await getInfo(PROXY_IP)
+  // const { PROXY_IP } = await getProxyInfo()
+  let info = await getInfo()
   $.log($.toStr(info))
   const ip = $.lodash_get(info, 'ip') || ' - '
   title = `${ip}`
