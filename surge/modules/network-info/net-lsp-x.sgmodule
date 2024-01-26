@@ -1,5 +1,5 @@
 #!name=网络信息
-#!desc=国内外, IPv6, 入口, 落地, 策略, 代理链. 自己设置对应域名的分流
+#!desc=国内外 IP, 运营商, 位置, 策略; IPv6; 入口落地; 隐私; LAN. 自己设置对应域名的分流
 #!author=@keywos @xream
 #!arguments=DOMESTIC_IPv4:spcn,DOMESTIC_IPv6:ddnspod,LANDING_IPv4:ipapi,LANDING_IPv6:ipsb,PRIVACY:0,LAN:0,IPv6:0,MASK:0,TIMEOUT:5,ICON:globe.asia.australia,ICON-COLOR:#6699FF
 #!arguments-desc=1 为开启, 0 为关闭\n\nLAN:\n显示 LAN IP\n\nIPv6:\n显示 IPv6 地址\n\nMASK:\n打码 保护隐私\n\nDOMESTIC_IPv4:\n\n国内 IPv4 来源, 可选 spcn, cip\n\nDOMESTIC_IPv6:\n\n国内 IPv6 来源, 可选 ddnspod, neu6\n\nLANDING_IPv4:\n\n落地 IPv4 来源, 可选 ipapi, ipinfo, ipscore, ipwhois\n\nLANDING_IPv6:\n\n落地 IPv6 来源, 可选 ipsb, ident\n\nPRIVACY:\n(当落地为 ipwhois, ipinfo 时)显示 Privacy/Security 等信息\n\nTIMEOUT:\n超时设置(单位: 秒)
