@@ -54,13 +54,15 @@ let content = ''
   }
   let ENTRANCE = ''
   if (IP && IP !== PROXY_IP) {
-    // $.log(`入口 IP: ${IP} 与落地 IP: ${PROXY_IP} 不一致`)
-    let [{ CN_INFO: ENTRANCE_INFO1 = '' } = {}, { PROXY_INFO: ENTRANCE_INFO2 = '' } = {}] = await Promise.all([
-      getDirectInfo(IP),
-      getProxyInfo(IP),
-    ])
+    const delay = parseFloat($.lodash_get(arg, 'ENTRANCE_DELAY') || 0)
+    $.log(`入口 IP: ${IP} 与落地 IP: ${PROXY_IP} 不一致, 等待 ${delay} 秒后查询入口`)
+    if (delay) {
+      await $.wait(1000 * delay)
+    }
+    let [{ CN_INFO: ENTRANCE_INFO1 = '', isCN = false } = {}, { PROXY_INFO: ENTRANCE_INFO2 = '' } = {}] =
+      await Promise.all([getDirectInfo(IP), getProxyInfo(IP)])
     // 国内接口的国外 IP 解析过于离谱 排除掉
-    if (ENTRANCE_INFO1 && ENTRANCE_INFO1.includes('🇨🇳')) {
+    if (ENTRANCE_INFO1 && isCN) {
       ENTRANCE = `入口 IP: ${maskIP(IP) || '-'}\n${maskAddr(ENTRANCE_INFO1)}`
     }
     if (ENTRANCE_INFO2) {
@@ -160,10 +162,12 @@ async function getRequestInfo(regexp) {
 async function getDirectInfo(ip) {
   let CN_IP
   let CN_INFO
+  let isCN
+  const msg = `使用 ${$.lodash_get(arg, 'DOMESTIC_IPv4') || 'spcn'} 查询 ${ip ? ip : '分流'} 信息`
   if ($.lodash_get(arg, 'DOMESTIC_IPv4') == 'cip') {
     try {
       const res = await $.http.get({
-        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 3),
+        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
         url: `http://cip.cc/${ip ? encodeURIComponent(ip) : ''}`,
         headers: { 'User-Agent': 'curl/7.16.3 (powerpc-apple-darwin9.0) libcurl/7.16.3' },
       })
@@ -171,19 +175,20 @@ async function getDirectInfo(ip) {
       // try {
       //   body = JSON.parse(body)
       // } catch (e) {}
+      const addr = body.match(/地址\s*(:|：)\s*(.*)/)[2]
+      isCN = addr.includes('中国')
       CN_IP = ip || body.match(/IP\s*(:|：)\s*(.*?)\s/)[2]
-      CN_INFO = `位置: ${body.match(/地址\s*(:|：)\s*(.*)/)[2].replace(/中国\s*/, '') || ''}\n运营商: ${
+      CN_INFO = `位置: ${addr.replace(/中国\s*/, '') || ''}\n运营商: ${
         body.match(/运营商\s*(:|：)\s*(.*)/)[2].replace(/中国\s*/, '') || ''
       }`
     } catch (e) {
-      $.logErr(e)
-      $.logErr($.toStr(e))
+      $.logErr(`${msg} 发生错误: ${e.message || e}`)
     }
   } else {
     try {
       if (ip) {
         const res = await $.http.get({
-          timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 3),
+          timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
           url: `https://api-v3.${keya}${bay}.cn/ip`,
           params: { ip },
           headers: {
@@ -195,11 +200,13 @@ async function getDirectInfo(ip) {
         try {
           body = JSON.parse(body)
         } catch (e) {}
+        const countryCode = $.lodash_get(body, 'data.countryCode')
+        isCN = countryCode === 'CN'
         CN_IP = ip || $.lodash_get(body, 'data.ip')
         CN_INFO = [
           [
             '位置:',
-            getflag($.lodash_get(body, 'data.countryCode')),
+            getflag(countryCode),
             $.lodash_get(body, 'data.country').replace(/\s*中国\s*/, ''),
             $.lodash_get(body, 'data.province'),
             $.lodash_get(body, 'data.city'),
@@ -215,7 +222,7 @@ async function getDirectInfo(ip) {
           .join('\n')
       } else {
         const res = await $.http.get({
-          timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 3),
+          timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
           url: `https://for${keyb}.${keya}${bay}.cn/api/location/info`,
           headers: {
             'User-Agent':
@@ -226,11 +233,13 @@ async function getDirectInfo(ip) {
         try {
           body = JSON.parse(body)
         } catch (e) {}
+        const countryCode = body.country_code
+        isCN = countryCode === 'CN'
         CN_IP = body.ip
         CN_INFO = [
           [
             '位置:',
-            getflag(body.country_code),
+            getflag(countryCode),
             body.country.replace(/\s*中国\s*/, ''),
             body.province,
             body.city,
@@ -244,19 +253,18 @@ async function getDirectInfo(ip) {
           .join('\n')
       }
     } catch (e) {
-      $.logErr(e)
-      $.logErr($.toStr(e))
+      $.logErr(`${msg} 发生错误: ${e.message || e}`)
     }
   }
-  return { CN_IP, CN_INFO }
+  return { CN_IP, CN_INFO, isCN }
 }
 async function getDirectInfoIPv6() {
   let CN_IPv6
-
+  const msg = `使用 ${$.lodash_get(arg, 'DOMESTIC_IPv6') || 'ddnspod'} 查询 IPv6 分流信息`
   if ($.lodash_get(arg, 'DOMESTIC_IPv6') == 'neu6') {
     try {
       const res = await $.http.get({
-        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 3),
+        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
         url: `https://speed.neu6.edu.cn/getIP.php`,
         headers: {
           'User-Agent':
@@ -266,13 +274,12 @@ async function getDirectInfoIPv6() {
       let body = String($.lodash_get(res, 'body'))
       CN_IPv6 = body.trim()
     } catch (e) {
-      $.logErr(e)
-      $.logErr($.toStr(e))
+      $.logErr(`${msg} 发生错误: ${e.message || e}`)
     }
   } else {
     try {
       const res = await $.http.get({
-        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 3),
+        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
         url: `https://ipv6.ddnspod.com`,
         headers: {
           'User-Agent':
@@ -282,8 +289,7 @@ async function getDirectInfoIPv6() {
       let body = String($.lodash_get(res, 'body'))
       CN_IPv6 = body.trim()
     } catch (e) {
-      $.logErr(e)
-      $.logErr($.toStr(e))
+      $.logErr(`${msg} 发生错误: ${e.message || e}`)
     }
   }
   return { CN_IPv6 }
@@ -293,10 +299,12 @@ async function getProxyInfo(ip) {
   let PROXY_INFO
   let PROXY_PRIVACY
 
+  const msg = `使用 ${$.lodash_get(arg, 'LANDING_IPv4') || 'ipapi'} 查询 ${ip ? ip : '分流'} 信息`
+
   if ($.lodash_get(arg, 'LANDING_IPv4') == 'ipinfo') {
     try {
       const res = await $.http.get({
-        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 3),
+        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
         url: `https://ipinfo.io/widget/${ip ? encodeURIComponent(ip) : ''}`,
         headers: {
           Referer: 'https://ipinfo.io/',
@@ -335,13 +343,12 @@ async function getProxyInfo(ip) {
         }
       }
     } catch (e) {
-      $.logErr(e)
-      $.logErr($.toStr(e))
+      $.logErr(`${msg} 发生错误: ${e.message || e}`)
     }
   } else if ($.lodash_get(arg, 'LANDING_IPv4') == 'ipscore') {
     try {
       const res = await $.http.get({
-        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 3),
+        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
         url: `https://ip-score.com/json`,
         params: { ip },
         headers: {
@@ -378,13 +385,12 @@ async function getProxyInfo(ip) {
         .filter(i => i)
         .join('\n')
     } catch (e) {
-      $.logErr(e)
-      $.logErr($.toStr(e))
+      $.logErr(`${msg} 发生错误: ${e.message || e}`)
     }
   } else if ($.lodash_get(arg, 'LANDING_IPv4') == 'ipwhois') {
     try {
       const res = await $.http.get({
-        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 3),
+        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
         url: `https://ipwhois.app/widget.php`,
         params: {
           lang: 'zh-CN',
@@ -438,15 +444,14 @@ async function getProxyInfo(ip) {
         }
       }
     } catch (e) {
-      $.logErr(e)
-      $.logErr($.toStr(e))
+      $.logErr(`${msg} 发生错误: ${e.message || e}`)
     }
   } else {
     try {
       const p = ip ? `/${encodeURIComponent(ip)}` : ''
       const res = await $.http.get({
-        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 3),
-        url: `http://ip-api.com${p}/json?lang=zh-CN`,
+        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
+        url: `http://ip-api.com/json${p}?lang=zh-CN`,
         headers: {
           'User-Agent':
             'Mozilla/5.0 (iPhone CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1 Edg/109.0.0.0',
@@ -466,8 +471,7 @@ async function getProxyInfo(ip) {
         .filter(i => i)
         .join('\n')
     } catch (e) {
-      $.logErr(e)
-      $.logErr($.toStr(e))
+      $.logErr(`${msg} 发生错误: ${e.message || e}`)
     }
   }
 
@@ -475,11 +479,11 @@ async function getProxyInfo(ip) {
 }
 async function getProxyInfoIPv6() {
   let PROXY_IPv6
-
+  const msg = `使用 ${$.lodash_get(arg, 'LANDING_IPv6') || 'ipsb'} 查询 IPv6 分流信息`
   if ($.lodash_get(arg, 'LANDING_IPv6') == 'ident') {
     try {
       const res = await $.http.get({
-        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 3),
+        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
         url: `https://v6.ident.me`,
         headers: {
           'User-Agent':
@@ -489,13 +493,12 @@ async function getProxyInfoIPv6() {
       let body = String($.lodash_get(res, 'body'))
       PROXY_IPv6 = body.trim()
     } catch (e) {
-      $.logErr(e)
-      $.logErr($.toStr(e))
+      $.logErr(`${msg} 发生错误: ${e.message || e}`)
     }
   } else {
     try {
       const res = await $.http.get({
-        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 3),
+        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
         url: `https://api-ipv6.ip.sb/ip`,
         headers: {
           'User-Agent':
@@ -505,8 +508,7 @@ async function getProxyInfoIPv6() {
       let body = String($.lodash_get(res, 'body'))
       PROXY_IPv6 = body.trim()
     } catch (e) {
-      $.logErr(e)
-      $.logErr($.toStr(e))
+      $.logErr(`${msg} 发生错误: ${e.message || e}`)
     }
   }
 
@@ -558,14 +560,18 @@ async function httpAPI(path = '/v1/requests/recent', method = 'GET', body = null
 }
 
 function getflag(e) {
-  try {
-    const t = e
-      .toUpperCase()
-      .split('')
-      .map(e => 127397 + e.charCodeAt())
-    // return String.fromCodePoint(...t).replace(/🇹🇼/g, '🇨🇳');
-    return String.fromCodePoint(...t).replace(/🇹🇼/g, '🇼🇸')
-  } catch (e) {
+  if ($.lodash_get(arg, 'FLAG') == 1) {
+    try {
+      const t = e
+        .toUpperCase()
+        .split('')
+        .map(e => 127397 + e.charCodeAt())
+      // return String.fromCodePoint(...t).replace(/🇹🇼/g, '🇨🇳');
+      return String.fromCodePoint(...t).replace(/🇹🇼/g, '🇼🇸')
+    } catch (e) {
+      return ''
+    }
+  } else {
     return ''
   }
 }
