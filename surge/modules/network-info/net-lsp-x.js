@@ -1,5 +1,6 @@
 const $ = new Env('network-info')
 
+$.isRequest = () => typeof $request !== 'undefined'
 $.isPanel = () => $.isSurge() && typeof $input != 'undefined' && $.lodash_get($input, 'purpose') === 'panel'
 $.isTile = () => $.isStash() && typeof $script != 'undefined' && $.lodash_get($script, 'type') === 'tile'
 // $.isStashCron = () => $.isStash() && typeof $script != 'undefined' && $.lodash_get($script, 'type') === 'cron'
@@ -8,10 +9,15 @@ let arg
 if (typeof $argument != 'undefined') {
   arg = Object.fromEntries($argument.split('&').map(item => item.split('=')))
 }
+if ($.isRequest()) {
+  // $.log($.toStr($request))
+  arg = { ...arg, ...parseQueryString($request.url) }
+}
 const keya = 'spe'
 const keyb = 'ge'
 const bay = 'edtest'
 
+let result = {}
 let title = ''
 let content = ''
 !(async () => {
@@ -122,7 +128,29 @@ let content = ''
     await notify('网络信息', title, content)
   })
   .finally(async () => {
-    const result = { title, content, ...arg }
+    if ($.isRequest()) {
+      result = {
+        response: {
+          status: 200,
+          body: JSON.stringify(
+            {
+              title,
+              content,
+            },
+            null,
+            2
+          ),
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST,GET,OPTIONS,PUT,DELETE',
+            'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept',
+          },
+        },
+      }
+    } else {
+      result = { title, content, ...arg }
+    }
     $.log($.toStr(result))
     $.done(result)
   })
@@ -151,6 +179,7 @@ async function getRequestInfo(regexp) {
       IP = request.remoteAddress.replace(/\s*\(Proxy\)\s*/, '')
     }
   } catch (e) {
+    $.log(`从最近请求中获取 ${regexp} 发生错误: ${e.message || e}`)
     $.logErr(e)
     $.logErr($.toStr(e))
   }
@@ -608,7 +637,21 @@ function getflag(e) {
     return ''
   }
 }
+// 参数 与其他脚本逻辑一致
+function parseQueryString(url) {
+  const queryString = url.split('?')[1] // 获取查询字符串部分
+  const regex = /([^=&]+)=([^&]*)/g // 匹配键值对的正则表达式
+  const params = {}
+  let match
 
+  while ((match = regex.exec(queryString))) {
+    const key = decodeURIComponent(match[1]) // 解码键
+    const value = decodeURIComponent(match[2]) // 解码值
+    params[key] = value // 将键值对添加到对象中
+  }
+
+  return params
+}
 // 通知
 async function notify(title, subt, desc, opts) {
   if ($.lodash_get(arg, 'notify') == 1) {
