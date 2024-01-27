@@ -96,9 +96,9 @@ let content = ''
     CN_INFO = `\n${CN_INFO}`
   }
   if (PROXY_POLICY === 'DIRECT') {
-    PROXY_POLICY = `代理策略: 直连\n`
+    PROXY_POLICY = `代理策略: 直连`
   } else {
-    PROXY_POLICY = `代理策略: ${maskAddr(PROXY_POLICY) || '-'}\n`
+    PROXY_POLICY = `代理策略: ${maskAddr(PROXY_POLICY) || '-'}`
   }
   if (PROXY_INFO) {
     PROXY_INFO = `\n${PROXY_INFO}`
