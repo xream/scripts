@@ -136,7 +136,7 @@ async function getDirectRequestInfo() {
 }
 async function getProxyRequestInfo() {
   const { PROXY_IP, PROXY_INFO, PROXY_PRIVACY } = await getProxyInfo()
-  const { POLICY, IP } = await getRequestInfo(/ipinfo\.io|ip-score\.com|ipwhois\.app|ip-api\.com/)
+  const { POLICY, IP } = await getRequestInfo(/ipinfo\.io|ip-score\.com|ipwhois\.app|ip-api\.com|api-ipv4\.ip\.sb/)
   return { PROXY_IP, PROXY_INFO, PROXY_PRIVACY, PROXY_POLICY: POLICY, IP }
 }
 async function getRequestInfo(regexp) {
@@ -381,6 +381,39 @@ async function getProxyInfo(ip) {
           .filter(i => i)
           .join(' '),
         ['运营商:', body.isp || body.org || body.asn].filter(i => i).join(' '),
+      ]
+        .filter(i => i)
+        .join('\n')
+    } catch (e) {
+      $.logErr(`${msg} 发生错误: ${e.message || e}`)
+    }
+  } else if ($.lodash_get(arg, 'LANDING_IPv4') == 'ipsb') {
+    try {
+      const res = await $.http.get({
+        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
+        url: `https://api-ipv4.ip.sb/geoip${ip ? `/${encodeURIComponent(ip)}` : ''}`,
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (iPhone CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1 Edg/109.0.0.0',
+        },
+      })
+      let body = String($.lodash_get(res, 'body'))
+      try {
+        body = JSON.parse(body)
+      } catch (e) {}
+      PROXY_IP = ip || $.lodash_get(body, 'ip')
+      PROXY_INFO = [
+        [
+          '位置:',
+          getflag($.lodash_get(body, 'country_code')),
+          $.lodash_get(body, 'country'),
+          $.lodash_get(body, 'region'),
+          $.lodash_get(body, 'city'),
+        ]
+          .filter(i => i)
+          .join(' '),
+
+        ['运营商:', body.isp || body.organization].filter(i => i).join(' '),
       ]
         .filter(i => i)
         .join('\n')
