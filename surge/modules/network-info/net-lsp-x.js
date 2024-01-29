@@ -213,6 +213,76 @@ async function getDirectInfo(ip) {
     } catch (e) {
       $.logErr(`${msg} 发生错误: ${e.message || e}`)
     }
+  } else if (!ip && $.lodash_get(arg, 'DOMESTIC_IPv4') == 'bilibili') {
+    try {
+      const res = await $.http.get({
+        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
+        url: `https://api.bilibili.com/x/web-interface/zone`,
+        // url: `https://api.live.bilibili.com/ip_service/v1/ip_service/get_ip_addr`,
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36 Edg/109.0.1518.14',
+        },
+      })
+      let body = String($.lodash_get(res, 'body'))
+      try {
+        body = JSON.parse(body)
+      } catch (e) {}
+
+      isCN = $.lodash_get(body, 'data.country') === '中国'
+      CN_IP = $.lodash_get(body, 'data.addr')
+      CN_INFO = [
+        [
+          '位置:',
+          isCN ? getflag('CN') : undefined,
+          $.lodash_get(body, 'data.country'),
+          $.lodash_get(body, 'data.province'),
+          $.lodash_get(body, 'data.city'),
+        ]
+          .filter(i => i)
+          .join(' '),
+        ['运营商:', $.lodash_get(body, 'data.isp')].filter(i => i).join(' '),
+      ]
+        .filter(i => i)
+        .join('\n')
+    } catch (e) {
+      $.logErr(`${msg} 发生错误: ${e.message || e}`)
+    }
+  } else if (!ip && $.lodash_get(arg, 'DOMESTIC_IPv4') == '126') {
+    try {
+      const res = await $.http.get({
+        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
+        url: `https://ipservice.ws.126.net/locate/api/getLocByIp`,
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36 Edg/109.0.1518.14',
+        },
+      })
+      let body = String($.lodash_get(res, 'body'))
+      try {
+        body = JSON.parse(body)
+      } catch (e) {}
+
+      const countryCode = $.lodash_get(body, 'result.countrySymbol')
+      isCN = countryCode === 'CN'
+      CN_IP = $.lodash_get(body, 'result.ip')
+      CN_INFO = [
+        [
+          '位置:',
+          getflag(countryCode),
+          $.lodash_get(body, 'result.country'),
+          $.lodash_get(body, 'result.province'),
+          $.lodash_get(body, 'result.city'),
+        ]
+          .filter(i => i)
+          .join(' '),
+        ['运营商:', $.lodash_get(body, 'result.operator')].filter(i => i).join(' '),
+      ]
+        .filter(i => i)
+        .join('\n')
+    } catch (e) {
+      $.logErr(`${msg} 发生错误: ${e.message || e}`)
+    }
   } else {
     try {
       if (ip) {
@@ -285,7 +355,7 @@ async function getDirectInfo(ip) {
       $.logErr(`${msg} 发生错误: ${e.message || e}`)
     }
   }
-  return { CN_IP, CN_INFO, isCN }
+  return { CN_IP, CN_INFO: simplifyAddr(CN_INFO), isCN }
 }
 async function getDirectInfoIPv6() {
   let CN_IPv6
@@ -537,7 +607,7 @@ async function getProxyInfo(ip) {
     }
   }
 
-  return { PROXY_IP, PROXY_INFO, PROXY_PRIVACY }
+  return { PROXY_IP, PROXY_INFO: simplifyAddr(PROXY_INFO), PROXY_PRIVACY }
 }
 async function getProxyInfoIPv6() {
   let PROXY_IPv6
@@ -575,6 +645,13 @@ async function getProxyInfoIPv6() {
   }
 
   return { PROXY_IPv6 }
+}
+function simplifyAddr(addr) {
+  if (!addr) return ''
+  return addr
+    .split(/\n/)
+    .map(i => Array.from(new Set(i.split(/\ +/))).join(' '))
+    .join('\n')
 }
 function maskAddr(addr) {
   if (!addr) return ''
