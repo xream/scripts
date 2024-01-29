@@ -21,9 +21,17 @@ let result = {}
 let title = ''
 let content = ''
 !(async () => {
+  if ($.lodash_get(arg, 'TYPE') === 'EVENT') {
+    const eventDelay = parseFloat($.lodash_get(arg, 'EVENT_DELAY') || 2)
+    $.log(`网络变化, 等待 ${eventDelay} 秒后开始查询`)
+    if (eventDelay) {
+      await $.wait(1000 * eventDelay)
+    }
+  }
   if ($.isTile()) {
     await notify('网络信息', '面板', '开始查询')
   }
+  let SSID = ''
   let LAN = ''
   let LAN_IPv4 = ''
   let LAN_IPv6 = ''
@@ -31,18 +39,33 @@ let content = ''
     $.log($.toStr($network))
     const v4 = $.lodash_get($network, 'v4.primaryAddress')
     const v6 = $.lodash_get($network, 'v6.primaryAddress')
+    if ($.lodash_get(arg, 'SSID') == 1) {
+      SSID = $.lodash_get($network, 'wifi.ssid')
+    }
     if (v4 && $.lodash_get(arg, 'LAN') == 1) {
       LAN_IPv4 = v4
     }
     if (v6 && $.lodash_get(arg, 'LAN') == 1 && $.lodash_get(arg, 'IPv6') == 1) {
       LAN_IPv6 = v6
     }
+  } else if (typeof $config !== 'undefined') {
+    try {
+      let conf = $config.getConfig()
+      $.log(conf)
+      conf = JSON.parse(conf)
+      if ($.lodash_get(arg, 'SSID') == 1) {
+        SSID = $.lodash_get(conf, 'ssid')
+      }
+    } catch (e) {}
   }
   if (LAN_IPv4 || LAN_IPv6) {
     LAN = ['LAN:', LAN_IPv4, maskIP(LAN_IPv6)].filter(i => i).join(' ')
   }
   if (LAN) {
     LAN = `${LAN}\n\n`
+  }
+  if (SSID) {
+    SSID = `SSID: ${SSID}\n\n`
   }
 
   let [
@@ -55,68 +78,105 @@ let content = ''
       ? [getDirectRequestInfo(), getProxyRequestInfo(), getDirectInfoIPv6(), getProxyInfoIPv6()]
       : [getDirectRequestInfo(), getProxyRequestInfo()]
   )
-  if ($.lodash_get(arg, 'PRIVACY') == '1' && PROXY_PRIVACY) {
-    PROXY_PRIVACY = `\n${PROXY_PRIVACY}`
+  let continueFlag = true
+  if ($.lodash_get(arg, 'TYPE') === 'EVENT') {
+    const lastNetworkInfoEvent = $.getjson('lastNetworkInfoEvent')
+    if (
+      CN_IP !== $.lodash_get(lastNetworkInfoEvent, 'CN_IP') ||
+      CN_IPv6 !== $.lodash_get(lastNetworkInfoEvent, 'CN_IPv6') ||
+      PROXY_IP !== $.lodash_get(lastNetworkInfoEvent, 'PROXY_IP') ||
+      PROXY_IPv6 !== $.lodash_get(lastNetworkInfoEvent, 'PROXY_IPv6')
+    ) {
+      // 有任何一项不同 都继续
+      $.setjson({ CN_IP, PROXY_IP, CN_IPv6, PROXY_IPv6 }, 'lastNetworkInfoEvent')
+    } else {
+      // 否则 直接结束
+      $.log('网络信息未发生变化, 不继续')
+      continueFlag = false
+    }
   }
-  let ENTRANCE = ''
-  if (IP && IP !== PROXY_IP) {
-    const delay = parseFloat($.lodash_get(arg, 'ENTRANCE_DELAY') || 0)
-    $.log(`入口 IP: ${IP} 与落地 IP: ${PROXY_IP} 不一致, 等待 ${delay} 秒后查询入口`)
-    if (delay) {
-      await $.wait(1000 * delay)
+  if (continueFlag) {
+    if ($.lodash_get(arg, 'PRIVACY') == '1' && PROXY_PRIVACY) {
+      PROXY_PRIVACY = `\n${PROXY_PRIVACY}`
     }
-    let [{ CN_INFO: ENTRANCE_INFO1 = '', isCN = false } = {}, { PROXY_INFO: ENTRANCE_INFO2 = '' } = {}] =
-      await Promise.all([getDirectInfo(IP), getProxyInfo(IP)])
-    // 国内接口的国外 IP 解析过于离谱 排除掉
-    if (ENTRANCE_INFO1 && isCN) {
-      ENTRANCE = `入口 IP: ${maskIP(IP) || '-'}\n${maskAddr(ENTRANCE_INFO1)}`
-    }
-    if (ENTRANCE_INFO2) {
-      if (ENTRANCE) {
-        ENTRANCE = `${ENTRANCE.replace('位置:', '位置¹:').replace('运营商:', '运营商¹:')}\n${maskAddr(
-          ENTRANCE_INFO2.replace('位置:', '位置²:').replace('运营商:', '运营商²:')
-        )}`
-      } else {
-        ENTRANCE = `入口 IP: ${maskIP(IP) || '-'}\n${maskAddr(ENTRANCE_INFO2)}`
+    let ENTRANCE = ''
+    if (IP && IP !== PROXY_IP) {
+      const entranceDelay = parseFloat($.lodash_get(arg, 'ENTRANCE_DELAY') || 0)
+      $.log(`入口 IP: ${IP} 与落地 IP: ${PROXY_IP} 不一致, 等待 ${entranceDelay} 秒后查询入口`)
+      if (entranceDelay) {
+        await $.wait(1000 * entranceDelay)
+      }
+      let [{ CN_INFO: ENTRANCE_INFO1 = '', isCN = false } = {}, { PROXY_INFO: ENTRANCE_INFO2 = '' } = {}] =
+        await Promise.all([getDirectInfo(IP), getProxyInfo(IP)])
+      // 国内接口的国外 IP 解析过于离谱 排除掉
+      if (ENTRANCE_INFO1 && isCN) {
+        ENTRANCE = `入口 IP: ${maskIP(IP) || '-'}\n${maskAddr(ENTRANCE_INFO1)}`
+      }
+      if (ENTRANCE_INFO2) {
+        if (ENTRANCE) {
+          ENTRANCE = `${ENTRANCE.replace('位置:', '位置¹:').replace('运营商:', '运营商¹:')}\n${maskAddr(
+            ENTRANCE_INFO2.replace('位置:', '位置²:').replace('运营商:', '运营商²:')
+          )}`
+        } else {
+          ENTRANCE = `入口 IP: ${maskIP(IP) || '-'}\n${maskAddr(ENTRANCE_INFO2)}`
+        }
       }
     }
-  }
-  if (ENTRANCE) {
-    ENTRANCE = `${ENTRANCE}\n\n`
-  }
-  if (/^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){4}$/.test(CN_IPv6)) {
-    CN_IPv6 = ''
-  }
-  if (CN_IPv6 && $.lodash_get(arg, 'IPv6') == 1) {
-    CN_IPv6 = `\n${maskIP(CN_IPv6)}`
-  }
-  if (PROXY_IPv6 && $.lodash_get(arg, 'IPv6') == 1) {
-    PROXY_IPv6 = `\n${maskIP(PROXY_IPv6)}`
-  }
-  if (CN_POLICY === 'DIRECT') {
-    CN_POLICY = ``
-  } else {
-    CN_POLICY = `策略: ${maskAddr(CN_POLICY) || '-'}\n`
-  }
-  if (CN_INFO) {
-    CN_INFO = `\n${CN_INFO}`
-  }
-  if (PROXY_POLICY === 'DIRECT') {
-    PROXY_POLICY = `代理策略: 直连`
-  } else {
-    PROXY_POLICY = `代理策略: ${maskAddr(PROXY_POLICY) || '-'}`
-  }
-  if (PROXY_INFO) {
-    PROXY_INFO = `\n${PROXY_INFO}`
-  }
-  title = `${PROXY_POLICY}`
-  content = `${LAN}${CN_POLICY}IP: ${maskIP(CN_IP) || '-'}${CN_IPv6}${maskAddr(CN_INFO)}\n\n${ENTRANCE}落地 IP: ${
-    maskIP(PROXY_IP) || '-'
-  }${PROXY_IPv6}${maskAddr(PROXY_INFO)}${PROXY_PRIVACY}\n执行时间: ${new Date().toTimeString().split(' ')[0]}`
-  if ($.isTile()) {
-    await notify('网络信息', '面板', '查询完成')
-  } else if (!$.isPanel()) {
-    await notify('网络信息', title, content)
+    if (ENTRANCE) {
+      ENTRANCE = `${ENTRANCE}\n\n`
+    }
+    if (/^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){4}$/.test(CN_IPv6)) {
+      CN_IPv6 = ''
+    }
+    if (CN_IPv6 && $.lodash_get(arg, 'IPv6') == 1) {
+      CN_IPv6 = `\n${maskIP(CN_IPv6)}`
+    }
+    if (PROXY_IPv6 && $.lodash_get(arg, 'IPv6') == 1) {
+      PROXY_IPv6 = `\n${maskIP(PROXY_IPv6)}`
+    }
+    if (CN_POLICY === 'DIRECT') {
+      CN_POLICY = ``
+    } else {
+      CN_POLICY = `策略: ${maskAddr(CN_POLICY) || '-'}\n`
+    }
+    if (CN_INFO) {
+      CN_INFO = `\n${CN_INFO}`
+    }
+    if (PROXY_POLICY === 'DIRECT') {
+      PROXY_POLICY = `代理策略: 直连`
+    } else {
+      PROXY_POLICY = `代理策略: ${maskAddr(PROXY_POLICY) || '-'}`
+    }
+    if (PROXY_INFO) {
+      PROXY_INFO = `\n${PROXY_INFO}`
+    }
+    title = `${PROXY_POLICY}`
+    content = `${SSID}${LAN}${CN_POLICY}IP: ${maskIP(CN_IP) || '-'}${CN_IPv6}${maskAddr(
+      CN_INFO
+    )}\n\n${ENTRANCE}落地 IP: ${maskIP(PROXY_IP) || '-'}${PROXY_IPv6}${maskAddr(
+      PROXY_INFO
+    )}${PROXY_PRIVACY}\n执行时间: ${new Date().toTimeString().split(' ')[0]}`
+    if ($.isTile()) {
+      await notify('网络信息', '面板', '查询完成')
+    } else if (!$.isPanel()) {
+      if ($.lodash_get(arg, 'TYPE') === 'EVENT') {
+        await notify(
+          `🄳 ${maskIP(CN_IP) || '-'} 🅿 ${maskIP(PROXY_IP) || '-'}`.replace(/\n+/g, '\n').replace(/\ +/g, ' ').trim(),
+          `${maskAddr(CN_INFO.replace(/(位置|运营商).*?:/g, '').replace(/\n/g, ' '))}`
+            .replace(/\n+/g, '\n')
+            .replace(/\ +/g, ' ')
+            .trim(),
+          `${maskAddr(PROXY_INFO.replace(/(位置|运营商).*?:/g, '').replace(/\n/g, ' '))}${
+            CN_IPv6 ? `\n🄳 ${CN_IPv6.replace(/\n+/g, '')}` : ''
+          }${PROXY_IPv6 ? `\n🅿 ${PROXY_IPv6.replace(/\n+/g, '')}` : ''}${SSID ? `\n${SSID}` : SSID}${LAN}`
+            .replace(/\n+/g, '\n')
+            .replace(/\ +/g, ' ')
+            .trim()
+        )
+      } else {
+        await notify('网络信息', title, content)
+      }
+    }
   }
 })()
   .catch(async e => {
@@ -733,7 +793,7 @@ function parseQueryString(url) {
 }
 // 通知
 async function notify(title, subt, desc, opts) {
-  if ($.lodash_get(arg, 'notify') == 1) {
+  if ($.lodash_get(arg, 'TYPE') === 'EVENT' || $.lodash_get(arg, 'notify') == 1) {
     $.msg(title, subt, desc, opts)
   } else {
     $.log('🔕', title, subt, desc, opts)
