@@ -158,7 +158,9 @@ let content = ''
 async function getDirectRequestInfo() {
   const { CN_IP, CN_INFO } = await getDirectInfo()
   const { POLICY } = await getRequestInfo(
-    new RegExp(`cip\\.cc|for${keyb}\\.${keya}${bay}\\.cn|api-v3\\.${keya}${bay}\\.cn`)
+    new RegExp(
+      `cip\\.cc|for${keyb}\\.${keya}${bay}\\.cn|api-v3\\.${keya}${bay}\\.cn|ipservice\\.ws\\.126\\.net|api\\.bilibili\\.com|api\\.live\\.bilibili\\.com`
+    )
   )
   return { CN_IP, CN_INFO, CN_POLICY: POLICY }
 }
