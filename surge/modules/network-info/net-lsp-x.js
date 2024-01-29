@@ -22,7 +22,7 @@ let title = ''
 let content = ''
 !(async () => {
   if ($.lodash_get(arg, 'TYPE') === 'EVENT') {
-    const eventDelay = parseFloat($.lodash_get(arg, 'EVENT_DELAY') || 2)
+    const eventDelay = parseFloat($.lodash_get(arg, 'EVENT_DELAY') || 3)
     $.log(`网络变化, 等待 ${eventDelay} 秒后开始查询`)
     if (eventDelay) {
       await $.wait(1000 * eventDelay)
