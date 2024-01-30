@@ -263,15 +263,30 @@ async function getDirectInfo(ip) {
         headers: { 'User-Agent': 'curl/7.16.3 (powerpc-apple-darwin9.0) libcurl/7.16.3' },
       })
       let body = String($.lodash_get(res, 'body'))
-      // try {
-      //   body = JSON.parse(body)
-      // } catch (e) {}
       const addr = body.match(/地址\s*(:|：)\s*(.*)/)[2]
       isCN = addr.includes('中国')
       CN_IP = ip || body.match(/IP\s*(:|：)\s*(.*?)\s/)[2]
-      CN_INFO = `位置: ${addr.replace(/中国\s*/, '') || ''}\n运营商: ${
-        body.match(/运营商\s*(:|：)\s*(.*)/)[2].replace(/中国\s*/, '') || ''
-      }`
+      CN_INFO = [
+        ['位置:', isCN ? getflag('CN') : undefined, addr.replace(/中国\s*/, '') || ''].filter(i => i).join(' '),
+        ['运营商:', body.match(/运营商\s*(:|：)\s*(.*)/)[2].replace(/中国\s*/, '') || ''].filter(i => i).join(' '),
+      ]
+        .filter(i => i)
+        .join('\n')
+    } catch (e) {
+      $.logErr(`${msg} 发生错误: ${e.message || e}`)
+    }
+  } else if (!ip && $.lodash_get(arg, 'DOMESTIC_IPv4') == 'ipip') {
+    try {
+      const res = await $.http.get({
+        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
+        url: `https://myip.ipip.net`,
+        headers: { 'User-Agent': 'curl/7.16.3 (powerpc-apple-darwin9.0) libcurl/7.16.3' },
+      })
+      let body = String($.lodash_get(res, 'body'))
+      CN_IP = body.match(/IP\s*(:|：)\s*(.*?)\s/)[2]
+      let info = body.match(/来自于\s*(:|：)\s*(.*)/)[2]
+      isCN = info.startsWith('中国')
+      CN_INFO = ['位置:', isCN ? getflag('CN') : undefined, info.replace(/中国\s*/, '')].filter(i => i).join(' ')
     } catch (e) {
       $.logErr(`${msg} 发生错误: ${e.message || e}`)
     }
