@@ -219,7 +219,7 @@ async function getDirectRequestInfo() {
   const { CN_IP, CN_INFO } = await getDirectInfo()
   const { POLICY } = await getRequestInfo(
     new RegExp(
-      `cip\\.cc|for${keyb}\\.${keya}${bay}\\.cn|api-v3\\.${keya}${bay}\\.cn|ipservice\\.ws\\.126\\.net|api\\.bilibili\\.com|api\\.live\\.bilibili\\.com`
+      `cip\\.cc|for${keyb}\\.${keya}${bay}\\.cn|api-v3\\.${keya}${bay}\\.cn|ipservice\\.ws\\.126\\.net|api\\.bilibili\\.com|api\\.live\\.bilibili\\.com|myip\\.ipip\\.net|ip\\.ip233\\.cn`
     )
   )
   return { CN_IP, CN_INFO, CN_POLICY: POLICY }
@@ -357,6 +357,31 @@ async function getDirectInfo(ip) {
       ]
         .filter(i => i)
         .join('\n')
+    } catch (e) {
+      $.logErr(`${msg} 发生错误: ${e.message || e}`)
+    }
+  } else if (!ip && $.lodash_get(arg, 'DOMESTIC_IPv4') == 'ip233') {
+    try {
+      const res = await $.http.get({
+        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
+        url: `https://ip.ip233.cn/ip`,
+        headers: {
+          Referer: 'https://ip233.cn/',
+          'User-Agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0',
+        },
+      })
+      let body = String($.lodash_get(res, 'body'))
+      try {
+        body = JSON.parse(body)
+      } catch (e) {}
+
+      const countryCode = $.lodash_get(body, 'country')
+      isCN = countryCode === 'CN'
+      CN_IP = $.lodash_get(body, 'ip')
+      CN_INFO = ['位置:', getflag(countryCode), $.lodash_get(body, 'desc').replace(/中国\s*/, '')]
+        .filter(i => i)
+        .join(' ')
     } catch (e) {
       $.logErr(`${msg} 发生错误: ${e.message || e}`)
     }
