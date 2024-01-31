@@ -21,6 +21,8 @@ if (isRequest()) {
 
 const keya = 'spe'
 const keyb = 'ge'
+const keyc = 'pin'
+const keyd = 'gan'
 const bay = 'edtest'
 
 let result = {}
@@ -67,8 +69,12 @@ let content = ''
   } else if (typeof $environment !== 'undefined') {
     try {
       $.log($.toStr($environment))
-      if ($.lodash_get(arg, 'LAN') == 1) {
-        // QX 给的是这个
+      const version = $.lodash_get($environment, 'version')
+      const os = version?.split(' ')?.[0]
+      // QX 上 macOS/iOS 不一致
+      if (os !== 'macOS' && $.lodash_get(arg, 'SSID') == 1) {
+        SSID = $.lodash_get($environment, 'ssid')
+      } else if (os === 'macOS' && $.lodash_get(arg, 'LAN') == 1) {
         LAN_IPv4 = $.lodash_get($environment, 'ssid')
       }
     } catch (e) {}
@@ -82,7 +88,7 @@ let content = ''
   if (SSID) {
     SSID = `SSID: ${SSID}\n\n`
   }
-
+  let { PROXIES = [] } = await getProxies()
   let [
     { CN_IP = '', CN_INFO = '', CN_POLICY = '' } = {},
     { PROXY_IP = '', PROXY_INFO = '', PROXY_PRIVACY = '', PROXY_POLICY = '', IP = '' } = {},
@@ -91,8 +97,14 @@ let content = ''
     { PROXY_IPv6 = '' } = {},
   ] = await Promise.all(
     $.lodash_get(arg, 'IPv6') == 1
-      ? [getDirectRequestInfo(), getProxyRequestInfo(), getEntranceInfo(), getDirectInfoIPv6(), getProxyInfoIPv6()]
-      : [getDirectRequestInfo(), getProxyRequestInfo(), getEntranceInfo()]
+      ? [
+          getDirectRequestInfo({ PROXIES }),
+          getProxyRequestInfo({ PROXIES }),
+          getEntranceInfo(),
+          getDirectInfoIPv6(),
+          getProxyInfoIPv6(),
+        ]
+      : [getDirectRequestInfo({ PROXIES }), getProxyRequestInfo({ PROXIES }), getEntranceInfo()]
   )
   let continueFlag = true
   if ($.lodash_get(arg, 'TYPE') === 'EVENT') {
@@ -117,6 +129,13 @@ let content = ''
     }
     let ENTRANCE = ''
     ENTRANCE_IP = IP || ENTRANCE_IP
+    if (ENTRANCE_IP) {
+      const { IP: resolvedIP } = await resolveDomain(ENTRANCE_IP)
+      if (resolvedIP) {
+        $.log(`入口域名解析: ${ENTRANCE_IP} ➟ ${resolvedIP}`)
+        ENTRANCE_IP = resolvedIP
+      }
+    }
     if (ENTRANCE_IP && ENTRANCE_IP !== PROXY_IP) {
       const entranceDelay = parseFloat($.lodash_get(arg, 'ENTRANCE_DELAY') || 0)
       $.log(`入口: ${ENTRANCE_IP} 与落地 IP: ${PROXY_IP} 不一致, 等待 ${entranceDelay} 秒后查询入口`)
@@ -151,7 +170,7 @@ let content = ''
     if (PROXY_IPv6 && $.lodash_get(arg, 'IPv6') == 1) {
       PROXY_IPv6 = `\n${maskIP(PROXY_IPv6)}`
     }
-    if ($.isSurge()) {
+    if ($.isSurge() || $.isStash()) {
       if (CN_POLICY === 'DIRECT') {
         CN_POLICY = ``
       } else {
@@ -162,7 +181,7 @@ let content = ''
     if (CN_INFO) {
       CN_INFO = `\n${CN_INFO}`
     }
-    if ($.isSurge()) {
+    if ($.isSurge() || $.isStash()) {
       if (PROXY_POLICY === 'DIRECT') {
         PROXY_POLICY = `代理策略: 直连`
       } else {
@@ -176,9 +195,10 @@ let content = ''
     title = `${PROXY_POLICY}`
     content = `${SSID}${LAN}${CN_POLICY}IP: ${maskIP(CN_IP) || '-'}${CN_IPv6}${maskAddr(
       CN_INFO
-    )}\n\n${ENTRANCE}落地 IP: ${maskIP(PROXY_IP) || '-'}${PROXY_IPv6}${maskAddr(
-      PROXY_INFO
-    )}${PROXY_PRIVACY}\n执行时间: ${new Date().toTimeString().split(' ')[0]}`
+    )}\n\n${ENTRANCE}落地 IP: ${maskIP(PROXY_IP) || '-'}${PROXY_IPv6}${maskAddr(PROXY_INFO)}${PROXY_PRIVACY}`
+    if (!isInteraction()) {
+      content = `${content}\n执行时间: ${new Date().toTimeString().split(' ')[0]}`
+    }
 
     title = title || '网络信息 𝕏'
     if (isTile()) {
@@ -193,7 +213,7 @@ let content = ''
             .trim(),
           `${maskAddr(PROXY_INFO.replace(/(位置|运营商).*?:/g, '').replace(/\n/g, ' '))}${
             CN_IPv6 ? `\n🄳 ${CN_IPv6.replace(/\n+/g, '')}` : ''
-          }${PROXY_IPv6 ? `\n🅿 ${PROXY_IPv6.replace(/\n+/g, '')}` : ''}${SSID ? `\n${SSID}` : SSID}${LAN}`
+          }${PROXY_IPv6 ? `\n🅿 ${PROXY_IPv6.replace(/\n+/g, '')}` : ''}${SSID ? `\n${SSID}` : '\n'}${LAN}`
             .replace(/\n+/g, '\n')
             .replace(/\ +/g, ' ')
             .trim()
@@ -240,7 +260,9 @@ let content = ''
     if (isInteraction()) {
       $.done({
         title,
-        htmlMessage: `<div style="font-family: -apple-system">${content.replace(/\n/g, '<br/>')}</div>`,
+        htmlMessage: `<div style="font-family: -apple-system; font-size: large">${content
+          .replace(/^(.*?):/gim, '<span style="font-weight: bold">$1</span>:')
+          .replace(/\n/g, '<br/>')}</div>`,
       })
     } else {
       $.done(result)
@@ -263,32 +285,37 @@ async function getEntranceInfo() {
         ENTRANCE_IP = $.lodash_get($environment, 'params.nodeInfo.address')
       }
     } catch (e) {
-      $.log(`获取入口信息 发生错误: ${e.message || e}`)
+      $.logErr(`获取入口信息 发生错误: ${e.message || e}`)
       $.logErr(e)
       $.logErr($.toStr(e))
     }
   }
   return { ENTRANCE_IP }
 }
-async function getDirectRequestInfo() {
+async function getDirectRequestInfo({ PROXIES = [] } = {}) {
   const { CN_IP, CN_INFO } = await getDirectInfo()
   const { POLICY } = await getRequestInfo(
     new RegExp(
-      `cip\\.cc|for${keyb}\\.${keya}${bay}\\.cn|api-v3\\.${keya}${bay}\\.cn|ipservice\\.ws\\.126\\.net|api\\.bilibili\\.com|api\\.live\\.bilibili\\.com|myip\\.ipip\\.net|ip\\.ip233\\.cn`
-    )
+      `cip\\.cc|for${keyb}\\.${keya}${bay}\\.cn|rmb\\.${keyc}${keyd}\\.com\\.cn|api-v3\\.${keya}${bay}\\.cn|ipservice\\.ws\\.126\\.net|api\\.bilibili\\.com|api\\.live\\.bilibili\\.com|myip\\.ipip\\.net|ip\\.ip233\\.cn`
+    ),
+    PROXIES
   )
   return { CN_IP, CN_INFO, CN_POLICY: POLICY }
 }
-async function getProxyRequestInfo() {
+async function getProxyRequestInfo({ PROXIES = [] } = {}) {
   const { PROXY_IP, PROXY_INFO, PROXY_PRIVACY } = await getProxyInfo()
-  const { POLICY, IP } = await getRequestInfo(/ipinfo\.io|ip-score\.com|ipwhois\.app|ip-api\.com|api-ipv4\.ip\.sb/)
+  const { POLICY, IP } = await getRequestInfo(
+    /ipinfo\.io|ip-score\.com|ipwhois\.app|ip-api\.com|api-ipv4\.ip\.sb/,
+    PROXIES
+  )
   return { PROXY_IP, PROXY_INFO, PROXY_PRIVACY, PROXY_POLICY: POLICY, IP }
 }
-async function getRequestInfo(regexp) {
+async function getRequestInfo(regexp, PROXIES = []) {
   let POLICY = ''
   let IP = ''
-  if ($.isSurge()) {
-    try {
+
+  try {
+    if ($.isSurge()) {
       const { requests } = await httpAPI('/v1/requests/recent', 'GET')
       const request = requests.slice(0, 10).find(i => regexp.test(i.URL))
       // $.log('recent request', $.toStr(request))
@@ -296,12 +323,33 @@ async function getRequestInfo(regexp) {
       if (/\(Proxy\)/.test(request.remoteAddress)) {
         IP = request.remoteAddress.replace(/\s*\(Proxy\)\s*/, '')
       }
-    } catch (e) {
-      $.log(`从最近请求中获取 ${regexp} 发生错误: ${e.message || e}`)
-      $.logErr(e)
-      $.logErr($.toStr(e))
+    } else if ($.isStash()) {
+      const res = await $.http.get({
+        url: `http://127.0.0.1:9090/connections`,
+      })
+
+      let body = String($.lodash_get(res, 'body') || $.lodash_get(res, 'rawBody'))
+      try {
+        body = JSON.parse(body)
+      } catch (e) {}
+      const connections = $.lodash_get(body, 'connections') || []
+
+      const connection =
+        connections.slice(0, 10).find(i => {
+          const dest = $.lodash_get(i, 'metadata.host') || $.lodash_get(i, 'metadata.destinationIP')
+          return regexp.test(dest)
+        }) || {}
+      const chain = $.lodash_get(connection, 'metadata.chain') || []
+      const proxy = chain[0]
+      POLICY = proxy // chain.reverse().join(' ➟ ')
+      IP = PROXIES?.[proxy]?.match(/^(.*?):\d+$/)?.[1]
     }
+  } catch (e) {
+    $.logErr(`从最近请求中获取 ${regexp} 发生错误: ${e.message || e}`)
+    $.logErr(e)
+    $.logErr($.toStr(e))
   }
+
   return {
     POLICY,
     IP,
@@ -315,7 +363,6 @@ async function getDirectInfo(ip) {
   if ($.lodash_get(arg, 'DOMESTIC_IPv4') == 'cip') {
     try {
       const res = await http({
-        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
         url: `http://cip.cc/${ip ? encodeURIComponent(ip) : ''}`,
         headers: { 'User-Agent': 'curl/7.16.3 (powerpc-apple-darwin9.0) libcurl/7.16.3' },
       })
@@ -335,7 +382,6 @@ async function getDirectInfo(ip) {
   } else if (!ip && $.lodash_get(arg, 'DOMESTIC_IPv4') == 'ipip') {
     try {
       const res = await http({
-        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
         url: `https://myip.ipip.net`,
         headers: { 'User-Agent': 'curl/7.16.3 (powerpc-apple-darwin9.0) libcurl/7.16.3' },
       })
@@ -350,7 +396,6 @@ async function getDirectInfo(ip) {
   } else if (!ip && $.lodash_get(arg, 'DOMESTIC_IPv4') == 'bilibili') {
     try {
       const res = await http({
-        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
         url: `https://api.bilibili.com/x/web-interface/zone`,
         // url: `https://api.live.bilibili.com/ip_service/v1/ip_service/get_ip_addr`,
         headers: {
@@ -385,7 +430,6 @@ async function getDirectInfo(ip) {
   } else if (!ip && $.lodash_get(arg, 'DOMESTIC_IPv4') == '126') {
     try {
       const res = await http({
-        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
         url: `https://ipservice.ws.126.net/locate/api/getLocByIp`,
         headers: {
           'User-Agent':
@@ -420,7 +464,6 @@ async function getDirectInfo(ip) {
   } else if (!ip && $.lodash_get(arg, 'DOMESTIC_IPv4') == 'ip233') {
     try {
       const res = await http({
-        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
         url: `https://ip.ip233.cn/ip`,
         headers: {
           Referer: 'https://ip233.cn/',
@@ -442,11 +485,45 @@ async function getDirectInfo(ip) {
     } catch (e) {
       $.logErr(`${msg} 发生错误: ${e.message || e}`)
     }
+  } else if ($.lodash_get(arg, 'DOMESTIC_IPv4') == 'pingan') {
+    try {
+      const res = await http({
+        url: `https://rmb.${keyc}${keyd}.com.cn/itam/mas/linden/ip/request`,
+        params: { ip },
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0',
+        },
+      })
+      let body = String($.lodash_get(res, 'body'))
+      try {
+        body = JSON.parse(body)
+      } catch (e) {}
+
+      const countryCode = $.lodash_get(body, 'data.countryIsoCode')
+      isCN = countryCode === 'CN'
+      CN_IP = ip || $.lodash_get(body, 'data.ip')
+      CN_INFO = [
+        [
+          '位置:',
+          getflag(countryCode),
+          $.lodash_get(body, 'data.country').replace(/\s*中国\s*/, ''),
+          $.lodash_get(body, 'data.region'),
+          $.lodash_get(body, 'data.city'),
+        ]
+          .filter(i => i)
+          .join(' '),
+        ['运营商:', $.lodash_get(body, 'data.isp') || $.lodash_get(body, 'data.isp') || '-'].filter(i => i).join(' '),
+      ]
+        .filter(i => i)
+        .join('\n')
+    } catch (e) {
+      $.logErr(`${msg} 发生错误: ${e.message || e}`)
+    }
   } else {
     try {
       if (ip) {
         const res = await http({
-          timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
           url: `https://api-v3.${keya}${bay}.cn/ip`,
           params: { ip },
           headers: {
@@ -480,7 +557,6 @@ async function getDirectInfo(ip) {
           .join('\n')
       } else {
         const res = await http({
-          timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
           url: `https://for${keyb}.${keya}${bay}.cn/api/location/info`,
           headers: {
             'User-Agent':
@@ -522,7 +598,6 @@ async function getDirectInfoIPv6() {
   if ($.lodash_get(arg, 'DOMESTIC_IPv6') == 'neu6') {
     try {
       const res = await http({
-        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
         url: `https://speed.neu6.edu.cn/getIP.php`,
         headers: {
           'User-Agent':
@@ -537,7 +612,6 @@ async function getDirectInfoIPv6() {
   } else {
     try {
       const res = await http({
-        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
         url: `https://ipv6.ddnspod.com`,
         headers: {
           'User-Agent':
@@ -563,7 +637,7 @@ async function getProxyInfo(ip) {
     try {
       const res = await http({
         ...(ip ? {} : getNodeOpt()),
-        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
+
         url: `https://ipinfo.io/widget/${ip ? encodeURIComponent(ip) : ''}`,
         headers: {
           Referer: 'https://ipinfo.io/',
@@ -608,7 +682,7 @@ async function getProxyInfo(ip) {
     try {
       const res = await http({
         ...(ip ? {} : getNodeOpt()),
-        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
+
         url: `https://ip-score.com/json`,
         params: { ip },
         headers: {
@@ -651,7 +725,7 @@ async function getProxyInfo(ip) {
     try {
       const res = await http({
         ...(ip ? {} : getNodeOpt()),
-        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
+
         url: `https://api-ipv4.ip.sb/geoip${ip ? `/${encodeURIComponent(ip)}` : ''}`,
         headers: {
           'User-Agent':
@@ -685,7 +759,7 @@ async function getProxyInfo(ip) {
     try {
       const res = await http({
         ...(ip ? {} : getNodeOpt()),
-        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
+
         url: `https://ipwhois.app/widget.php`,
         params: {
           lang: 'zh-CN',
@@ -746,7 +820,7 @@ async function getProxyInfo(ip) {
       const p = ip ? `/${encodeURIComponent(ip)}` : ''
       const res = await http({
         ...(ip ? {} : getNodeOpt()),
-        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
+
         url: `http://ip-api.com/json${p}?lang=zh-CN`,
         headers: {
           'User-Agent':
@@ -780,7 +854,7 @@ async function getProxyInfoIPv6(ip) {
     try {
       const res = await http({
         ...(ip ? {} : getNodeOpt()),
-        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
+
         url: `https://v6.ident.me`,
         headers: {
           'User-Agent':
@@ -796,7 +870,7 @@ async function getProxyInfoIPv6(ip) {
     try {
       const res = await http({
         ...(ip ? {} : getNodeOpt()),
-        timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
+
         url: `https://api-ipv6.ip.sb/ip`,
         headers: {
           'User-Agent':
@@ -888,6 +962,177 @@ function parseQueryString(url) {
 
   return params
 }
+const DOMAIN_RESOLVERS = {
+  google: async function (domain, type) {
+    const resp = await http({
+      url: `https://8.8.4.4/resolve`,
+      params: {
+        name: domain,
+        type: type === 'IPv6' ? 'AAAA' : 'A',
+      },
+      headers: {
+        accept: 'application/dns-json',
+      },
+    })
+    const body = JSON.parse(resp.body)
+    if (body['Status'] !== 0) {
+      throw new Error(`Status is ${body['Status']}`)
+    }
+    const answers = body['Answer']
+    if (answers.length === 0) {
+      throw new Error('域名解析无结果')
+    }
+    return answers[answers.length - 1].data
+  },
+
+  cf: async function (domain, type) {
+    const resp = await http({
+      url: `https://1.0.0.1/dns-query`,
+      params: {
+        name: domain,
+        type: type === 'IPv6' ? 'AAAA' : 'A',
+      },
+      headers: {
+        accept: 'application/dns-json',
+      },
+    })
+    const body = JSON.parse(resp.body)
+    if (body['Status'] !== 0) {
+      throw new Error(`Status is ${body['Status']}`)
+    }
+    const answers = body['Answer']
+    if (answers.length === 0) {
+      throw new Error('域名解析无结果')
+    }
+    return answers[answers.length - 1].data
+  },
+  ali: async function (domain, type) {
+    const resp = await http({
+      url: `http://223.6.6.6/resolve`,
+      params: {
+        name: domain,
+        short: 1,
+        type: type === 'IPv6' ? 'AAAA' : 'A',
+      },
+      headers: {
+        accept: 'application/dns-json',
+      },
+    })
+    const answers = JSON.parse(resp.body)
+    if (answers.length === 0) {
+      throw new Error('域名解析无结果')
+    }
+    return answers[answers.length - 1]
+  },
+  tencent: async function (domain, type) {
+    const resp = await http({
+      url: `http://119.28.28.28/d`,
+      params: {
+        dn: domain,
+        type: type === 'IPv6' ? 'AAAA' : 'A',
+      },
+      headers: {
+        accept: 'application/dns-json',
+      },
+    })
+    const answers = resp.body.split(';').map(i => i.split(',')[0])
+    if (answers.length === 0) {
+      throw new Error('域名解析无结果')
+    }
+    return answers[answers.length - 1]
+  },
+}
+async function resolveDomain(domain) {
+  let IPv4
+  let IPv6
+  if (isIPv4(domain)) {
+    IPv4 = domain
+  } else if (isIPv6(domain)) {
+    IPv6 = domain
+  } else {
+    let resolverName = $.lodash_get(arg, 'DNS') || 'ali'
+    let resolver = DOMAIN_RESOLVERS[resolverName]
+    if (!resolver) {
+      resolverName = 'ali'
+      resolver = DOMAIN_RESOLVERS[resolverName]
+    }
+    const msg = `使用 ${resolverName} 解析域名 ${domain}`
+    const res = await Promise.all([
+      (async () => {
+        try {
+          return await resolver(domain, 'IPv4')
+        } catch (e) {
+          // $.logErr(`${msg} 发生错误: ${e.message || e}`)
+        }
+      })(),
+      (async () => {
+        try {
+          return await resolver(domain, 'IPv6')
+        } catch (e) {
+          // $.logErr(`${msg} 发生错误: ${e.message || e}`)
+        }
+      })(),
+    ])
+    console.log(res)
+    const [v4, v6] = res
+
+    if (isIPv4(v4)) {
+      IPv4 = v4
+    } else {
+      $.logErr(`${msg} 解析 IPv4 失败`)
+    }
+    if (isIPv6(v6)) {
+      IPv6 = v6
+    } else {
+      $.logErr(`${msg} 解析 IPv6 失败`)
+    }
+  }
+  return { IP: IPv4 || IPv6, IPv4, IPv6 }
+}
+// source: https://stackoverflow.com/a/36760050
+const IPV4_REGEX = /^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){4}$/
+
+// source: https://ihateregex.io/expr/ipv6/
+const IPV6_REGEX =
+  /^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/
+
+function isIPv4(ip) {
+  return IPV4_REGEX.test(ip)
+}
+
+function isIPv6(ip) {
+  return IPV6_REGEX.test(ip)
+}
+function isIP(ip) {
+  return isIPv4(ip) || isIPv6(ip)
+}
+async function getProxies() {
+  let PROXIES = []
+  if ($.isStash()) {
+    try {
+      const res = await $.http.get({
+        url: `http://127.0.0.1:9090/providers/proxies`,
+      })
+      let body = String($.lodash_get(res, 'body') || $.lodash_get(res, 'rawBody'))
+      try {
+        body = JSON.parse(body)
+      } catch (e) {}
+
+      // $.log(JSON.stringify(body, null, 2))
+      PROXIES = Object.values(body.providers)
+        .map(i => i.proxies)
+        .flat()
+        .reduce((obj, i) => {
+          obj[i.name] = i.address
+          return obj
+        }, {})
+    } catch (e) {
+      $logErr(e)
+      $logErr($.toStr(e))
+    }
+  }
+  return { PROXIES }
+}
 async function httpAPI(path = '/v1/requests/recent', method = 'GET', body = null) {
   return new Promise((resolve, reject) => {
     $httpAPI(method, path, body, result => {
@@ -931,7 +1176,7 @@ function getNodeOpt() {
 }
 // 请求
 async function http(opt = {}) {
-  const timeout = opt.timeout
+  const timeout = parseFloat(opt.timeout || $.lodash_get(arg, 'TIMEOUT') || 5)
   if (timeout) {
     return await Promise.race([
       $.http.get({ ...opt, timeout: undefined }),
