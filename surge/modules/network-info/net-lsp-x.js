@@ -68,7 +68,7 @@ let content = ''
   } else if (typeof $environment !== 'undefined') {
     try {
       $.log($.toStr($environment))
-      if ($.lodash_get(arg, 'LAN') == 1) {
+      if ($.lodash_get(arg, 'SSID') == 1 || $.lodash_get(arg, 'LAN') == 1) {
         // QX 上 macOS/iOS 不一致
         WiFi = $.lodash_get($environment, 'ssid')
       }
