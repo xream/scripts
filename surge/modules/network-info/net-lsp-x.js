@@ -251,7 +251,7 @@ let content = ''
       $.done({
         title,
         htmlMessage: `<div style="font-family: -apple-system; font-size: large">${content
-          .replace(/^(.*?):/gim, '<span style="font-weight: bold">$1</span>')
+          .replace(/^(.*?):/gim, '<span style="font-weight: bold">$1</span>:')
           .replace(/\n/g, '<br/>')}</div>`,
       })
     } else {
