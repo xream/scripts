@@ -38,6 +38,7 @@ let content = ''
     await notify('网络信息', '面板', '开始查询')
   }
 
+  let WiFi = ''
   let SSID = ''
   let LAN = ''
   let LAN_IPv4 = ''
@@ -68,8 +69,8 @@ let content = ''
     try {
       $.log($.toStr($environment))
       if ($.lodash_get(arg, 'LAN') == 1) {
-        // QX 给的是这个
-        LAN_IPv4 = $.lodash_get($environment, 'ssid')
+        // QX 上 macOS/iOS 不一致
+        WiFi = $.lodash_get($environment, 'ssid')
       }
     } catch (e) {}
   }
@@ -81,6 +82,8 @@ let content = ''
   }
   if (SSID) {
     SSID = `SSID: ${SSID}\n\n`
+  } else if (WiFi) {
+    SSID = `WiFi: ${WiFi}\n\n`
   }
 
   let [
