@@ -38,7 +38,6 @@ let content = ''
     await notify('网络信息', '面板', '开始查询')
   }
 
-  let WiFi = ''
   let SSID = ''
   let LAN = ''
   let LAN_IPv4 = ''
@@ -68,9 +67,13 @@ let content = ''
   } else if (typeof $environment !== 'undefined') {
     try {
       $.log($.toStr($environment))
-      if ($.lodash_get(arg, 'SSID') == 1 || $.lodash_get(arg, 'LAN') == 1) {
-        // QX 上 macOS/iOS 不一致
-        WiFi = $.lodash_get($environment, 'ssid')
+      const version = $.lodash_get($environment, 'version')
+      const os = version?.split(' ')?.[0]
+      // QX 上 macOS/iOS 不一致
+      if (os !== 'macOS' && $.lodash_get(arg, 'SSID') == 1) {
+        SSID = $.lodash_get($environment, 'ssid')
+      } else if (os === 'macOS' && $.lodash_get(arg, 'LAN') == 1) {
+        LAN_IPv4 = $.lodash_get($environment, 'ssid')
       }
     } catch (e) {}
   }
@@ -82,8 +85,6 @@ let content = ''
   }
   if (SSID) {
     SSID = `SSID: ${SSID}\n\n`
-  } else if (WiFi) {
-    SSID = `WiFi: ${WiFi}\n\n`
   }
   let { PROXIES = [] } = await getProxies()
   let [
