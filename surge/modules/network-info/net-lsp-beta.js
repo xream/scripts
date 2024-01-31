@@ -7,7 +7,9 @@ if (typeof $argument != 'undefined') {
 } else {
   arg = {}
 }
+
 arg = { ...arg, ...$.getjson(NAME, {}) }
+
 if (typeof $environment !== 'undefined' && $.lodash_get($environment, 'executor') === 'event-network') {
   $.lodash_set(arg, 'TYPE', 'EVENT')
 }
@@ -177,6 +179,8 @@ let content = ''
     )}\n\n${ENTRANCE}落地 IP: ${maskIP(PROXY_IP) || '-'}${PROXY_IPv6}${maskAddr(
       PROXY_INFO
     )}${PROXY_PRIVACY}\n执行时间: ${new Date().toTimeString().split(' ')[0]}`
+
+    title = title || '网络信息 𝕏'
     if (isTile()) {
       await notify('网络信息', '面板', '查询完成')
     } else if (!isPanel()) {
@@ -195,7 +199,7 @@ let content = ''
             .trim()
         )
       } else {
-        await notify('网络信息', title, content)
+        await notify('网络信息 𝕏', title, content)
       }
     }
   }
@@ -206,7 +210,7 @@ let content = ''
     const msg = `${$.lodash_get(e, 'message') || $.lodash_get(e, 'error') || e}`
     title = `❌`
     content = msg
-    await notify('网络信息', title, content)
+    await notify('网络信息 𝕏', title, content)
   })
   .finally(async () => {
     if (isRequest()) {
@@ -234,7 +238,10 @@ let content = ''
     }
     $.log($.toStr(result))
     if (isInteraction()) {
-      $.done({ title, htmlMessage: `<div style="font-family: -apple-system">${content.replace(/\n/g, '<br/>')}</div>` })
+      $.done({
+        title,
+        htmlMessage: `<div style="font-family: -apple-system">${content.replace(/\n/g, '<br/>')}</div>`,
+      })
     } else {
       $.done(result)
     }
@@ -851,7 +858,7 @@ function maskIP(ip) {
 }
 
 function getflag(e) {
-  if ($.lodash_get(arg, 'FLAG') == 1) {
+  if ($.lodash_get(arg, 'FLAG', 1) == 1) {
     try {
       const t = e
         .toUpperCase()
