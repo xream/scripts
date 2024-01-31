@@ -1,4 +1,5 @@
-const $ = new Env('network-info')
+const NAME = 'network-info'
+const $ = new Env(NAME)
 
 let arg
 if (typeof $argument != 'undefined') {
@@ -6,6 +7,7 @@ if (typeof $argument != 'undefined') {
 } else {
   arg = {}
 }
+arg = { ...arg, ...$.getjson(NAME, {}) }
 if (typeof $environment !== 'undefined' && $.lodash_get($environment, 'executor') === 'event-network') {
   $.lodash_set(arg, 'TYPE', 'EVENT')
 }
