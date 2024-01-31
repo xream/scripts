@@ -185,9 +185,10 @@ let content = ''
     title = `${PROXY_POLICY}`
     content = `${SSID}${LAN}${CN_POLICY}IP: ${maskIP(CN_IP) || '-'}${CN_IPv6}${maskAddr(
       CN_INFO
-    )}\n\n${ENTRANCE}落地 IP: ${maskIP(PROXY_IP) || '-'}${PROXY_IPv6}${maskAddr(
-      PROXY_INFO
-    )}${PROXY_PRIVACY}\n执行时间: ${new Date().toTimeString().split(' ')[0]}`
+    )}\n\n${ENTRANCE}落地 IP: ${maskIP(PROXY_IP) || '-'}${PROXY_IPv6}${maskAddr(PROXY_INFO)}${PROXY_PRIVACY}`
+    if (!isInteraction()) {
+      content = `${content}\n执行时间: ${new Date().toTimeString().split(' ')[0]}`
+    }
 
     title = title || '网络信息 𝕏'
     if (isTile()) {
@@ -249,7 +250,9 @@ let content = ''
     if (isInteraction()) {
       $.done({
         title,
-        htmlMessage: `<div style="font-family: -apple-system">${content.replace(/\n/g, '<br/>')}</div>`,
+        htmlMessage: `<div style="font-family: -apple-system; font-size: large">${content
+          .replace(/^(.*?):/gim, '<span style="font-weight: bold">$1</span>')
+          .replace(/\n/g, '<br/>')}</div>`,
       })
     } else {
       $.done(result)
