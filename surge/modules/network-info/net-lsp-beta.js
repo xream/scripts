@@ -553,6 +553,7 @@ async function getProxyInfo(ip) {
   if ($.lodash_get(arg, 'LANDING_IPv4') == 'ipinfo') {
     try {
       const res = await http({
+        ...(ip ? {} : getNodeOpt()),
         timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
         url: `https://ipinfo.io/widget/${ip ? encodeURIComponent(ip) : ''}`,
         headers: {
@@ -597,6 +598,7 @@ async function getProxyInfo(ip) {
   } else if ($.lodash_get(arg, 'LANDING_IPv4') == 'ipscore') {
     try {
       const res = await http({
+        ...(ip ? {} : getNodeOpt()),
         timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
         url: `https://ip-score.com/json`,
         params: { ip },
@@ -639,6 +641,7 @@ async function getProxyInfo(ip) {
   } else if ($.lodash_get(arg, 'LANDING_IPv4') == 'ipsb') {
     try {
       const res = await http({
+        ...(ip ? {} : getNodeOpt()),
         timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
         url: `https://api-ipv4.ip.sb/geoip${ip ? `/${encodeURIComponent(ip)}` : ''}`,
         headers: {
@@ -672,6 +675,7 @@ async function getProxyInfo(ip) {
   } else if ($.lodash_get(arg, 'LANDING_IPv4') == 'ipwhois') {
     try {
       const res = await http({
+        ...(ip ? {} : getNodeOpt()),
         timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
         url: `https://ipwhois.app/widget.php`,
         params: {
@@ -732,6 +736,7 @@ async function getProxyInfo(ip) {
     try {
       const p = ip ? `/${encodeURIComponent(ip)}` : ''
       const res = await http({
+        ...(ip ? {} : getNodeOpt()),
         timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
         url: `http://ip-api.com/json${p}?lang=zh-CN`,
         headers: {
@@ -759,12 +764,13 @@ async function getProxyInfo(ip) {
 
   return { PROXY_IP, PROXY_INFO: simplifyAddr(PROXY_INFO), PROXY_PRIVACY }
 }
-async function getProxyInfoIPv6() {
+async function getProxyInfoIPv6(ip) {
   let PROXY_IPv6
   const msg = `使用 ${$.lodash_get(arg, 'LANDING_IPv6') || 'ipsb'} 查询 IPv6 分流信息`
   if ($.lodash_get(arg, 'LANDING_IPv6') == 'ident') {
     try {
       const res = await http({
+        ...(ip ? {} : getNodeOpt()),
         timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
         url: `https://v6.ident.me`,
         headers: {
@@ -780,6 +786,7 @@ async function getProxyInfoIPv6() {
   } else {
     try {
       const res = await http({
+        ...(ip ? {} : getNodeOpt()),
         timeout: parseFloat($.lodash_get(arg, 'TIMEOUT') || 5),
         url: `https://api-ipv6.ip.sb/ip`,
         headers: {
@@ -895,6 +902,23 @@ function isInteraction() {
       $.lodash_get($environment, 'executor') === 'event-interaction') ||
     ($.isLoon() && typeof $environment != 'undefined' && $.lodash_get($environment, 'params.node'))
   )
+}
+function getNodeOpt() {
+  let opt = {}
+  if (isInteraction()) {
+    if ($.isQuanX()) {
+      opt = {
+        opts: {
+          policy: $environment.params,
+        },
+      }
+    } else if ($.isLoon()) {
+      opt = {
+        node: $environment.params.node,
+      }
+    }
+  }
+  return opt
 }
 // 请求
 async function http(opt = {}) {
