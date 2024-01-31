@@ -1,0 +1,34 @@
+name: |-
+  网络信息 𝕏
+desc: |-
+  国内外 IP, 运营商, 位置, 策略; IPv6; 入口落地; 隐私; LAN; SSID. 自己设置对应域名的分流. 提供 https://net-lsp-x.com 数据接口, 参数与模块参数相同. 详细参数设置见频道说明: https://t.me/zhetengsha
+author: |-
+  @keywos @xream https://t.me/zhetengsha
+
+http:
+  mitm:
+    - "net-lsp-x.com"
+
+  script:
+    # Request
+    - match: ^https?:\/\/net-lsp-x\.com
+      name: "网络信息 𝕏"
+      type: request
+      timeout: 120
+
+tiles:
+  # Panel
+  - name: "网络信息 𝕏"
+    interval: 300
+    content: "..."
+    icon: "antenna.radiowaves.left.and.right.circle.fill"
+    backgroundColor: "#178BD8"
+    title: "网络信息 𝕏"
+    timeout: 30
+    argument: |-
+      icon=globe.asia.australia&flag=1
+
+script-providers:
+  "网络信息 𝕏":
+    url: https://raw.githubusercontent.com/xream/scripts/main/surge/modules/network-info/net-lsp-x.js
+    interval: 86400
