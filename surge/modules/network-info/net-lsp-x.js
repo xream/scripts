@@ -85,7 +85,7 @@ let content = ''
   } else if (WiFi) {
     SSID = `WiFi: ${WiFi}\n\n`
   }
-
+  let { PROXIES = [] } = await getProxies()
   let [
     { CN_IP = '', CN_INFO = '', CN_POLICY = '' } = {},
     { PROXY_IP = '', PROXY_INFO = '', PROXY_PRIVACY = '', PROXY_POLICY = '', IP = '' } = {},
@@ -94,8 +94,14 @@ let content = ''
     { PROXY_IPv6 = '' } = {},
   ] = await Promise.all(
     $.lodash_get(arg, 'IPv6') == 1
-      ? [getDirectRequestInfo(), getProxyRequestInfo(), getEntranceInfo(), getDirectInfoIPv6(), getProxyInfoIPv6()]
-      : [getDirectRequestInfo(), getProxyRequestInfo(), getEntranceInfo()]
+      ? [
+          getDirectRequestInfo({ PROXIES }),
+          getProxyRequestInfo({ PROXIES }),
+          getEntranceInfo(),
+          getDirectInfoIPv6(),
+          getProxyInfoIPv6(),
+        ]
+      : [getDirectRequestInfo({ PROXIES }), getProxyRequestInfo({ PROXIES }), getEntranceInfo()]
   )
   let continueFlag = true
   if ($.lodash_get(arg, 'TYPE') === 'EVENT') {
@@ -154,7 +160,7 @@ let content = ''
     if (PROXY_IPv6 && $.lodash_get(arg, 'IPv6') == 1) {
       PROXY_IPv6 = `\n${maskIP(PROXY_IPv6)}`
     }
-    if ($.isSurge()) {
+    if ($.isSurge() || $.isStash()) {
       if (CN_POLICY === 'DIRECT') {
         CN_POLICY = ``
       } else {
@@ -165,7 +171,7 @@ let content = ''
     if (CN_INFO) {
       CN_INFO = `\n${CN_INFO}`
     }
-    if ($.isSurge()) {
+    if ($.isSurge() || $.isStash()) {
       if (PROXY_POLICY === 'DIRECT') {
         PROXY_POLICY = `代理策略: 直连`
       } else {
@@ -266,32 +272,37 @@ async function getEntranceInfo() {
         ENTRANCE_IP = $.lodash_get($environment, 'params.nodeInfo.address')
       }
     } catch (e) {
-      $.log(`获取入口信息 发生错误: ${e.message || e}`)
+      $.logErr(`获取入口信息 发生错误: ${e.message || e}`)
       $.logErr(e)
       $.logErr($.toStr(e))
     }
   }
   return { ENTRANCE_IP }
 }
-async function getDirectRequestInfo() {
+async function getDirectRequestInfo({ PROXIES = [] } = {}) {
   const { CN_IP, CN_INFO } = await getDirectInfo()
   const { POLICY } = await getRequestInfo(
     new RegExp(
       `cip\\.cc|for${keyb}\\.${keya}${bay}\\.cn|api-v3\\.${keya}${bay}\\.cn|ipservice\\.ws\\.126\\.net|api\\.bilibili\\.com|api\\.live\\.bilibili\\.com|myip\\.ipip\\.net|ip\\.ip233\\.cn`
-    )
+    ),
+    PROXIES
   )
   return { CN_IP, CN_INFO, CN_POLICY: POLICY }
 }
-async function getProxyRequestInfo() {
+async function getProxyRequestInfo({ PROXIES = [] } = {}) {
   const { PROXY_IP, PROXY_INFO, PROXY_PRIVACY } = await getProxyInfo()
-  const { POLICY, IP } = await getRequestInfo(/ipinfo\.io|ip-score\.com|ipwhois\.app|ip-api\.com|api-ipv4\.ip\.sb/)
+  const { POLICY, IP } = await getRequestInfo(
+    /ipinfo\.io|ip-score\.com|ipwhois\.app|ip-api\.com|api-ipv4\.ip\.sb/,
+    PROXIES
+  )
   return { PROXY_IP, PROXY_INFO, PROXY_PRIVACY, PROXY_POLICY: POLICY, IP }
 }
-async function getRequestInfo(regexp) {
+async function getRequestInfo(regexp, PROXIES = []) {
   let POLICY = ''
   let IP = ''
-  if ($.isSurge()) {
-    try {
+
+  try {
+    if ($.isSurge()) {
       const { requests } = await httpAPI('/v1/requests/recent', 'GET')
       const request = requests.slice(0, 10).find(i => regexp.test(i.URL))
       // $.log('recent request', $.toStr(request))
@@ -299,12 +310,33 @@ async function getRequestInfo(regexp) {
       if (/\(Proxy\)/.test(request.remoteAddress)) {
         IP = request.remoteAddress.replace(/\s*\(Proxy\)\s*/, '')
       }
-    } catch (e) {
-      $.log(`从最近请求中获取 ${regexp} 发生错误: ${e.message || e}`)
-      $.logErr(e)
-      $.logErr($.toStr(e))
+    } else if ($.isStash()) {
+      const res = await $.http.get({
+        url: `http://127.0.0.1:9090/connections`,
+      })
+
+      let body = String($.lodash_get(res, 'body') || $.lodash_get(res, 'rawBody'))
+      try {
+        body = JSON.parse(body)
+      } catch (e) {}
+      const connections = $.lodash_get(body, 'connections') || []
+
+      const connection =
+        connections.slice(0, 10).find(i => {
+          const dest = $.lodash_get(i, 'metadata.host') || $.lodash_get(i, 'metadata.destinationIP')
+          return regexp.test(dest)
+        }) || {}
+      const chain = $.lodash_get(connection, 'metadata.chain') || []
+      const proxy = chain[0]
+      POLICY = proxy // chain.reverse().join(' ➟ ')
+      IP = PROXIES?.[proxy]?.match(/^(.*?):\d+$/)?.[1]
     }
+  } catch (e) {
+    $.logErr(`从最近请求中获取 ${regexp} 发生错误: ${e.message || e}`)
+    $.logErr(e)
+    $.logErr($.toStr(e))
   }
+
   return {
     POLICY,
     IP,
@@ -890,6 +922,33 @@ function parseQueryString(url) {
   }
 
   return params
+}
+async function getProxies() {
+  let PROXIES = []
+  if ($.isStash()) {
+    try {
+      const res = await $.http.get({
+        url: `http://127.0.0.1:9090/providers/proxies`,
+      })
+      let body = String($.lodash_get(res, 'body') || $.lodash_get(res, 'rawBody'))
+      try {
+        body = JSON.parse(body)
+      } catch (e) {}
+
+      // $.log(JSON.stringify(body, null, 2))
+      PROXIES = Object.values(body.providers)
+        .map(i => i.proxies)
+        .flat()
+        .reduce((obj, i) => {
+          obj[i.name] = i.address
+          return obj
+        }, {})
+    } catch (e) {
+      $logErr(e)
+      $logErr($.toStr(e))
+    }
+  }
+  return { PROXIES }
 }
 async function httpAPI(path = '/v1/requests/recent', method = 'GET', body = null) {
   return new Promise((resolve, reject) => {
