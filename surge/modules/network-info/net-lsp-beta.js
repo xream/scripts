@@ -1127,8 +1127,8 @@ async function getProxies() {
           return obj
         }, {})
     } catch (e) {
-      $logErr(e)
-      $logErr($.toStr(e))
+      $.logErr(e)
+      $.logErr($.toStr(e))
     }
   }
   return { PROXIES }
