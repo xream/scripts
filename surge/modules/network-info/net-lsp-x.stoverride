@@ -1,7 +1,7 @@
 name: |-
   网络信息 𝕏
 desc: |-
-  国内外 IP, 运营商, 位置, 策略; IPv6; 入口落地; 隐私; LAN; SSID. 自己设置对应域名的分流. 提供 https://net-lsp-x.com 数据接口, 参数与模块参数相同. 详细参数设置见频道说明: https://t.me/zhetengsha
+  国内外 IP, 运营商, ASN, ORG, 位置, 策略; IPv6; 入口落地; 隐私; LAN; SSID. 自己设置对应域名的分流. 提供 https://net-lsp-x.com 数据接口, 参数与模块参数相同. 详细参数设置见频道说明: https://t.me/zhetengsha (从最近连接和外部代理集获取同名的节点的信息作为入口数据 不一定正确)
 author: |-
   @keywos @xream https://t.me/zhetengsha
 

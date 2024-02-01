@@ -6,7 +6,7 @@
 
 🆕 新版:
 
-国内外 IP, 运营商, 位置, 策略; IPv6; 入口落地; 隐私; LAN; SSID. 自己设置对应域名的分流. 支持网络变化时进行查询通知. 提供 https://net-lsp-x.com 数据接口
+国内外 IP, 运营商, ASN, ORG, 位置, 策略; IPv6; 入口落地; 隐私; LAN; SSID. 自己设置对应域名的分流. 支持网络变化时进行查询通知. 提供 https://net-lsp-x.com 数据接口
 
 查看 👉🏻 [https://t.me/zhetengsha/1107](https://t.me/zhetengsha/1107)
 
