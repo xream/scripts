@@ -261,15 +261,15 @@ let content = ''
     }
     $.log($.toStr(result))
     if (isInteraction()) {
+      const html = `<div style="font-family: -apple-system; font-size: large">${`\n${content}${
+        proxy_policy ? `\n\n${proxy_policy.replace(/^(.*?:\s*)(.*)$/, '$1<span style="color: #467fcf">$2</span>')}` : ''
+      }`
+        .replace(/^(.*?):/gim, '<span style="font-weight: bold">$1</span>:')
+        .replace(/\n/g, '<br/>')}</div>`
+      // $.log(html)
       $.done({
         title: '网络信息 𝕏',
-        htmlMessage: `<div style="font-family: -apple-system; font-size: large">${`${content}${
-          proxy_policy
-            ? `\n\n${proxy_policy.replace(/^(.*?:\s*)(.*)$/, '$1<span style="color: #467FCF">$2</span>')}`
-            : ''
-        }`
-          .replace(/^(.*?):/gim, '<span style="font-weight: bold">$1</span>:')
-          .replace(/\n/g, '<br/>')}</div>`,
+        htmlMessage: html,
       })
     } else {
       $.done(result)
