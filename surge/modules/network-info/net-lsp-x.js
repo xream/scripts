@@ -290,7 +290,7 @@ async function getEntranceInfo() {
       $.logErr($.toStr(e))
     }
   }
-  return { IP }
+  return { IP, POLICY }
 }
 async function getDirectRequestInfo({ PROXIES = [] } = {}) {
   const { CN_IP, CN_INFO } = await getDirectInfo()
