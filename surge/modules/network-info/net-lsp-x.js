@@ -1075,7 +1075,6 @@ async function resolveDomain(domain) {
         }
       })(),
     ])
-    console.log(res)
     const [v4, v6] = res
 
     if (isIPv4(v4)) {
@@ -1178,14 +1177,29 @@ function getNodeOpt() {
 }
 // 请求
 async function http(opt = {}) {
-  const timeout = parseFloat(opt.timeout || $.lodash_get(arg, 'TIMEOUT') || 5)
-  if (timeout) {
-    return await Promise.race([
-      $.http.get({ ...opt, timeout: undefined }),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('HTTP TIMEOUT')), timeout * 1000)),
-    ])
+  const TIMEOUT = parseFloat(opt.timeout || $.lodash_get(arg, 'TIMEOUT') || 5)
+  const RETRIES = parseFloat(opt.retries || $.lodash_get(arg, 'RETRIES') || 1)
+  const RETRY_DELAY = parseFloat(opt.retries || $.lodash_get(arg, 'RETRY_DELAY') || 1)
+  let count = 0
+  const fn = async () => {
+    try {
+      if (TIMEOUT) {
+        return await Promise.race([
+          $.http.get({ ...opt, timeout: undefined }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('HTTP TIMEOUT')), TIMEOUT * 1000)),
+        ])
+      }
+      return await $.http.get(opt)
+    } catch (e) {
+      if (count < RETRIES) {
+        count++
+        $.log(`第 ${count} 次请求失败: ${e.message || e}, 等待 ${RETRY_DELAY}s 后重试`)
+        await $.wait(RETRY_DELAY * 1000)
+        return await fn()
+      }
+    }
   }
-  return await $.http.get(opt)
+  return await fn()
 }
 // 通知
 async function notify(title, subt, desc, opts) {
