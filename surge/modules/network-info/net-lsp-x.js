@@ -26,6 +26,7 @@ const keyd = 'gan'
 const bay = 'edtest'
 
 let result = {}
+let proxy_policy = ''
 let title = ''
 let content = ''
 !(async () => {
@@ -185,6 +186,11 @@ let content = ''
     } else {
       PROXY_POLICY = ''
     }
+    if (PROXY_POLICY) {
+      proxy_policy = PROXY_POLICY
+    } else {
+      proxy_policy = ''
+    }
 
     if (PROXY_INFO) {
       PROXY_INFO = `\n${PROXY_INFO}`
@@ -256,8 +262,12 @@ let content = ''
     $.log($.toStr(result))
     if (isInteraction()) {
       $.done({
-        title,
-        htmlMessage: `<div style="font-family: -apple-system; font-size: large">${content
+        title: '网络信息 𝕏',
+        htmlMessage: `<div style="font-family: -apple-system; font-size: large">${`${content}${
+          proxy_policy
+            ? `\n\n${proxy_policy.replace(/^(.*?:\s*)(.*)$/, '$1<span style="color: #467FCF">$2</span>')}`
+            : ''
+        }`
           .replace(/^(.*?):/gim, '<span style="font-weight: bold">$1</span>:')
           .replace(/\n/g, '<br/>')}</div>`,
       })
