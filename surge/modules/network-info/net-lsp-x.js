@@ -93,20 +93,13 @@ let content = ''
   let { PROXIES = [] } = await getProxies()
   let [
     { CN_IP = '', CN_INFO = '', CN_POLICY = '' } = {},
-    { PROXY_IP = '', PROXY_INFO = '', PROXY_PRIVACY = '', PROXY_POLICY = '', IP = '' } = {},
-    { ENTRANCE_IP = '' } = {},
+    { PROXY_IP = '', PROXY_INFO = '', PROXY_PRIVACY = '', PROXY_POLICY = '', ENTRANCE_IP = '' } = {},
     { CN_IPv6 = '' } = {},
     { PROXY_IPv6 = '' } = {},
   ] = await Promise.all(
     $.lodash_get(arg, 'IPv6') == 1
-      ? [
-          getDirectRequestInfo({ PROXIES }),
-          getProxyRequestInfo({ PROXIES }),
-          getEntranceInfo(),
-          getDirectInfoIPv6(),
-          getProxyInfoIPv6(),
-        ]
-      : [getDirectRequestInfo({ PROXIES }), getProxyRequestInfo({ PROXIES }), getEntranceInfo()]
+      ? [getDirectRequestInfo({ PROXIES }), getProxyRequestInfo({ PROXIES }), getDirectInfoIPv6(), getProxyInfoIPv6()]
+      : [getDirectRequestInfo({ PROXIES }), getProxyRequestInfo({ PROXIES })]
   )
   let continueFlag = true
   if ($.lodash_get(arg, 'TYPE') === 'EVENT') {
@@ -130,7 +123,6 @@ let content = ''
       PROXY_PRIVACY = `\n${PROXY_PRIVACY}`
     }
     let ENTRANCE = ''
-    ENTRANCE_IP = IP || ENTRANCE_IP
     if (ENTRANCE_IP) {
       const { IP: resolvedIP } = await resolveDomain(ENTRANCE_IP)
       if (resolvedIP) {
@@ -152,8 +144,8 @@ let content = ''
       }
       if (ENTRANCE_INFO2) {
         if (ENTRANCE) {
-          ENTRANCE = `${ENTRANCE.replace('位置:', '位置¹:').replace('运营商:', '运营商¹:')}\n${maskAddr(
-            ENTRANCE_INFO2.replace('位置:', '位置²:').replace('运营商:', '运营商²:')
+          ENTRANCE = `${ENTRANCE.replace(/^(.*?):/gim, '$1¹:')}\n${maskAddr(
+            ENTRANCE_INFO2.replace(/^(.*?):/gim, '$1²:')
           )}`
         } else {
           ENTRANCE = `入口: ${maskIP(ENTRANCE_IP) || '-'}\n${maskAddr(ENTRANCE_INFO2)}`
@@ -185,12 +177,13 @@ let content = ''
     if (CN_INFO) {
       CN_INFO = `\n${CN_INFO}`
     }
-    if ($.isSurge() || $.isStash()) {
-      if (PROXY_POLICY === 'DIRECT') {
-        PROXY_POLICY = `代理策略: 直连`
-      } else {
-        PROXY_POLICY = `代理策略: ${maskAddr(PROXY_POLICY) || '-'}`
-      }
+    const policy_prefix = $.isQuanX() || $.isLoon() ? '节点: ' : '代理策略: '
+    if (PROXY_POLICY === 'DIRECT') {
+      PROXY_POLICY = `${policy_prefix}直连`
+    } else if (PROXY_POLICY) {
+      PROXY_POLICY = `${policy_prefix}${maskAddr(PROXY_POLICY) || '-'}`
+    } else {
+      PROXY_POLICY = ''
     }
 
     if (PROXY_INFO) {
@@ -274,7 +267,8 @@ let content = ''
   })
 
 async function getEntranceInfo() {
-  let ENTRANCE_IP = ''
+  let IP = ''
+  let POLICY = ''
   if (isInteraction()) {
     try {
       if ($.isQuanX()) {
@@ -284,9 +278,11 @@ async function getEntranceInfo() {
         // $.log(JSON.stringify(ret, null, 2))
         const proxy = Object.values(ret)[0]
         // $.log(proxy)
-        ENTRANCE_IP = proxy.match(/.+?\s*?=\s*?(.+?):\d+\s*?,.+/)[1]
-      } else {
-        ENTRANCE_IP = $.lodash_get($environment, 'params.nodeInfo.address')
+        IP = proxy.match(/.+?\s*?=\s*?(.+?):\d+\s*?,.+/)[1]
+        POLICY = nodeName
+      } else if ($.isLoon()) {
+        IP = $.lodash_get($environment, 'params.nodeInfo.address')
+        POLICY = $.lodash_get($environment, 'params.node')
       }
     } catch (e) {
       $.logErr(`获取入口信息 发生错误: ${e.message || e}`)
@@ -294,7 +290,7 @@ async function getEntranceInfo() {
       $.logErr($.toStr(e))
     }
   }
-  return { ENTRANCE_IP }
+  return { IP }
 }
 async function getDirectRequestInfo({ PROXIES = [] } = {}) {
   const { CN_IP, CN_INFO } = await getDirectInfo()
@@ -308,11 +304,19 @@ async function getDirectRequestInfo({ PROXIES = [] } = {}) {
 }
 async function getProxyRequestInfo({ PROXIES = [] } = {}) {
   const { PROXY_IP, PROXY_INFO, PROXY_PRIVACY } = await getProxyInfo()
-  const { POLICY, IP } = await getRequestInfo(
-    /ipinfo\.io|ip-score\.com|ipwhois\.app|ip-api\.com|api-ipv4\.ip\.sb/,
-    PROXIES
-  )
-  return { PROXY_IP, PROXY_INFO, PROXY_PRIVACY, PROXY_POLICY: POLICY, IP }
+  let result
+  if ($.isSurge() || $.isStash()) {
+    result = await getRequestInfo(/ipinfo\.io|ip-score\.com|ipwhois\.app|ip-api\.com|api-ipv4\.ip\.sb/, PROXIES)
+  } else if ($.isQuanX() || $.isLoon()) {
+    result = await getEntranceInfo()
+  }
+  return {
+    PROXY_IP,
+    PROXY_INFO,
+    PROXY_PRIVACY,
+    PROXY_POLICY: $.lodash_get(result, 'POLICY'),
+    ENTRANCE_IP: $.lodash_get(result, 'IP'),
+  }
 }
 async function getRequestInfo(regexp, PROXIES = []) {
   let POLICY = ''
@@ -483,9 +487,14 @@ async function getDirectInfo(ip) {
       const countryCode = $.lodash_get(body, 'country')
       isCN = countryCode === 'CN'
       CN_IP = $.lodash_get(body, 'ip')
-      CN_INFO = ['位置:', getflag(countryCode), $.lodash_get(body, 'desc').replace(/中国\s*/, '')]
+      CN_INFO = CN_INFO = [
+        ['位置:', getflag(countryCode), $.lodash_get(body, 'desc').replace(/中国\s*/, '')].filter(i => i).join(' '),
+        $.lodash_get(arg, 'ORG') == 1
+          ? ['组织:', $.lodash_get(body, 'org') || '-'].filter(i => i).join(' ')
+          : undefined,
+      ]
         .filter(i => i)
-        .join(' ')
+        .join('\n')
     } catch (e) {
       $.logErr(`${msg} 发生错误: ${e.message || e}`)
     }
@@ -517,7 +526,10 @@ async function getDirectInfo(ip) {
         ]
           .filter(i => i)
           .join(' '),
-        ['运营商:', $.lodash_get(body, 'data.isp') || $.lodash_get(body, 'data.isp') || '-'].filter(i => i).join(' '),
+        ['运营商:', $.lodash_get(body, 'data.isp') || '-'].filter(i => i).join(' '),
+        $.lodash_get(arg, 'ORG') == 1
+          ? ['组织:', $.lodash_get(body, 'org') || '-'].filter(i => i).join(' ')
+          : undefined,
       ]
         .filter(i => i)
         .join('\n')
@@ -659,6 +671,12 @@ async function getProxyInfo(ip) {
           .filter(i => i)
           .join(' '),
         ['运营商:', $.lodash_get(body, 'company.name') || $.lodash_get(body, 'asn.name')].filter(i => i).join(' '),
+        $.lodash_get(arg, 'ORG') == 1
+          ? ['组织:', $.lodash_get(body, 'asn.name') || $.lodash_get(body, 'org') || '-'].filter(i => i).join(' ')
+          : undefined,
+        $.lodash_get(arg, 'ASN') == 1
+          ? ['ASN:', $.lodash_get(body, 'asn.asn') || '-'].filter(i => i).join(' ')
+          : undefined,
       ]
         .filter(i => i)
         .join('\n')
@@ -753,6 +771,11 @@ async function getProxyInfo(ip) {
           .join(' '),
 
         ['运营商:', body.isp || body.organization].filter(i => i).join(' '),
+        $.lodash_get(arg, 'ORG') == 1
+          ? ['组织:', $.lodash_get(body, 'asn_organization') || '-'].filter(i => i).join(' ')
+          : undefined,
+
+        $.lodash_get(arg, 'ASN') == 1 ? ['ASN:', $.lodash_get(body, 'asn') || '-'].filter(i => i).join(' ') : undefined,
       ]
         .filter(i => i)
         .join('\n')
@@ -793,9 +816,14 @@ async function getProxyInfo(ip) {
         ['位置:', getflag(body.country_code), body.country.replace(/\s*中国\s*/, ''), body.region, body.city]
           .filter(i => i)
           .join(' '),
-        ['运营商:', $.lodash_get(body, 'connection.org') || $.lodash_get(body, 'connection.isp')]
-          .filter(i => i)
-          .join(' '),
+        ['运营商:', $.lodash_get(body, 'connection.isp') || '-'].filter(i => i).join(' '),
+        $.lodash_get(arg, 'ORG') == 1
+          ? ['组织:', $.lodash_get(body, 'connection.org') || '-'].filter(i => i).join(' ')
+          : undefined,
+
+        $.lodash_get(arg, 'ASN') == 1
+          ? ['ASN:', $.lodash_get(body, 'connection.asn') || '-'].filter(i => i).join(' ')
+          : undefined,
       ]
         .filter(i => i)
         .join('\n')
@@ -841,6 +869,11 @@ async function getProxyInfo(ip) {
           .filter(i => i)
           .join(' '),
         ['运营商:', body.isp || body.org || body.as].filter(i => i).join(' '),
+        $.lodash_get(arg, 'ORG') == 1
+          ? ['组织:', $.lodash_get(body, 'org') || '-'].filter(i => i).join(' ')
+          : undefined,
+
+        $.lodash_get(arg, 'ASN') == 1 ? ['ASN:', $.lodash_get(body, 'as') || '-'].filter(i => i).join(' ') : undefined,
       ]
         .filter(i => i)
         .join('\n')
