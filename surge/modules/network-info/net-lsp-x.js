@@ -163,14 +163,16 @@ let content = ''
     if (ENTRANCE) {
       ENTRANCE = `${ENTRANCE}\n\n`
     }
-    if (/^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){4}$/.test(CN_IPv6)) {
+
+    if (CN_IPv6 && isIPv6(CN_IPv6) && $.lodash_get(arg, 'IPv6') == 1) {
+      CN_IPv6 = `\n${maskIP(CN_IPv6)}`
+    } else {
       CN_IPv6 = ''
     }
-    if (CN_IPv6 && $.lodash_get(arg, 'IPv6') == 1) {
-      CN_IPv6 = `\n${maskIP(CN_IPv6)}`
-    }
-    if (PROXY_IPv6 && $.lodash_get(arg, 'IPv6') == 1) {
+    if (PROXY_IPv6 && isIPv6(PROXY_IPv6) && $.lodash_get(arg, 'IPv6') == 1) {
       PROXY_IPv6 = `\n${maskIP(PROXY_IPv6)}`
+    } else {
+      PROXY_IPv6 = ''
     }
     if ($.isSurge() || $.isStash()) {
       if (CN_POLICY === 'DIRECT') {
