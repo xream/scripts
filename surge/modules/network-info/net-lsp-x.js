@@ -87,6 +87,8 @@ let content = ''
   }
   if (SSID) {
     SSID = `SSID: ${SSID}\n\n`
+  } else {
+    SSID = ''
   }
   let { PROXIES = [] } = await getProxies()
   let [
