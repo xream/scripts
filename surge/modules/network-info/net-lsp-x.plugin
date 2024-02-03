@@ -8,6 +8,7 @@
 [Rule]
 DOMAIN-SUFFIX,speedtest.cn,DIRECT
 DOMAIN-SUFFIX,ip.im,DIRECT
+DOMAIN-SUFFIX,ip.plus,DIRECT
 
 [Script]
 # Request

@@ -311,7 +311,7 @@ async function getDirectRequestInfo({ PROXIES = [] } = {}) {
   const { CN_IP, CN_INFO } = await getDirectInfo(undefined, $.lodash_get(arg, 'DOMESTIC_IPv4'))
   const { POLICY } = await getRequestInfo(
     new RegExp(
-      `cip\\.cc|for${keyb}\\.${keya}${bay}\\.cn|rmb\\.${keyc}${keyd}\\.com\\.cn|api-v3\\.${keya}${bay}\\.cn|ipservice\\.ws\\.126\\.net|api\\.bilibili\\.com|api\\.live\\.bilibili\\.com|myip\\.ipip\\.net|ip\\.ip233\\.cn|ua${keye}\\.wo${keyf}x\\.cn|ip\\.im`
+      `cip\\.cc|for${keyb}\\.${keya}${bay}\\.cn|rmb\\.${keyc}${keyd}\\.com\\.cn|api-v3\\.${keya}${bay}\\.cn|ipservice\\.ws\\.126\\.net|api\\.bilibili\\.com|api\\.live\\.bilibili\\.com|myip\\.ipip\\.net|ip\\.ip233\\.cn|ua${keye}\\.wo${keyf}x\\.cn|ip\\.im|ips\.market\.alicloudapi\.com|api\\.ip\\.plus`
     ),
     PROXIES
   )
@@ -551,6 +551,45 @@ async function getDirectInfo(ip, provider) {
     } catch (e) {
       $.logErr(`${msg} 发生错误: ${e.message || e}`)
     }
+  } else if (provider == 'ipplus') {
+    try {
+      const res = await http({
+        url: `https://api.ip.plus${ip ? `/${encodeURIComponent(ip)}` : ''}`,
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0',
+        },
+      })
+      let body = String($.lodash_get(res, 'body'))
+      try {
+        body = JSON.parse(body)
+      } catch (e) {}
+
+      const countryCode = $.lodash_get(body, 'data.country_code')
+      isCN = countryCode === 'CN'
+      CN_IP = ip || $.lodash_get(body, 'data.ip')
+      CN_INFO = [
+        [
+          '位置:',
+          getflag(countryCode),
+          $.lodash_get(body, 'data.country').replace(/\s*中国\s*/, ''),
+          $.lodash_get(body, 'data.subdivisions'),
+          $.lodash_get(body, 'data.city'),
+        ]
+          .filter(i => i)
+          .join(' '),
+        $.lodash_get(arg, 'ORG') == 1
+          ? ['组织:', $.lodash_get(body, 'data.as_name') || '-'].filter(i => i).join(' ')
+          : undefined,
+        $.lodash_get(arg, 'ASN') == 1
+          ? ['ASN:', $.lodash_get(body, 'data.asn') || '-'].filter(i => i).join(' ')
+          : undefined,
+      ]
+        .filter(i => i)
+        .join('\n')
+    } catch (e) {
+      $.logErr(`${msg} 发生错误: ${e.message || e}`)
+    }
   } else if (provider == 'muhan') {
     try {
       const res = await http({
@@ -590,6 +629,31 @@ async function getDirectInfo(ip, provider) {
   } else if (provider == 'ipim') {
     try {
       const res = await ipim(ip)
+      isCN = $.lodash_get(res, 'isCN')
+      CN_IP = $.lodash_get(res, 'IP')
+      CN_INFO = $.lodash_get(res, 'INFO')
+    } catch (e) {
+      $.logErr(`${msg} 发生错误: ${e.message || e}`)
+    }
+  } else if (provider == 'ali') {
+    try {
+      let APPCODE = $.lodash_get(arg, 'DOMESTIC_IPv4_KEY')
+      if (!APPCODE) throw new Error('请在 DOMESTIC_IPv4_KEY 填写阿里云 IP 接口的 APPCODE')
+      APPCODE = APPCODE.split(/,|，/)
+        .map(i => i.trim())
+        .filter(i => i)
+      APPCODE = APPCODE[Math.floor(Math.random() * APPCODE.length)]
+      if (APPCODE.length > 1) {
+        $.log(`随机使用阿里云 IP 接口的 APPCODE: ${APPCODE}`)
+      }
+      let ali_ip = ip
+      if (!ali_ip) {
+        $.log('阿里云接口需要 IP. 未提供 IP, 先使用默认 IP 查询')
+        const res = await getDirectInfo()
+        ali_ip = $.lodash_get(res, 'CN_IP')
+        if (!ali_ip) throw new Error('阿里云接口需要 IP. 未提供 IP, 使用默认 IP 查询失败')
+      }
+      const res = await ali(ali_ip, APPCODE)
       isCN = $.lodash_get(res, 'isCN')
       CN_IP = $.lodash_get(res, 'IP')
       CN_INFO = $.lodash_get(res, 'INFO')
@@ -1007,6 +1071,40 @@ async function ipim(ip) {
     ['位置:', isCN ? getflag('CN') : getflag(country), country, province, city, district].filter(i => i).join(' '),
     ['运营商:', isp || '-'].filter(i => i).join(' '),
     $.lodash_get(arg, 'ORG') == 1 ? ['组织:', org || '-'].filter(i => i).join(' ') : undefined,
+  ]
+    .filter(i => i)
+    .join('\n')
+  return { IP, INFO, isCN }
+}
+async function ali(ip, key) {
+  let isCN
+  let IP
+  let INFO
+  const res = await http({
+    url: `https://ips.market.alicloudapi.com/iplocaltion`,
+    params: { ip },
+    headers: { authorization: `APPCODE ${key}` },
+  })
+  let body = String($.lodash_get(res, 'body'))
+  try {
+    body = JSON.parse(body)
+  } catch (e) {}
+
+  IP = $.lodash_get(body, 'ip')
+  const countryCode = $.lodash_get(body, 'result.en_short')
+  isCN = countryCode === 'CN'
+
+  INFO = [
+    [
+      '位置:',
+      getflag(countryCode),
+      $.lodash_get(body, 'result.nation').replace(/中国\s*/, ''),
+      $.lodash_get(body, 'result.province'),
+      $.lodash_get(body, 'result.city'),
+      $.lodash_get(body, 'result.district'),
+    ]
+      .filter(i => i)
+      .join(' '),
   ]
     .filter(i => i)
     .join('\n')
