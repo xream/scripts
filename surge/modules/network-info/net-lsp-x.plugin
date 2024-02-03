@@ -5,6 +5,10 @@
 #!openurl=https://t.me/zhetengsha
 #!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Global.png
 
+[Rule]
+DOMAIN-SUFFIX,speedtest.cn,DIRECT
+DOMAIN-SUFFIX,ip.im,DIRECT
+
 [Script]
 # Request
 http-request ^https?:\/\/net-lsp-x\.com script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/network-info/net-lsp-x.js, timeout=120, tag=网络信息请求 𝕏
