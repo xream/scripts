@@ -1027,6 +1027,22 @@ async function getProxyInfoIPv6(ip) {
     } catch (e) {
       $.logErr(`${msg} 发生错误: ${e.message || e}`)
     }
+  } else if ($.lodash_get(arg, 'LANDING_IPv6') == 'ipify') {
+    try {
+      const res = await http({
+        ...(ip ? {} : getNodeOpt()),
+
+        url: `https://api6.ipify.org`,
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36 Edg/109.0.1518.14',
+        },
+      })
+      let body = String($.lodash_get(res, 'body'))
+      PROXY_IPv6 = body.trim()
+    } catch (e) {
+      $.logErr(`${msg} 发生错误: ${e.message || e}`)
+    }
   } else {
     try {
       const res = await http({
