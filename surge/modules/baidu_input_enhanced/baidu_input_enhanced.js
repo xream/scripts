@@ -36,9 +36,7 @@ if (typeof $argument != 'undefined') {
     let API = $.lodash_get(arg, 'BIE_API') || $.getval('BIE_API')
     if (!API || API === 'https://api.openai.com/v1/chat/completions') {
       if (TYPE === 'Gemini') {
-        API = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${encodeURIComponent(
-          KEY
-        )}`
+        API = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent`
       } else {
         API = 'https://api.openai.com/v1/chat/completions'
       }
