@@ -49,9 +49,11 @@ if (typeof $argument != 'undefined') {
     const headers = {
       'Content-Type': 'application/json',
     }
-    const params = {}
+    // 不知道为啥 QX 上有问题
+    // const params = {}
     if (TYPE === 'Gemini') {
-      params.key = KEY
+      // params.key = KEY
+      API = `${API}?key=${encodeURIComponent(KEY)}`
     } else {
       headers.Authorization = `Bearer ${KEY}`
     }
@@ -59,7 +61,7 @@ if (typeof $argument != 'undefined') {
       timeout: TIMEOUT,
       url: API,
       headers,
-      params,
+      // params,
       body: JSON.stringify(
         TYPE === 'Gemini'
           ? {
