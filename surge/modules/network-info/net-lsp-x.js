@@ -7,16 +7,31 @@ if (typeof $argument != 'undefined') {
 } else {
   arg = {}
 }
+$.log(`传入的 $argument: ${$.toStr(arg)}`)
+if (typeof $loon === 'string') {
+  // const build = $loon.match(/\(\s*?(\d+)\s*?\)\s*?$/)?.[1]
+  // $.log(`当前 Loon Build: ${build}`)
+  $.log(`当前版本: ${$loon}`)
+}
 
 arg = { ...arg, ...$.getjson(NAME, {}) }
 
+$.log(`从持久化存储读取参数后: ${$.toStr(arg)}`)
+
 if (typeof $environment !== 'undefined' && $.lodash_get($environment, 'executor') === 'event-network') {
+  $.log(`QX 事件脚本不能带参 修正运行环境`)
+  $.lodash_set(arg, 'TYPE', 'EVENT')
+}
+
+if (!isInteraction() && !isRequest() && !isTile() && !isPanel()) {
+  $.log(`参数为空 非可交互操作, 非请求, 非面板的情况下, 修正运行环境`)
   $.lodash_set(arg, 'TYPE', 'EVENT')
 }
 
 if (isRequest()) {
   // $.log($.toStr($request))
   arg = { ...arg, ...parseQueryString($request.url) }
+  $.log(`从请求后读取参数后: ${$.toStr(arg)}`)
 }
 
 const keya = 'spe'

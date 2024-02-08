@@ -460,6 +460,8 @@ function Env(name, opts) {
     }
 
     get(request, callback = () => {}) {
+      console.log('==========Env get 方法 传入 request =========')
+      console.log(JSON.stringify(request, null, 2))
       if (request.headers) {
         delete request.headers['Content-Type']
         delete request.headers['Content-Length']
@@ -495,6 +497,7 @@ function Env(name, opts) {
             request.opts = request.opts || {}
             Object.assign(request.opts, { hints: false })
           }
+          console.log('==========Env get 方法 $task.fetch request =========')
           console.log(JSON.stringify(request, null, 2))
           $task.fetch(request).then(
             resp => {
@@ -538,6 +541,8 @@ function Env(name, opts) {
     }
 
     post(request, callback = () => {}) {
+      console.log('==========Env post 方法 传入 request =========')
+      console.log(JSON.stringify(request, null, 2))
       const method = request.method ? request.method.toLocaleLowerCase() : 'post'
 
       // 如果指定了请求体, 但没指定 `Content-Type`、`content-type`, 则自动生成。
@@ -575,6 +580,7 @@ function Env(name, opts) {
             request.opts = request.opts || {}
             Object.assign(request.opts, { hints: false })
           }
+          console.log('==========Env post 方法 $task.fetch 传入 request =========')
           console.log(JSON.stringify(request, null, 2))
           $task.fetch(request).then(
             resp => {
