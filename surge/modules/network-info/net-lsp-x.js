@@ -8,11 +8,11 @@ if (typeof $argument != 'undefined') {
   arg = {}
 }
 $.log(`传入的 $argument: ${$.toStr(arg)}`)
-if (typeof $loon === 'string') {
-  // const build = $loon.match(/\(\s*?(\d+)\s*?\)\s*?$/)?.[1]
-  // $.log(`当前 Loon Build: ${build}`)
-  $.log(`当前版本: ${$loon}`)
-}
+// if (typeof $loon === 'string') {
+//   // const build = $loon.match(/\(\s*?(\d+)\s*?\)\s*?$/)?.[1]
+//   // $.log(`当前 Loon Build: ${build}`)
+//   $.log(`当前版本: ${$loon}`)
+// }
 
 arg = { ...arg, ...$.getjson(NAME, {}) }
 
@@ -1004,7 +1004,13 @@ async function getProxyInfo(ip, provider) {
       } catch (e) {}
       PROXY_IP = ip || $.lodash_get(body, 'query')
       PROXY_INFO = [
-        ['位置:', getflag(body.countryCode), body.country.replace(/\s*中国\s*/, ''), body.regionName, body.city]
+        [
+          '位置:',
+          getflag(body.countryCode),
+          body.country.replace(/\s*中国\s*/, ''),
+          body.regionName ? body.regionName.split(/\s+or\s+/)[0] : body.regionName,
+          body.city,
+        ]
           .filter(i => i)
           .join(' '),
         ['运营商:', body.isp || body.org || body.as].filter(i => i).join(' '),
