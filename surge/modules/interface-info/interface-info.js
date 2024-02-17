@@ -20,10 +20,15 @@ let content = ''
     en0: 'Wi-Fi/Ethernet',
     pdp_ip0: '蜂窝网络',
   }
-  content = Object.keys(interface)
+  const keys = Object.keys(interface)
+  content = keys
     .map(key => {
       const item = interface[key]
-      const name = INTERFACES[key] || key
+      let name = INTERFACES[key]
+      if (!name && /^en\d*$/.test(key) && !keys.includes('en0')) {
+        name = INTERFACES['en0']
+      }
+      name = name || key
       return $.lodash_get(arg, 'STYLE') === 'normal'
         ? `${name}:\n上传流量: ${formatFlow(item.out, 2)}\n下载流量: ${formatFlow(item.in, 2)}\n上传速度: ${formatFlow(
             item.outCurrentSpeed,
