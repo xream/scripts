@@ -22,16 +22,17 @@ let content = ''
   }
   content = Object.keys(interface)
     .map(key => {
-      const item = interface[key] || key
+      const item = interface[key]
+      const name = INTERFACES[key] || key
       return $.lodash_get(arg, 'STYLE') === 'normal'
-        ? `${INTERFACES[key]}:\n上传流量: ${formatFlow(item.out, 2)}\n下载流量: ${formatFlow(
-            item.in,
+        ? `${name}:\n上传流量: ${formatFlow(item.out, 2)}\n下载流量: ${formatFlow(item.in, 2)}\n上传速度: ${formatFlow(
+            item.outCurrentSpeed,
             2
-          )}\n上传速度: ${formatFlow(item.outCurrentSpeed, 2)}/s\n下载速度: ${formatFlow(
-            item.inCurrentSpeed,
+          )}/s\n下载速度: ${formatFlow(item.inCurrentSpeed, 2)}/s\n最大上传速度: ${formatFlow(
+            item.outMaxSpeed,
             2
-          )}/s\n最大上传速度: ${formatFlow(item.outMaxSpeed, 2)}/s\n最大下载速度: ${formatFlow(item.inMaxSpeed, 2)}/s`
-        : `${INTERFACES[key]}:\n流量: ↑ ${formatFlow(item.out, 2)} ↓ ${formatFlow(item.in, 2)}\n速度: ↑ ${formatFlow(
+          )}/s\n最大下载速度: ${formatFlow(item.inMaxSpeed, 2)}/s`
+        : `${name}:\n流量: ↑ ${formatFlow(item.out, 2)} ↓ ${formatFlow(item.in, 2)}\n速度: ↑ ${formatFlow(
             item.outCurrentSpeed,
             2
           )}/s ↓ ${formatFlow(item.inCurrentSpeed, 2)}/s\n最大速度: ↑ ${formatFlow(
