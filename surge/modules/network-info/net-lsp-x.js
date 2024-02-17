@@ -1439,12 +1439,17 @@ async function http(opt = {}) {
   const TIMEOUT = parseFloat(opt.timeout || $.lodash_get(arg, 'TIMEOUT') || 5)
   const RETRIES = parseFloat(opt.retries || $.lodash_get(arg, 'RETRIES') || 1)
   const RETRY_DELAY = parseFloat(opt.retries || $.lodash_get(arg, 'RETRY_DELAY') || 1)
+
+  let timeout = TIMEOUT + 1
+  timeout = $.isSurge() ? timeout : timeout * 1000
+
   let count = 0
   const fn = async () => {
     try {
       if (TIMEOUT) {
+        // Surge, Loon, Stash 默认为 5 秒
         return await Promise.race([
-          $.http.get({ ...opt, timeout: undefined }),
+          $.http.get({ ...opt, timeout }),
           new Promise((_, reject) => setTimeout(() => reject(new Error('HTTP TIMEOUT')), TIMEOUT * 1000)),
         ])
       }
