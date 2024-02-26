@@ -5,11 +5,12 @@
 // 把 所有节点插入匹配 /all|all-auto/i 的 outbound 中(跟在 🕳 后面, ℹ️ 表示忽略大小写, 不筛选节点不需要给 🏷 )
 // 把匹配 /港|hk|hongkong|kong kong|🇭🇰/i  (跟在 🏷 后面, ℹ️ 表示忽略大小写) 的节点插入匹配 /hk|hk-auto/i 的 outbound 中
 // ...
+// 可选参数: includeUnsupportedProxy 包含官方/商店版不支持的协议 SSR. 用法: `&includeUnsupportedProxy=true`
 
 // ⚠️ 如果 outbounds 为空, 自动创建 COMPATIBLE(direct) 并插入 防止报错
 log(`🚀 开始`)
 
-let { type, name, outbound } = $arguments
+let { type, name, outbound, includeUnsupportedProxy } = $arguments
 
 log(`传入参数 type: ${type}, name: ${name}, outbound: ${outbound}`)
 
@@ -30,6 +31,9 @@ let proxies = await produceArtifact({
   type,
   platform: 'sing-box',
   produceType: 'internal',
+  produceOpts: {
+    'include-unsupported-proxy': includeUnsupportedProxy,
+  },
 })
 log(`③ outbound 规则解析`)
 const outbounds = outbound
