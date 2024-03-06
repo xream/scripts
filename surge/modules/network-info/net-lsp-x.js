@@ -1407,7 +1407,11 @@ function isPanel() {
   return $.isSurge() && typeof $input != 'undefined' && $.lodash_get($input, 'purpose') === 'panel'
 }
 function isTile() {
-  return $.isStash() && typeof $script != 'undefined' && $.lodash_get($script, 'type') === 'tile'
+  return (
+    $.isStash() &&
+    ((typeof $script != 'undefined' && $.lodash_get($script, 'type') === 'tile') ||
+      $.lodash_get(arg, 'TYPE') === 'TILE')
+  )
 }
 function isInteraction() {
   return (
