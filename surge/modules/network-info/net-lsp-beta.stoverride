@@ -26,7 +26,7 @@ tiles:
     title: "网络信息 𝕏"
     timeout: 30
     argument: |-
-      icon=globe.asia.australia&flag=1
+      TYPE=TILE&icon=globe.asia.australia&flag=1
 
 script-providers:
   "网络信息 𝕏":

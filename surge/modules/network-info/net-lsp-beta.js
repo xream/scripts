@@ -22,11 +22,6 @@ if (typeof $environment !== 'undefined' && $.lodash_get($environment, 'executor'
   $.log(`QX 事件脚本不能带参 修正运行环境`)
   $.lodash_set(arg, 'TYPE', 'EVENT')
 }
-$.log(`isStash: ${$.isStash()}`)
-if (typeof $script != 'undefined') {
-  $.log($.toStr($script))
-  $.log(`isTile: ${$.lodash_get($script, 'type') === 'tile'}`)
-}
 
 if (!isInteraction() && !isRequest() && !isTile() && !isPanel()) {
   $.log(`参数为空 非可交互操作, 非请求, 非面板的情况下, 修正运行环境`)
@@ -1412,7 +1407,11 @@ function isPanel() {
   return $.isSurge() && typeof $input != 'undefined' && $.lodash_get($input, 'purpose') === 'panel'
 }
 function isTile() {
-  return $.isStash() && typeof $script != 'undefined' && $.lodash_get($script, 'type') === 'tile'
+  return (
+    $.isStash() &&
+    ((typeof $script != 'undefined' && $.lodash_get($script, 'type') === 'tile') ||
+      $.lodash_get(arg, 'TYPE') === 'TILE')
+  )
 }
 function isInteraction() {
   return (
