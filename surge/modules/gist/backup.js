@@ -6,6 +6,7 @@ const KEY_TOKEN = `@xream.gist.token`
 const KEY_DESC = `@xream.gist.desc`
 const KEY_SAVE_KEY = `@xream.gist.saveKey`
 const KEY_TESTFLIGHT_ACCOUNT_ONLY_FOR_BACKUP_KEY = `@xream.gist.testFlightAccountOnlyForBackup`
+const KEY_KEYS = `@xream.gist.keys`
 
 $.setdata(new Date().toLocaleString('zh'), KEY_INITED)
 
@@ -16,6 +17,19 @@ $.setdata(new Date().toLocaleString('zh'), KEY_INITED)
   const username = $.getdata(KEY_USERNAME)
   const token = $.getdata(KEY_TOKEN)
   if (!token || !username) throw new Error('请填写 Gist 备份的 token 和 用户名')
+
+  const gistObj = {}
+  let keys = $.getdata(KEY_KEYS) || ''
+  keys.split(/,|，/).map(i => {
+    const key = i.trim()
+    if (key.length > 0) {
+      const val = $.getdata(key)
+      if (val !== null) {
+        gistObj[key] = val
+      }
+    }
+  })
+  console.log(`需要额外备份的持久化缓存: ${Object.keys(gistObj).join(', ')}`)
 
   let gist
   let gists = []
@@ -125,7 +139,7 @@ $.setdata(new Date().toLocaleString('zh'), KEY_INITED)
         public: false,
         files: {
           [saveKey]: {
-            content: JSON.stringify(content),
+            content: JSON.stringify({ ...content, _gist_obj: gistObj }),
           },
         },
       }),

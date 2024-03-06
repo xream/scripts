@@ -8,6 +8,7 @@ const KEY_SAVE_KEY = `@xream.gist.saveKey`
 const KEY_TESTFLIGHT_ACCOUNT_LOCAL_ID_KEY = `@xream.gist.testFlightAccountLocalId`
 const KEY_TESTFLIGHT_ACCOUNT_ONLY_KEY = `@xream.gist.testFlightAccountOnly`
 const KEY_TESTFLIGHT_ACCOUNT_ONLY_FOR_BACKUP_KEY = `@xream.gist.testFlightAccountOnlyForBackup`
+const KEY_KEYS = `@xream.gist.keys`
 
 $.setdata(new Date().toLocaleString('zh'), KEY_INITED)
 
@@ -121,6 +122,14 @@ $.setdata(new Date().toLocaleString('zh'), KEY_INITED)
     $.log('仅恢复 TestFlight 账户管理脚本的数据')
     $BoxJs.setjson(JSON.parse(backup['TESTFLIGHT-ACCOUNT']), 'TESTFLIGHT-ACCOUNT')
   } else {
+    const gistObj = backup._gist_obj
+    if (gistObj) {
+      Object.keys(gistObj).map(key => {
+        $.setdata(gistObj[key], key)
+      })
+      console.log(`恢复的额外备份的持久化缓存: ${Object.keys(gistObj).join(', ')}`)
+    }
+    delete backup._gist_obj
     setBoxJsData(backup)
   }
 

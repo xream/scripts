@@ -338,7 +338,8 @@
         "@xream.gist.saveKey",
         "@xream.gist.testFlightAccountLocalId",
         "@xream.gist.testFlightAccountOnly",
-        "@xream.gist.testFlightAccountOnlyForBackup"
+        "@xream.gist.testFlightAccountOnlyForBackup",
+        "@xream.gist.keys"
       ],
       "author": "@xream",
       "repo": "https://github.com/xream/scripts/tree/main/surge/modules/gist",
@@ -425,6 +426,15 @@
           "val": false,
           "type": "boolean",
           "desc": "默认禁用. 启用后只会备份 TestFlight 账户管理脚本的数据"
+        },
+        {
+          "id": "@xream.gist.keys",
+          "name": "需要额外备份的持久化缓存的 key(s)",
+          "placeholder": "",
+          "val": "",
+          "type": "textarea",
+          "persistentHint": true,
+          "desc": "多个 key 逗号分隔"
         }
       ],
       "icons": [
