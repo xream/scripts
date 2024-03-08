@@ -11,13 +11,16 @@ async function operator(proxies = [], targetPlatform, env) {
   const currT = flowTransfer(Math.abs(current))
   currT.value = current < 0 ? '-' + currT.value : currT.value
   const totalT = flowTransfer(total)
-
-  proxies.unshift({
+  // 获取 proxies 的最后一项
+  const node = proxies[proxies.length - 1] || {
     type: 'ss',
     server: '1.0.0.1',
     port: 80,
     cipher: 'aes-128-gcm',
     password: 'password',
+  }
+  proxies.unshift({
+    ...node,
     name: `流量信息: ${currT.value} ${currT.unit} / ${totalT.value} ${totalT.unit} ${date}`,
   })
   return proxies
