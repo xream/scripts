@@ -1,5 +1,5 @@
 async function operator(proxies = [], targetPlatform, env) {
-  const { parseFlowHeaders, getFlowHeaders, flowTransfer } = flowUtils
+  const { parseFlowHeaders, getFlowHeaders, flowTransfer, getRmainingDays } = flowUtils
   const sub = env.source[proxies[0].subName]
   const localOnly = sub.source === 'local' && !['localFirst', 'remoteFirst'].includes(sub.mergeSources)
 
@@ -32,11 +32,21 @@ async function operator(proxies = [], targetPlatform, env) {
         usage: { upload, download },
       } = parseFlowHeaders(await getFlowHeaders(url))
       const date = expires ? new Date(expires * 1000).toLocaleDateString() : ''
-
+      let remainingDays
+      try {
+        remainingDays = getRmainingDays($arguments.resetDay)
+      } catch (e) {}
       const current = upload + download
       const currT = flowTransfer(Math.abs(current))
       currT.value = current < 0 ? '-' + currT.value : currT.value
       const totalT = flowTransfer(total)
+      let name = `流量 ${currT.value} ${currT.unit} / ${totalT.value} ${totalT.unit}`
+      if (remainingDays) {
+        name = `${name} | ${remainingDays} 天`
+      }
+      if (date) {
+        name = `${name} | ${date}`
+      }
       // 获取 proxies 的最后一项
       const node = proxies[proxies.length - 1] || {
         type: 'ss',
@@ -47,7 +57,7 @@ async function operator(proxies = [], targetPlatform, env) {
       }
       proxies.unshift({
         ...node,
-        name: `流量信息: ${currT.value} ${currT.unit} / ${totalT.value} ${totalT.unit} ${date}`,
+        name,
       })
     }
   }
