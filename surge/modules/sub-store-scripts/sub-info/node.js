@@ -34,7 +34,11 @@ async function operator(proxies = [], targetPlatform, env) {
       const date = expires ? new Date(expires * 1000).toLocaleDateString() : ''
       let remainingDays
       try {
-        remainingDays = getRmainingDays($arguments.resetDay)
+        remainingDays = getRmainingDays({
+          resetDay: $arguments.resetDay,
+          startDate: $arguments.startDate,
+          cycleDays: $arguments.cycleDays,
+        })
       } catch (e) {}
       const current = upload + download
       const currT = flowTransfer(Math.abs(current))
