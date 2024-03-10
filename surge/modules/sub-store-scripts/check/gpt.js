@@ -27,24 +27,25 @@ async function operator(proxies = [], targetPlatform, context) {
   async function check(proxy) {
     try {
       const node = ProxyUtils.produce([proxy], target)
-
-      // 请求
-      const res = await http({
-        method: 'get',
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3.1 Mobile/15E148 Safari/604.1',
-        },
-        url,
-        'policy-descriptor': node,
-        node,
-      })
-      const status = parseInt(res.status || res.statusCode || 200)
-      $.info(status)
-      // 判断响应
-      // https://zset.cc/archives/34/
-      if (status == 403) {
-        proxy.name = `[GPT] ${proxy.name}`
+      if (node) {
+        // 请求
+        const res = await http({
+          method: 'get',
+          headers: {
+            'User-Agent':
+              'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3.1 Mobile/15E148 Safari/604.1',
+          },
+          url,
+          'policy-descriptor': node,
+          node,
+        })
+        const status = parseInt(res.status || res.statusCode || 200)
+        $.info(status)
+        // 判断响应
+        // https://zset.cc/archives/34/
+        if (status == 403) {
+          proxy.name = `[GPT] ${proxy.name}`
+        }
       }
     } catch (e) {
       $.error(e)
