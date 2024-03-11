@@ -1,7 +1,20 @@
-// 欢迎加入 Telegram 群组 https://t.me/zhetengsha
-// 检测方法: https://zset.cc/archives/34/
-// 需求来源: @underHZLY
-// 讨论贴: https://www.nodeseek.com/post-78153-1
+/**
+ * GPT 检测(适配 Surge/Loon 版)
+ *
+ * 适配 Sub-Store Node.js 版 请查看: https://t.me/zhetengsha/1208
+ *
+ * 欢迎加入 Telegram 群组 https://t.me/zhetengsha
+ * 检测方法: https://zset.cc/archives/34/
+ * 需求来源: @underHZLY
+ * 讨论贴: https://www.nodeseek.com/post-78153-1
+ *
+ * 参数
+ * - [timeout] 请求超时(单位: 毫秒) 默认 5000
+ * - [retries] 重试次数 默认 1
+ * - [retry_delay] 重试延时(单位: 毫秒) 默认 1000
+ * - [concurrency] 并发数 默认 10
+ * - [client] GPT 检测的客户端类型. 默认 iOS
+ */
 
 async function operator(proxies = [], targetPlatform, context) {
   const $ = $substore
@@ -40,7 +53,7 @@ async function operator(proxies = [], targetPlatform, context) {
           node,
         })
         const status = parseInt(res.status || res.statusCode || 200)
-        $.info(status)
+        // $.info(status)
         // 判断响应
         // https://zset.cc/archives/34/
         if (status == 403) {
