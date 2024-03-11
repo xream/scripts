@@ -17,6 +17,7 @@
  * - [retry_delay] 重试延时(单位: 毫秒) 默认 1000
  * - [concurrency] 并发数 默认 10
  * - [client] GPT 检测的客户端类型. 默认 iOS
+ * - [method] 请求方法. 默认 head, 如果不支持, 可设为 get
  */
 
 async function operator(proxies = [], targetPlatform, context) {
@@ -29,6 +30,7 @@ async function operator(proxies = [], targetPlatform, context) {
   const http_meta_start_delay = $arguments.http_meta_start_delay ?? 60
   const http_meta_proxy_timeout = $arguments.http_meta_proxy_timeout ?? 60
   const http_meta_timeout = (http_meta_start_delay + proxies.length * http_meta_proxy_timeout) * 1000
+  const method = $arguments.method || 'head'
   const url = $arguments.client === 'Android' ? `https://android.chat.openai.com` : `https://ios.chat.openai.com`
 
   const $ = $substore
@@ -115,7 +117,7 @@ async function operator(proxies = [], targetPlatform, context) {
       const index = internalProxies.indexOf(proxy)
       const res = await http({
         proxy: `http://${http_meta_host}:${http_meta_ports[index]}`,
-        method: 'get',
+        method,
         headers: {
           'User-Agent':
             'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3.1 Mobile/15E148 Safari/604.1',
