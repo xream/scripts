@@ -8,8 +8,8 @@
  * - [http_meta_protocol] 协议 默认: http
  * - [http_meta_host] 服务地址 默认: 127.0.0.1
  * - [http_meta_port] 端口号 默认: 9876
- * - [http_meta_start_delay] 初始启动延时(单位: 秒) 默认: 60
- * - [http_meta_proxy_timeout] 每个节点耗时(单位: 秒). 此参数是为了防止脚本异常退出未关闭核心. 设置过小将导致核心过早退出. 目前逻辑: 启动初始的延时 + 每个节点耗时. 默认: 60
+ * - [http_meta_start_delay] 初始启动延时(单位: 毫秒) 默认: 3000
+ * - [http_meta_proxy_timeout] 每个节点耗时(单位: 毫秒). 此参数是为了防止脚本异常退出未关闭核心. 设置过小将导致核心过早退出. 目前逻辑: 启动初始的延时 + 每个节点耗时. 默认: 10000
  *
  * 其它参数
  * - [timeout] 请求超时(单位: 毫秒) 默认 5000
@@ -28,11 +28,10 @@ async function operator(proxies = [], targetPlatform, context) {
   const http_meta_port = $arguments.http_meta_port ?? 9876
   const http_meta_protocol = $arguments.http_meta_protocol ?? 'http'
   const http_meta_api = `${http_meta_protocol}://${http_meta_host}:${http_meta_port}`
-  // 若未手动关闭, 将按此超时设置自动关闭
-  // 此参数是为了防止脚本异常退出未关闭核心. 设置过小将导致核心过早退出. 目前逻辑: 启动初始的延时 + 每个节点耗时(因为测入口的节点为全部节点, 测落地的节点为核心支持的有效节点 先偷懒按全部节点计算)
-  const http_meta_start_delay = $arguments.http_meta_start_delay ?? 60
-  const http_meta_proxy_timeout = $arguments.http_meta_proxy_timeout ?? 60
-  const http_meta_timeout = (http_meta_start_delay + proxies.length * http_meta_proxy_timeout) * 1000
+
+  const http_meta_start_delay = parseFloat($arguments.http_meta_start_delay ?? 3000)
+  const http_meta_proxy_timeout = parseFloat($arguments.http_meta_proxy_timeout ?? 10000)
+
   const method = $arguments.method || 'head'
   const keepIncompatible = $arguments.keep_incompatible
   const validStatus = parseInt($arguments.status || 200)
@@ -61,9 +60,12 @@ async function operator(proxies = [], targetPlatform, context) {
   $.info(`核心支持节点数: ${internalProxies.length}/${proxies.length}`)
   if (!internalProxies.length) return proxies
 
+  const http_meta_timeout = http_meta_start_delay + internalProxies.length * http_meta_proxy_timeout
+
   let http_meta_pid
   let http_meta_ports = []
   // 启动 HTTP META
+  await $.wait(http_meta_start_delay)
   const res = await http({
     retries: 0,
     method: 'post',
@@ -158,8 +160,7 @@ async function operator(proxies = [], targetPlatform, context) {
     const METHOD = opt.method || $arguments.method || 'get'
     const TIMEOUT = parseFloat(opt.timeout || $arguments.timeout || 5000)
     const RETRIES = parseFloat(opt.retries ?? $arguments.retries ?? 1)
-    const RETRY_DELAY = parseFloat(opt.retry_delay ?? $arguments.retries ?? 1000)
-
+    const RETRY_DELAY = parseFloat(opt.retry_delay ?? $arguments.retry_delay ?? 1000)
     let count = 0
     const fn = async () => {
       try {
