@@ -1,16 +1,20 @@
 #!name=打断请求
 #!desc=谨慎启用. 自动刷新面板. 点击面板按钮或请求 kill-active-requests.com 手动打断请求. WiFi 断开时自动执行.
+#!arguments=EVENT_SCRIPT_NAME:网络变化时打断连接,EVENT_NOTIFY:1,ICON:xmark.circle,ICON-COLOR:#C5424A
+#!arguments-desc=1 为开启, 0 为关闭\n\nEVENT_SCRIPT_NAME:\n网络变化时打断连接的脚本名称\n若要禁用网络变化时打断连接这个功能, 请输入 #\n\nEVENT_NOTIFY:\n网络变化打断连接时, 是否发送通知
 
 [MITM]
 hostname = %APPEND% kill-active-requests.com
 
 [Script]
+# Request
 通过请求手动打断连接 = type=http-request,pattern=^https?:\/\/kill-active-requests\.com,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/kill-active-requests/index.js
 
-网络变化时打断连接 = type=event,event-name=network-changed,timeout=30,script-update-interval=3600,debug=false,enable=true,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/kill-active-requests/index.js
+# Event
+{{{EVENT_SCRIPT_NAME}}} = type=event,event-name=network-changed,timeout=30,script-update-interval=3600,debug=false,enable=true,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/kill-active-requests/index.js,argument="EVENT_NOTIFY={{{EVENT_NOTIFY}}}"
 
 # Panel
-面板手动打断连接 = type=generic,timeout=30,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/kill-active-requests/index.js,argument=icon=xmark.circle&icon-color=#C5424A
+面板手动打断连接 = type=generic,timeout=30,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/kill-active-requests/index.js,argument="icon={{{ICON}}}&icon-color={{{ICON-COLOR}}}"
 
 [Panel]
 面板手动打断连接 = script-name=面板手动打断连接,update-interval=1

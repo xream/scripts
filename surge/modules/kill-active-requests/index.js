@@ -65,7 +65,9 @@ let result = {}
         //   // console.log(res)
         // }
         await kill()
-        $notification.post('网络变化', '打断请求', `${requests.length} 个`)
+        if (arg?.EVENT_NOTIFY == 1) {
+          $notification.post('网络变化', '打断请求', `${requests.length} 个`)
+        }
       }
       $persistentStore.write('', 'last_network')
     }
@@ -77,7 +79,7 @@ let result = {}
     if (isPanel()) {
       result = { title: '❌', content: msg, ...arg }
     } else {
-      $.msg('网络变化', `❌ 打断请求`, msg)
+      $notification.post('网络变化', `❌ 打断请求`, msg)
     }
   })
   .finally(() => $done(result))
