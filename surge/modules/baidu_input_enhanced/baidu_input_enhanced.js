@@ -24,7 +24,7 @@ if (typeof $argument != 'undefined') {
   const input = queryObject.s_qr ?? ''
 
   let answer = ''
-  const [_, __, cmd, param] = input.match(/(^(\w+)\s*?[:：]\s*)([\s\S]*)/i)
+  const [_, __, cmd, param] = input.match(/(^(\w+)\s*?[:：]\s*)([\s\S]*)/i) || []
   if (['eval', 'return'].includes(cmd)) {
     answer = await Object.getPrototypeOf(async function () {}).constructor(
       `${['return'].includes(cmd) ? 'return ' : ''}${param}`
