@@ -65,7 +65,6 @@ async function operator(proxies = [], targetPlatform, context) {
   let http_meta_pid
   let http_meta_ports = []
   // 启动 HTTP META
-  await $.wait(http_meta_start_delay)
   const res = await http({
     retries: 0,
     method: 'post',
@@ -90,9 +89,11 @@ async function operator(proxies = [], targetPlatform, context) {
   http_meta_ports = ports
   $.info(
     `\n======== HTTP META 启动 ====\n[端口] ${ports}\n[PID] ${pid}\n[超时] 若未手动关闭 ${
-      http_meta_timeout / 60 / 1000
+      Math.round(http_meta_timeout / 60 / 10) / 100
     } 分钟后自动关闭\n`
   )
+  $.info(`等待 ${http_meta_start_delay / 1000} 秒后开始检测`)
+  await $.wait(http_meta_start_delay)
 
   const batches = []
   const concurrency = parseInt($arguments.concurrency || 10) // 一组并发数
@@ -140,19 +141,17 @@ async function operator(proxies = [], targetPlatform, context) {
       })
       const status = parseInt(res.status || res.statusCode || 200)
       let latency = ''
-      if ($arguments.show_latency) {
-        latency = `${Date.now() - startedAt}`
-      }
-      $.info(`status: ${status}, latency: ${latency}`)
+      latency = `${Date.now() - startedAt}`
+      $.info(`[${proxy.name}] status: ${status}, latency: ${latency}`)
       // 判断响应
       if (status == validStatus) {
         validProxies.push({
           ...proxy,
-          name: `${latency ? `[${latency}] ` : ''}${proxy.name}`,
+          name: `${$arguments.show_latency ? `[${latency}] ` : ''}${proxy.name}`,
         })
       }
     } catch (e) {
-      $.error(e)
+      $.error(`[${proxy.name}] ${e.message ?? e}`)
     }
   }
   // 请求
@@ -166,13 +165,15 @@ async function operator(proxies = [], targetPlatform, context) {
       try {
         return await $.http[METHOD]({ ...opt, timeout: TIMEOUT })
       } catch (e) {
-        $.error(e)
+        // $.error(e)
         if (count < RETRIES) {
           count++
           const delay = RETRY_DELAY * count
-          $.log(`第 ${count} 次请求失败: ${e.message || e}, 等待 ${delay / 1000}s 后重试`)
+          // $.info(`第 ${count} 次请求失败: ${e.message ?? e}, 等待 ${delay / 1000}s 后重试`)
           await $.wait(delay)
           return await fn()
+        } else {
+          throw e
         }
       }
     }

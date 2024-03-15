@@ -76,9 +76,11 @@ async function operator(proxies = [], targetPlatform, context) {
   http_meta_ports = ports
   $.info(
     `\n======== HTTP META 启动 ====\n[端口] ${ports}\n[PID] ${pid}\n[超时] 若未手动关闭 ${
-      http_meta_timeout / 60 / 1000
+      Math.round(http_meta_timeout / 60 / 10) / 100
     } 分钟后自动关闭\n`
   )
+  $.info(`等待 ${http_meta_start_delay / 1000} 秒后开始检测`)
+  await $.wait(http_meta_start_delay)
 
   const batches = []
   const concurrency = parseInt($arguments.concurrency || 10) // 一组并发数
@@ -114,6 +116,7 @@ async function operator(proxies = [], targetPlatform, context) {
     try {
       // $.info(JSON.stringify(proxy, null, 2))
       const index = internalProxies.indexOf(proxy)
+      const startedAt = Date.now()
       const res = await http({
         proxy: `http://${http_meta_host}:${http_meta_ports[index]}`,
         method,
@@ -124,13 +127,16 @@ async function operator(proxies = [], targetPlatform, context) {
         url,
       })
       const status = parseInt(res.status || res.statusCode || 200)
-      // $.info(status)
-      // 判断响应
+      let latency = ''
+      latency = `${Date.now() - startedAt}`
+      $.info(`[${proxy.name}] status: ${status}, latency: ${latency}`)
+      // cf 拦截是 400 错误, 403 就是没被拦截, 走到了未鉴权的逻辑
+      // https://zset.cc/archives/34/
       if (status === 403) {
         proxies[proxy._proxies_index].name = `[GPT] ${proxies[proxy._proxies_index].name}`
       }
     } catch (e) {
-      $.error(e)
+      $.error(`[${proxy.name}] ${e.message ?? e}`)
     }
   }
   // 请求
@@ -145,13 +151,15 @@ async function operator(proxies = [], targetPlatform, context) {
       try {
         return await $.http[METHOD]({ ...opt, timeout: TIMEOUT })
       } catch (e) {
-        $.error(e)
+        // $.error(e)
         if (count < RETRIES) {
           count++
           const delay = RETRY_DELAY * count
-          $.log(`第 ${count} 次请求失败: ${e.message || e}, 等待 ${delay / 1000}s 后重试`)
+          // $.info(`第 ${count} 次请求失败: ${e.message || e}, 等待 ${delay / 1000}s 后重试`)
           await $.wait(delay)
           return await fn()
+        } else {
+          throw e
         }
       }
     }

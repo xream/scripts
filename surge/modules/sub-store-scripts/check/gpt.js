@@ -44,6 +44,7 @@ async function operator(proxies = [], targetPlatform, context) {
       const node = ProxyUtils.produce([proxy], target)
       if (node) {
         // 请求
+        const startedAt = Date.now()
         const res = await http({
           method,
           headers: {
@@ -55,36 +56,40 @@ async function operator(proxies = [], targetPlatform, context) {
           node,
         })
         const status = parseInt(res.status || res.statusCode || 200)
-        // $.info(status)
-        // 判断响应
+        let latency = ''
+        latency = `${Date.now() - startedAt}`
+        $.info(`[${proxy.name}] status: ${status}, latency: ${latency}`)
+        // cf 拦截是 400 错误, 403 就是没被拦截, 走到了未鉴权的逻辑
         // https://zset.cc/archives/34/
         if (status == 403) {
           proxy.name = `[GPT] ${proxy.name}`
         }
       }
     } catch (e) {
-      $.error(e)
+      $.error(`[${proxy.name}] ${e.message ?? e}`)
     }
   }
   // 请求
   async function http(opt = {}) {
     const METHOD = opt.method || 'get'
     const TIMEOUT = parseFloat(opt.timeout || $arguments.timeout || 5000)
-    const RETRIES = parseFloat(opt.retries || $arguments.retries || 1)
-    const RETRY_DELAY = parseFloat(opt.retry_delay || $arguments.retry_delay || 1000)
+    const RETRIES = parseFloat(opt.retries ?? $arguments.retries ?? 1)
+    const RETRY_DELAY = parseFloat(opt.retry_delay ?? $arguments.retry_delay ?? 1000)
 
     let count = 0
     const fn = async () => {
       try {
         return await $.http[METHOD]({ ...opt, timeout: TIMEOUT })
       } catch (e) {
-        $.error(e)
+        // $.error(e)
         if (count < RETRIES) {
           count++
           const delay = RETRY_DELAY * count
-          $.log(`第 ${count} 次请求失败: ${e.message || e}, 等待 ${delay / 1000}s 后重试`)
+          // $.info(`第 ${count} 次请求失败: ${e.message || e}, 等待 ${delay / 1000}s 后重试`)
           await $.wait(delay)
           return await fn()
+        } else {
+          throw e
         }
       }
     }

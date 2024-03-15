@@ -60,15 +60,13 @@ async function operator(proxies = [], targetPlatform, context) {
         })
         const status = parseInt(res.status || res.statusCode || 200)
         let latency = ''
-        if ($arguments.show_latency) {
-          latency = `${Date.now() - startedAt}`
-        }
-        $.info(`status: ${status}, latency: ${latency}`)
+        latency = `${Date.now() - startedAt}`
+        $.info(`[${proxy.name}] status: ${status}, latency: ${latency}`)
         // 判断响应
         if (status == validStatus) {
           validProxies.push({
             ...proxy,
-            name: `${latency ? `[${latency}] ` : ''}${proxy.name}`,
+            name: `${$arguments.show_latency ? `[${latency}] ` : ''}${proxy.name}`,
           })
         }
       } else {
@@ -77,28 +75,30 @@ async function operator(proxies = [], targetPlatform, context) {
         }
       }
     } catch (e) {
-      $.error(e)
+      $.error(`[${proxy.name}] ${e.message ?? e}`)
     }
   }
   // 请求
   async function http(opt = {}) {
     const METHOD = opt.method || 'get'
     const TIMEOUT = parseFloat(opt.timeout || $arguments.timeout || 5000)
-    const RETRIES = parseFloat(opt.retries || $arguments.retries || 1)
-    const RETRY_DELAY = parseFloat(opt.retry_delay || $arguments.retry_delay || 1000)
+    const RETRIES = parseFloat(opt.retries ?? $arguments.retries ?? 1)
+    const RETRY_DELAY = parseFloat(opt.retry_delay ?? $arguments.retry_delay ?? 1000)
 
     let count = 0
     const fn = async () => {
       try {
         return await $.http[METHOD]({ ...opt, timeout: TIMEOUT })
       } catch (e) {
-        $.error(e)
+        // $.error(e)
         if (count < RETRIES) {
           count++
           const delay = RETRY_DELAY * count
-          $.log(`第 ${count} 次请求失败: ${e.message || e}, 等待 ${delay / 1000}s 后重试`)
+          // $.info(`第 ${count} 次请求失败: ${e.message || e}, 等待 ${delay / 1000}s 后重试`)
           await $.wait(delay)
           return await fn()
+        } else {
+          throw e
         }
       }
     }
