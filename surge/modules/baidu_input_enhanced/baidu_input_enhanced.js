@@ -21,6 +21,8 @@ if (typeof $argument != 'undefined') {
 
   $.log('参数', $.toStr(queryObject))
 
+  if (['image'].includes(queryObject.s_search_type)) return $.done({})
+
   const input = queryObject.s_qr ?? ''
 
   let answer = ''
