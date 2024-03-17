@@ -19,7 +19,7 @@ type = /^1$|col|组合/i.test(type) ? 'collection' : 'subscription'
 log(`① 解析配置文件`)
 let config
 try {
-  config = JSON.parse($files[0])
+  config = JSON.parse($content ?? $files[0])
 } catch (e) {
   log(`${e.message ?? e}`)
   throw new Error('配置文件不是合法的 JSON')
