@@ -43,11 +43,14 @@ async function operator(proxies = [], targetPlatform, env) {
           cycleDays: $arguments.cycleDays,
         })
       } catch (e) {}
-      const current = upload + download
-      const currT = flowTransfer(Math.abs(current))
-      currT.value = current < 0 ? '-' + currT.value : currT.value
+      let show = upload + download
+      if ($arguments.showRemaining) {
+        show = total - show
+      }
+      const showT = flowTransfer(Math.abs(show))
+      showT.value = show < 0 ? '-' + showT.value : showT.value
       const totalT = flowTransfer(total)
-      let name = `流量 ${currT.value} ${currT.unit} / ${totalT.value} ${totalT.unit}`
+      let name = `流量 ${showT.value} ${showT.unit} / ${totalT.value} ${totalT.unit}`
       if (remainingDays) {
         name = `${name} | ${remainingDays} 天`
       }
