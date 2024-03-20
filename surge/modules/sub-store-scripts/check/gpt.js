@@ -15,17 +15,18 @@
  * - [concurrency] 并发数 默认 10
  * - [client] GPT 检测的客户端类型. 默认 iOS
  * - [method] 请求方法. 默认 head, 如果不支持, 可设为 get
+ * - [cache] 使用缓存, 默认不使用缓存
  */
 
 async function operator(proxies = [], targetPlatform, context) {
   const $ = $substore
   const { isLoon, isSurge } = $.env
   if (!isLoon && !isSurge) throw new Error('仅支持 Loon 和 Surge(ability=http-client-policy)')
-
+  const cacheEnabled = $arguments.cache
+  const cache = scriptResourceCache
   const method = $arguments.method || 'head'
   const url = $arguments.client === 'Android' ? `https://android.chat.openai.com` : `https://ios.chat.openai.com`
   const target = isLoon ? 'Loon' : isSurge ? 'Surge' : undefined
-
   const batches = []
   const concurrency = parseInt($arguments.concurrency || 10) // 一组并发数
   for (let i = 0; i < proxies.length; i += concurrency) {
@@ -40,9 +41,27 @@ async function operator(proxies = [], targetPlatform, context) {
   return proxies
 
   async function check(proxy) {
+    // $.info(`[${proxy.name}] 检测`)
+    // $.info(`检测 ${JSON.stringify(proxy, null, 2)}`)
+    const id = cacheEnabled
+      ? `gpt:${JSON.stringify(
+          Object.fromEntries(
+            Object.entries(proxy).filter(([key]) => !/^(name|collectionName|subName|id|_.*)$/i.test(key))
+          )
+        )}`
+      : undefined
+    // $.info(`检测 ${id}`)
     try {
       const node = ProxyUtils.produce([proxy], target)
       if (node) {
+        const cached = cache.get(id)
+        if (cacheEnabled && cached) {
+          $.info(`[${proxy.name}] 使用缓存`)
+          if (cached.gpt) {
+            proxy.name = `[GPT] ${proxy.name}`
+          }
+          return
+        }
         // 请求
         const startedAt = Date.now()
         const res = await http({
@@ -63,10 +82,23 @@ async function operator(proxies = [], targetPlatform, context) {
         // https://zset.cc/archives/34/
         if (status == 403) {
           proxy.name = `[GPT] ${proxy.name}`
+          if (cacheEnabled) {
+            $.info(`[${proxy.name}] 设置成功缓存`)
+            cache.set(id, { gpt: true })
+          }
+        } else {
+          if (cacheEnabled) {
+            $.info(`[${proxy.name}] 设置失败缓存`)
+            cache.set(id, {})
+          }
         }
       }
     } catch (e) {
       $.error(`[${proxy.name}] ${e.message ?? e}`)
+      if (cacheEnabled) {
+        $.info(`[${proxy.name}] 设置失败缓存`)
+        cache.set(id, {})
+      }
     }
   }
   // 请求

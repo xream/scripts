@@ -15,19 +15,20 @@
  * - [method] 请求方法. 默认 head, 如果测试 URL 不支持, 可设为 get
  * - [show_latency] 显示延迟. 默认不显示
  * - [keep_incompatible] 保留当前客户端不兼容的协议. 默认不保留.
+ * - [cache] 使用缓存, 默认不使用缓存
  */
 
 async function operator(proxies = [], targetPlatform, context) {
   const $ = $substore
   const { isLoon, isSurge } = $.env
   if (!isLoon && !isSurge) throw new Error('仅支持 Loon 和 Surge(ability=http-client-policy)')
-
+  const cacheEnabled = $arguments.cache
+  const cache = scriptResourceCache
   const method = $arguments.method || 'head'
   const keepIncompatible = $arguments.keep_incompatible
   const validStatus = parseInt($arguments.status || 200)
   const url = decodeURIComponent($arguments.url || 'http://www.apple.com/library/test/success.html')
   const target = isLoon ? 'Loon' : isSurge ? 'Surge' : undefined
-
   const validProxies = []
   const batches = []
   const concurrency = parseInt($arguments.concurrency || 10) // 一组并发数
@@ -43,9 +44,30 @@ async function operator(proxies = [], targetPlatform, context) {
   return validProxies
 
   async function check(proxy) {
+    // $.info(`[${proxy.name}] 检测`)
+    // $.info(`检测 ${JSON.stringify(proxy, null, 2)}`)
+    const id = cacheEnabled
+      ? `availability:${JSON.stringify(
+          Object.fromEntries(
+            Object.entries(proxy).filter(([key]) => !/^(name|collectionName|subName|id|_.*)$/i.test(key))
+          )
+        )}`
+      : undefined
+    // $.info(`检测 ${id}`)
     try {
       const node = ProxyUtils.produce([proxy], target)
       if (node) {
+        const cached = cache.get(id)
+        if (cacheEnabled && cached) {
+          $.info(`[${proxy.name}] 使用缓存`)
+          if (cached.latency) {
+            validProxies.push({
+              ...proxy,
+              name: `${$arguments.show_latency ? `[${cached.latency}] ` : ''}${proxy.name}`,
+            })
+          }
+          return
+        }
         // 请求
         const startedAt = Date.now()
         const res = await http({
@@ -68,6 +90,15 @@ async function operator(proxies = [], targetPlatform, context) {
             ...proxy,
             name: `${$arguments.show_latency ? `[${latency}] ` : ''}${proxy.name}`,
           })
+          if (cacheEnabled) {
+            $.info(`[${proxy.name}] 设置成功缓存`)
+            cache.set(id, { latency })
+          }
+        } else {
+          if (cacheEnabled) {
+            $.info(`[${proxy.name}] 设置失败缓存`)
+            cache.set(id, {})
+          }
         }
       } else {
         if (keepIncompatible) {
@@ -76,6 +107,10 @@ async function operator(proxies = [], targetPlatform, context) {
       }
     } catch (e) {
       $.error(`[${proxy.name}] ${e.message ?? e}`)
+      if (cacheEnabled) {
+        $.info(`[${proxy.name}] 设置失败缓存`)
+        cache.set(id, {})
+      }
     }
   }
   // 请求

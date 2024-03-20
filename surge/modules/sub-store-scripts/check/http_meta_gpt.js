@@ -18,9 +18,12 @@
  * - [concurrency] 并发数 默认 10
  * - [client] GPT 检测的客户端类型. 默认 iOS
  * - [method] 请求方法. 默认 head, 如果不支持, 可设为 get
+ * - [cache] 使用缓存, 默认不使用缓存
  */
 
 async function operator(proxies = [], targetPlatform, context) {
+  const cacheEnabled = $arguments.cache
+  const cache = scriptResourceCache
   const http_meta_host = $arguments.http_meta_host ?? '127.0.0.1'
   const http_meta_port = $arguments.http_meta_port ?? 9876
   const http_meta_protocol = $arguments.http_meta_protocol ?? 'http'
@@ -113,7 +116,25 @@ async function operator(proxies = [], targetPlatform, context) {
   return proxies
 
   async function check(proxy) {
+    // $.info(`[${proxy.name}] 检测`)
+    // $.info(`检测 ${JSON.stringify(proxy, null, 2)}`)
+    const id = cacheEnabled
+      ? `http-meta:gpt:${JSON.stringify(
+          Object.fromEntries(
+            Object.entries(proxy).filter(([key]) => !/^(name|collectionName|subName|id|_.*)$/i.test(key))
+          )
+        )}`
+      : undefined
+    // $.info(`检测 ${id}`)
     try {
+      const cached = cache.get(id)
+      if (cacheEnabled && cached) {
+        $.info(`[${proxy.name}] 使用缓存`)
+        if (cached.gpt) {
+          proxies[proxy._proxies_index].name = `[GPT] ${proxies[proxy._proxies_index].name}`
+        }
+        return
+      }
       // $.info(JSON.stringify(proxy, null, 2))
       const index = internalProxies.indexOf(proxy)
       const startedAt = Date.now()
@@ -134,9 +155,22 @@ async function operator(proxies = [], targetPlatform, context) {
       // https://zset.cc/archives/34/
       if (status === 403) {
         proxies[proxy._proxies_index].name = `[GPT] ${proxies[proxy._proxies_index].name}`
+        if (cacheEnabled) {
+          $.info(`[${proxy.name}] 设置成功缓存`)
+          cache.set(id, { gpt: true })
+        }
+      } else {
+        if (cacheEnabled) {
+          $.info(`[${proxy.name}] 设置失败缓存`)
+          cache.set(id, {})
+        }
       }
     } catch (e) {
       $.error(`[${proxy.name}] ${e.message ?? e}`)
+      if (cacheEnabled) {
+        $.info(`[${proxy.name}] 设置失败缓存`)
+        cache.set(id, {})
+      }
     }
   }
   // 请求

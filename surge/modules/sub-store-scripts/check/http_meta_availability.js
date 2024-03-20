@@ -21,9 +21,12 @@
  * - [method] 请求方法. 默认 head, 如果测试 URL 不支持, 可设为 get
  * - [show_latency] 显示延迟. 默认不显示
  * - [keep_incompatible] 保留当前客户端不兼容的协议. 默认不保留.
+ * - [cache] 使用缓存, 默认不使用缓存
  */
 
 async function operator(proxies = [], targetPlatform, context) {
+  const cacheEnabled = $arguments.cache
+  const cache = scriptResourceCache
   const http_meta_host = $arguments.http_meta_host ?? '127.0.0.1'
   const http_meta_port = $arguments.http_meta_port ?? 9876
   const http_meta_protocol = $arguments.http_meta_protocol ?? 'http'
@@ -126,7 +129,28 @@ async function operator(proxies = [], targetPlatform, context) {
   return keepIncompatible ? [...validProxies, ...incompatibleProxies] : validProxies
 
   async function check(proxy) {
+    // $.info(`[${proxy.name}] 检测`)
+    // $.info(`检测 ${JSON.stringify(proxy, null, 2)}`)
+    const id = cacheEnabled
+      ? `http-meta:availability:${JSON.stringify(
+          Object.fromEntries(
+            Object.entries(proxy).filter(([key]) => !/^(name|collectionName|subName|id|_.*)$/i.test(key))
+          )
+        )}`
+      : undefined
+    // $.info(`检测 ${id}`)
     try {
+      const cached = cache.get(id)
+      if (cacheEnabled && cached) {
+        $.info(`[${proxy.name}] 使用缓存`)
+        if (cached.latency) {
+          validProxies.push({
+            ...proxy,
+            name: `${$arguments.show_latency ? `[${cached.latency}] ` : ''}${proxy.name}`,
+          })
+        }
+        return
+      }
       // $.info(JSON.stringify(proxy, null, 2))
       const index = internalProxies.indexOf(proxy)
       const startedAt = Date.now()
@@ -149,9 +173,22 @@ async function operator(proxies = [], targetPlatform, context) {
           ...proxy,
           name: `${$arguments.show_latency ? `[${latency}] ` : ''}${proxy.name}`,
         })
+        if (cacheEnabled) {
+          $.info(`[${proxy.name}] 设置成功缓存`)
+          cache.set(id, { latency })
+        }
+      } else {
+        if (cacheEnabled) {
+          $.info(`[${proxy.name}] 设置失败缓存`)
+          cache.set(id, {})
+        }
       }
     } catch (e) {
       $.error(`[${proxy.name}] ${e.message ?? e}`)
+      if (cacheEnabled) {
+        $.info(`[${proxy.name}] 设置失败缓存`)
+        cache.set(id, {})
+      }
     }
   }
   // 请求

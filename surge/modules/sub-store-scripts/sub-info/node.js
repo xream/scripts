@@ -32,7 +32,7 @@ async function operator(proxies = [], targetPlatform, env) {
         usage: { upload, download },
       } = parseFlowHeaders(await getFlowHeaders(url))
       if ($arguments.hideExpire) {
-        expires = ''
+        expires = undefined
       }
       const date = expires ? new Date(expires * 1000).toLocaleDateString() : ''
       let remainingDays
