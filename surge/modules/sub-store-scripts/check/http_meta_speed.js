@@ -1,8 +1,8 @@
 /**
  *
- * GPT 检测(适配 Sub-Store Node.js 版)
+ * 节点测速娱乐版(适配 Sub-Store Node.js 版)
  *
- * Surge/Loon 版 请查看: https://t.me/zhetengsha/1207
+ * 说明: https://t.me/zhetengsha/1258
  *
  * 欢迎加入 Telegram 群组 https://t.me/zhetengsha
  *
@@ -14,12 +14,12 @@
  * - [http_meta_proxy_timeout] 每个节点耗时(单位: 毫秒). 此参数是为了防止脚本异常退出未关闭核心. 设置过小将导致核心过早退出. 目前逻辑: 启动初始的延时 + 每个节点耗时. 默认: 10000
  *
  * 其它参数
- * - [timeout] 请求超时(单位: 毫秒) 默认 5000
- * - [retries] 重试次数 默认 1
+ * - [timeout] 请求超时(单位: 毫秒) 默认 10000
+ * - [retries] 重试次数 默认 0
  * - [retry_delay] 重试延时(单位: 毫秒) 默认 1000
- * - [concurrency] 并发数 默认 10
- * - [client] GPT 检测的客户端类型. 默认 iOS
- * - [method] 请求方法. 默认 head, 如果不支持, 可设为 get
+ * - [concurrency] 并发数 默认 1
+ * - [size] 测速大小(单位 MB). 默认 10
+ * - [keep_incompatible] 保留当前客户端不兼容的协议. 默认不保留.
  * - [cache] 使用缓存, 默认不使用缓存
  */
 
@@ -30,12 +30,17 @@ async function operator(proxies = [], targetPlatform, context) {
   const http_meta_port = $arguments.http_meta_port ?? 9876
   const http_meta_protocol = $arguments.http_meta_protocol ?? 'http'
   const http_meta_api = `${http_meta_protocol}://${http_meta_host}:${http_meta_port}`
+
   const http_meta_start_delay = parseFloat($arguments.http_meta_start_delay ?? 3000)
   const http_meta_proxy_timeout = parseFloat($arguments.http_meta_proxy_timeout ?? 10000)
-  const method = $arguments.method || 'head'
-  const url = $arguments.client === 'Android' ? `https://android.chat.openai.com` : `https://ios.chat.openai.com`
+
+  const keepIncompatible = $arguments.keep_incompatible
+  const bytes = ($arguments.size || 10) * 1024 * 1024
+  const url = `https://speed.cloudflare.com/__down?bytes=${bytes}`
 
   const $ = $substore
+  const validProxies = []
+  const incompatibleProxies = []
   const internalProxies = []
   proxies.map((proxy, index) => {
     try {
@@ -43,6 +48,10 @@ async function operator(proxies = [], targetPlatform, context) {
       if (node) {
         // $.info(JSON.stringify(node, null, 2))
         internalProxies.push({ ...node, _proxies_index: index })
+      } else {
+        if (keepIncompatible) {
+          incompatibleProxies.push(proxy)
+        }
       }
     } catch (e) {
       $.error(e)
@@ -115,13 +124,13 @@ async function operator(proxies = [], targetPlatform, context) {
     $.error(e)
   }
 
-  return proxies
+  return keepIncompatible ? [...validProxies, ...incompatibleProxies] : validProxies
 
   async function check(proxy) {
     // $.info(`[${proxy.name}] 检测`)
     // $.info(`检测 ${JSON.stringify(proxy, null, 2)}`)
     const id = cacheEnabled
-      ? `http-meta:gpt:${JSON.stringify(
+      ? `http-meta:speed:${JSON.stringify(
           Object.fromEntries(
             Object.entries(proxy).filter(([key]) => !/^(name|collectionName|subName|id|_.*)$/i.test(key))
           )
@@ -132,8 +141,11 @@ async function operator(proxies = [], targetPlatform, context) {
       const cached = cache.get(id)
       if (cacheEnabled && cached) {
         $.info(`[${proxy.name}] 使用缓存`)
-        if (cached.gpt) {
-          proxies[proxy._proxies_index].name = `[GPT] ${proxies[proxy._proxies_index].name}`
+        if (cached.speed) {
+          validProxies.push({
+            ...proxy,
+            name: `[${cached.speed}] ${proxy.name}`,
+          })
         }
         return
       }
@@ -142,7 +154,6 @@ async function operator(proxies = [], targetPlatform, context) {
       const startedAt = Date.now()
       const res = await http({
         proxy: `http://${http_meta_host}:${http_meta_ports[index]}`,
-        method,
         headers: {
           'User-Agent':
             'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3.1 Mobile/15E148 Safari/604.1',
@@ -152,14 +163,17 @@ async function operator(proxies = [], targetPlatform, context) {
       const status = parseInt(res.status || res.statusCode || 200)
       let latency = ''
       latency = `${Date.now() - startedAt}`
-      $.info(`[${proxy.name}] status: ${status}, latency: ${latency}`)
-      // cf 拦截是 400 错误, 403 就是没被拦截, 走到了未鉴权的逻辑
-      // https://zset.cc/archives/34/
-      if (status === 403) {
-        proxies[proxy._proxies_index].name = `[GPT] ${proxies[proxy._proxies_index].name}`
+      const speed = Math.round((bytes / 1024 / 1024 / (latency / 1000)) * 8) + ' M'
+      $.info(`[${proxy.name}] status: ${status}, latency: ${latency}, speed: ${speed}`)
+      // 判断响应
+      if (speed) {
+        validProxies.push({
+          ...proxy,
+          name: `[${speed}] ${proxy.name}`,
+        })
         if (cacheEnabled) {
           $.info(`[${proxy.name}] 设置成功缓存`)
-          cache.set(id, { gpt: true })
+          cache.set(id, { speed })
         }
       } else {
         if (cacheEnabled) {
@@ -178,10 +192,9 @@ async function operator(proxies = [], targetPlatform, context) {
   // 请求
   async function http(opt = {}) {
     const METHOD = opt.method || $arguments.method || 'get'
-    const TIMEOUT = parseFloat(opt.timeout || $arguments.timeout || 5000)
-    const RETRIES = parseFloat(opt.retries ?? $arguments.retries ?? 1)
+    const TIMEOUT = parseFloat(opt.timeout || $arguments.timeout || 10000)
+    const RETRIES = parseFloat(opt.retries ?? $arguments.retries ?? 0)
     const RETRY_DELAY = parseFloat(opt.retry_delay ?? $arguments.retry_delay ?? 1000)
-
     let count = 0
     const fn = async () => {
       try {
@@ -191,7 +204,7 @@ async function operator(proxies = [], targetPlatform, context) {
         if (count < RETRIES) {
           count++
           const delay = RETRY_DELAY * count
-          // $.info(`第 ${count} 次请求失败: ${e.message || e}, 等待 ${delay / 1000}s 后重试`)
+          // $.info(`第 ${count} 次请求失败: ${e.message ?? e}, 等待 ${delay / 1000}s 后重试`)
           await $.wait(delay)
           return await fn()
         } else {

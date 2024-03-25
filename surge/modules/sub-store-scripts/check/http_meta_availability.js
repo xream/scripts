@@ -4,6 +4,8 @@
  *
  * 说明: https://t.me/zhetengsha/1210
  *
+ * 欢迎加入 Telegram 群组 https://t.me/zhetengsha
+ *
  * HTTP META(https://github.com/xream/http-meta) 参数
  * - [http_meta_protocol] 协议 默认: http
  * - [http_meta_host] 服务地址 默认: 127.0.0.1
