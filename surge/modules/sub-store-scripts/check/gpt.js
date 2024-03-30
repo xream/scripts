@@ -44,7 +44,7 @@ async function operator(proxies = [], targetPlatform, context) {
     // $.info(`[${proxy.name}] 检测`)
     // $.info(`检测 ${JSON.stringify(proxy, null, 2)}`)
     const id = cacheEnabled
-      ? `gpt:${JSON.stringify(
+      ? `gpt:${url}:${JSON.stringify(
           Object.fromEntries(
             Object.entries(proxy).filter(([key]) => !/^(name|collectionName|subName|id|_.*)$/i.test(key))
           )

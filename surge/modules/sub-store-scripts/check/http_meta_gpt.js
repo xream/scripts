@@ -52,6 +52,29 @@ async function operator(proxies = [], targetPlatform, context) {
   $.info(`核心支持节点数: ${internalProxies.length}/${proxies.length}`)
   if (!internalProxies.length) return proxies
 
+  if (cacheEnabled) {
+    try {
+      let allCached = true
+      for (var i = 0; i < internalProxies.length; i++) {
+        const proxy = internalProxies[i]
+        const id = getCacheId({ proxy, url })
+        const cached = cache.get(id)
+        if (cached) {
+          if (cached.gpt) {
+            proxies[proxy._proxies_index].name = `[GPT] ${proxies[proxy._proxies_index].name}`
+          }
+        } else {
+          allCached = false
+          break
+        }
+      }
+      if (allCached) {
+        $.info('所有节点都有有效缓存 完成')
+        return proxies
+      }
+    } catch (e) {}
+  }
+
   const http_meta_timeout = http_meta_start_delay + internalProxies.length * http_meta_proxy_timeout
 
   let http_meta_pid
@@ -120,13 +143,7 @@ async function operator(proxies = [], targetPlatform, context) {
   async function check(proxy) {
     // $.info(`[${proxy.name}] 检测`)
     // $.info(`检测 ${JSON.stringify(proxy, null, 2)}`)
-    const id = cacheEnabled
-      ? `http-meta:gpt:${JSON.stringify(
-          Object.fromEntries(
-            Object.entries(proxy).filter(([key]) => !/^(name|collectionName|subName|id|_.*)$/i.test(key))
-          )
-        )}`
-      : undefined
+    const id = cacheEnabled ? getCacheId({ proxy, url }) : undefined
     // $.info(`检测 ${id}`)
     try {
       const cached = cache.get(id)
@@ -200,5 +217,10 @@ async function operator(proxies = [], targetPlatform, context) {
       }
     }
     return await fn()
+  }
+  function getCacheId({ proxy = {}, url }) {
+    return `http-meta:gpt:${url}:${JSON.stringify(
+      Object.fromEntries(Object.entries(proxy).filter(([key]) => !/^(name|collectionName|subName|id|_.*)$/i.test(key)))
+    )}`
   }
 }

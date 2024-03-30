@@ -56,52 +56,69 @@ async function operator(proxies = [], targetPlatform, context) {
   $.info(`核心支持节点数: ${internalProxies.length}/${proxies.length}`)
   if (!internalProxies.length) return proxies
 
-  let httpMetaEnabled = true
   if (cacheEnabled) {
-    httpMetaEnabled = internalProxies.some(proxy => {
-      const id = getCacheId({ proxy, url, format })
-      const cached = cache.get(id)
-      return !cached || !cached.api
-    })
-    $.info('每一个节点都有有效缓存 不需要启动 HTTP META')
+    try {
+      let allCached = true
+      for (var i = 0; i < internalProxies.length; i++) {
+        const proxy = internalProxies[i]
+        const id = getCacheId({ proxy, url, format })
+        const cached = cache.get(id)
+        if (cached) {
+          if (cached.api) {
+            proxies[proxy._proxies_index].name = formatter({
+              proxy: proxies[proxy._proxies_index],
+              api: cached.api,
+              format,
+            })
+            if (geoEnabled) proxies[proxy._proxies_index]._geo = cached.api
+          }
+        } else {
+          allCached = false
+          break
+        }
+      }
+      if (allCached) {
+        $.info('所有节点都有有效缓存 完成')
+        return proxies
+      }
+    } catch (e) {}
   }
 
   const http_meta_timeout = http_meta_start_delay + internalProxies.length * http_meta_proxy_timeout
 
   let http_meta_pid
   let http_meta_ports = []
-  if (httpMetaEnabled) {
-    // 启动 HTTP META
-    const res = await http({
-      retries: 0,
-      method: 'post',
-      url: `${http_meta_api}/start`,
-      headers: {
-        'Content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        proxies: internalProxies,
-        timeout: http_meta_timeout,
-      }),
-    })
-    let body = res.body
-    try {
-      body = JSON.parse(body)
-    } catch (e) {}
-    const { ports, pid } = body
-    if (!pid || !ports) {
-      throw new Error(`======== HTTP META 启动失败 ====\n${body}`)
-    }
-    http_meta_pid = pid
-    http_meta_ports = ports
-    $.info(
-      `\n======== HTTP META 启动 ====\n[端口] ${ports}\n[PID] ${pid}\n[超时] 若未手动关闭 ${
-        Math.round(http_meta_timeout / 60 / 10) / 100
-      } 分钟后自动关闭\n`
-    )
-    $.info(`等待 ${http_meta_start_delay / 1000} 秒后开始检测`)
-    await $.wait(http_meta_start_delay)
+
+  // 启动 HTTP META
+  const res = await http({
+    retries: 0,
+    method: 'post',
+    url: `${http_meta_api}/start`,
+    headers: {
+      'Content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      proxies: internalProxies,
+      timeout: http_meta_timeout,
+    }),
+  })
+  let body = res.body
+  try {
+    body = JSON.parse(body)
+  } catch (e) {}
+  const { ports, pid } = body
+  if (!pid || !ports) {
+    throw new Error(`======== HTTP META 启动失败 ====\n${body}`)
   }
+  http_meta_pid = pid
+  http_meta_ports = ports
+  $.info(
+    `\n======== HTTP META 启动 ====\n[端口] ${ports}\n[PID] ${pid}\n[超时] 若未手动关闭 ${
+      Math.round(http_meta_timeout / 60 / 10) / 100
+    } 分钟后自动关闭\n`
+  )
+  $.info(`等待 ${http_meta_start_delay / 1000} 秒后开始检测`)
+  await $.wait(http_meta_start_delay)
 
   const batches = []
   const concurrency = parseInt($arguments.concurrency || 10) // 一组并发数
@@ -114,23 +131,21 @@ async function operator(proxies = [], targetPlatform, context) {
     await Promise.all(batch.map(check))
   }
 
-  if (httpMetaEnabled) {
-    // stop http meta
-    try {
-      const res = await http({
-        method: 'post',
-        url: `${http_meta_api}/stop`,
-        headers: {
-          'Content-type': 'application/json',
-        },
-        body: JSON.stringify({
-          pid: [http_meta_pid],
-        }),
-      })
-      $.info(`\n======== HTTP META 关闭 ====\n${JSON.stringify(res, null, 2)}`)
-    } catch (e) {
-      $.error(e)
-    }
+  // stop http meta
+  try {
+    const res = await http({
+      method: 'post',
+      url: `${http_meta_api}/stop`,
+      headers: {
+        'Content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        pid: [http_meta_pid],
+      }),
+    })
+    $.info(`\n======== HTTP META 关闭 ====\n${JSON.stringify(res, null, 2)}`)
+  } catch (e) {
+    $.error(e)
   }
 
   return proxies
@@ -151,7 +166,7 @@ async function operator(proxies = [], targetPlatform, context) {
             api: cached.api,
             format,
           })
-          if (geoEnabled) proxy._geo = cached.api
+          if (geoEnabled) proxies[proxy._proxies_index]._geo = cached.api
         }
         return
       }
@@ -178,7 +193,7 @@ async function operator(proxies = [], targetPlatform, context) {
       $.log(`[${proxy.name}] api: ${JSON.stringify(api, null, 2)}`)
       if (status == 200) {
         proxies[proxy._proxies_index].name = formatter({ proxy: proxies[proxy._proxies_index], api, format })
-        if (geoEnabled) proxy._geo = api
+        if (geoEnabled) proxies[proxy._proxies_index]._geo = api
         if (cacheEnabled) {
           $.info(`[${proxy.name}] 设置成功缓存`)
           cache.set(id, { api })

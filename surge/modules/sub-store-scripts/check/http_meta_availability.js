@@ -134,7 +134,7 @@ async function operator(proxies = [], targetPlatform, context) {
     // $.info(`[${proxy.name}] 检测`)
     // $.info(`检测 ${JSON.stringify(proxy, null, 2)}`)
     const id = cacheEnabled
-      ? `http-meta:availability:${JSON.stringify(
+      ? `http-meta:availability:${url}:${method}:${validStatus}:${JSON.stringify(
           Object.fromEntries(
             Object.entries(proxy).filter(([key]) => !/^(name|collectionName|subName|id|_.*)$/i.test(key))
           )
