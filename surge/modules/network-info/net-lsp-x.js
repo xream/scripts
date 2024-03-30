@@ -420,14 +420,32 @@ async function getDirectInfo(ip, provider) {
   } else if (!ip && provider == 'ipip') {
     try {
       const res = await http({
-        url: `https://myip.ipip.net`,
-        headers: { 'User-Agent': 'curl/7.16.3 (powerpc-apple-darwin9.0) libcurl/7.16.3' },
+        url: `https://myip.ipip.net/json`,
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36 Edg/109.0.1518.14',
+        },
       })
       let body = String($.lodash_get(res, 'body'))
-      CN_IP = body.match(/IP\s*(:|：)\s*(.*?)\s/)[2]
-      let info = body.match(/来自于\s*(:|：)\s*(.*)/)[2]
-      isCN = info.startsWith('中国')
-      CN_INFO = ['位置:', isCN ? getflag('CN') : undefined, info.replace(/中国\s*/, '')].filter(i => i).join(' ')
+      try {
+        body = JSON.parse(body)
+      } catch (e) {}
+      isCN = $.lodash_get(body, 'data.location.0') === '中国'
+      CN_IP = $.lodash_get(body, 'data.ip')
+      CN_INFO = [
+        [
+          '位置:',
+          isCN ? getflag('CN') : undefined,
+          $.lodash_get(body, 'data.location.0'),
+          $.lodash_get(body, 'data.location.1'),
+          $.lodash_get(body, 'data.location.2'),
+        ]
+          .filter(i => i)
+          .join(' '),
+        ['运营商:', $.lodash_get(body, 'data.location.4')].filter(i => i).join(' '),
+      ]
+        .filter(i => i)
+        .join('\n')
     } catch (e) {
       $.logErr(`${msg} 发生错误: ${e.message || e}`)
     }
