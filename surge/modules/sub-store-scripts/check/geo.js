@@ -1,5 +1,5 @@
 /**
- * 节点信息(适配 Surge/Loon 版)
+ * 节点信息(适配 Surge/Loon 版 也可在任意平台上使用 HTTP API)
  *
  * 查看说明: https://t.me/zhetengsha/1269
  *
@@ -15,12 +15,20 @@
  * - [format] 自定义格式, 从 节点(proxy) 和 API 接口响应(api) 中取数据. 默认为: {{api.country}} {{api.isp}} - {{proxy.name}}
  * - [cache] 使用缓存, 默认不使用缓存
  * - [geo] 在节点上附加 _geo 字段, 默认不附加
+ * - [surge_http_api] 使用另一台设备上的 HTTP API. 设置后, 将不检测当前运行客户端, 并使用另一台设备上的 HTTP API 执行请求. 默认不使用. 例: 192.168.31.5:6171
+ * - [surge_http_api_protocol] HTTP API 的 协议. 默认 http
+ * - [surge_http_api_key] HTTP API 的 密码
  */
 
 async function operator(proxies = [], targetPlatform, context) {
   const $ = $substore
   const { isLoon, isSurge } = $.env
-  if (!isLoon && !isSurge) throw new Error('仅支持 Loon 和 Surge(ability=http-client-policy)')
+  const surge_http_api = $arguments.surge_http_api
+  const surge_http_api_protocol = $arguments.surge_http_api_protocol || 'http'
+  const surge_http_api_key = $arguments.surge_http_api_key
+  const surge_http_api_enabled = surge_http_api
+  if (!surge_http_api_enabled && !isLoon && !isSurge)
+    throw new Error('仅支持 Loon 和 Surge(ability=http-client-policy) 或 配置 HTTP API')
   const geoEnabled = $arguments.geo
   const cacheEnabled = $arguments.cache
   const cache = scriptResourceCache
@@ -51,7 +59,7 @@ async function operator(proxies = [], targetPlatform, context) {
       : undefined
     // $.info(`检测 ${id}`)
     try {
-      const node = ProxyUtils.produce([proxy], target)
+      const node = ProxyUtils.produce([proxy], surge_http_api_enabled ? 'Surge' : target)
       if (node) {
         const cached = cache.get(id)
         if (cacheEnabled && cached) {
@@ -116,7 +124,37 @@ async function operator(proxies = [], targetPlatform, context) {
     let count = 0
     const fn = async () => {
       try {
-        return await $.http[METHOD]({ ...opt, timeout: TIMEOUT })
+        if (surge_http_api_enabled) {
+          const res = await $.http.post({
+            url: `${surge_http_api_protocol}://${surge_http_api}/v1/scripting/evaluate`,
+            timeout: TIMEOUT,
+            headers: { 'x-key': surge_http_api_key, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              script_text: `$httpClient.get(${JSON.stringify({
+                ...opt,
+                timeout: TIMEOUT / 1000,
+              })}, (error, response, data) => {  $done({ error, response, data }) }) `,
+              mock_type: 'cron',
+              timeout: TIMEOUT / 1000,
+            }),
+          })
+          let body = String(lodash_get(res, 'body'))
+          try {
+            body = JSON.parse(body)
+          } catch (e) {}
+          // $.info(JSON.stringify(body, null, 2))
+          const error = lodash_get(body, 'result.error')
+          if (error) throw new Error(error)
+          let data = String(lodash_get(body, 'result.data'))
+          let response = String(lodash_get(body, 'result.response'))
+          // try {
+          //   data = JSON.parse(data)
+          // } catch (e) {}
+          // $.info(JSON.stringify(data, null, 2))
+          return { ...response, body: data }
+        } else {
+          return await $.http[METHOD]({ ...opt, timeout: TIMEOUT })
+        }
       } catch (e) {
         // $.error(e)
         if (count < RETRIES) {
