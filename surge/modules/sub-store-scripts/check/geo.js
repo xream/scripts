@@ -15,6 +15,9 @@
  * - [format] 自定义格式, 从 节点(proxy) 和 API 接口响应(api) 中取数据. 默认为: {{api.country}} {{api.isp}} - {{proxy.name}}
  * - [cache] 使用缓存, 默认不使用缓存
  * - [geo] 在节点上附加 _geo 字段, 默认不附加
+ * - [incompatible] 在节点上附加 _incompatible 字段来标记当前客户端不兼容该协议, 默认不附加
+ * - [remove_incompatible] 移除当前客户端不兼容的协议. 默认不移除.
+ * - [remove_failed] 移除失败的节点. 默认不移除.
  * - [surge_http_api] 使用另一台设备上的 HTTP API. 设置后, 将不检测当前运行客户端, 并使用另一台设备上的 HTTP API 执行请求. 默认不使用. 例: 192.168.31.5:6171
  * - [surge_http_api_protocol] HTTP API 的 协议. 默认 http
  * - [surge_http_api_key] HTTP API 的 密码
@@ -29,6 +32,9 @@ async function operator(proxies = [], targetPlatform, context) {
   const surge_http_api_enabled = surge_http_api
   if (!surge_http_api_enabled && !isLoon && !isSurge)
     throw new Error('仅支持 Loon 和 Surge(ability=http-client-policy) 或 配置 HTTP API')
+  const remove_failed = $arguments.remove_failed
+  const remove_incompatible = $arguments.remove_incompatible
+  const incompatibleEnabled = $arguments.incompatible
   const geoEnabled = $arguments.geo
   const cacheEnabled = $arguments.cache
   const cache = scriptResourceCache
@@ -45,6 +51,29 @@ async function operator(proxies = [], targetPlatform, context) {
 
   for (const batch of batches) {
     await Promise.all(batch.map(check))
+  }
+
+  if (remove_incompatible || remove_failed) {
+    proxies = proxies.filter(p => {
+      if (remove_incompatible && p._incompatible) {
+        return false
+      } else if (remove_failed && !p._geo) {
+        return !remove_incompatible && p._incompatible
+      }
+      return true
+    })
+  }
+
+  if (!geoEnabled || !incompatibleEnabled) {
+    proxies = proxies.map(p => {
+      if (!geoEnabled) {
+        delete p._geo
+      }
+      if (!incompatibleEnabled) {
+        delete p._incompatible
+      }
+      return p
+    })
   }
 
   return proxies
@@ -67,7 +96,7 @@ async function operator(proxies = [], targetPlatform, context) {
           if (cached.api) {
             $.log(`[${proxy.name}] api: ${JSON.stringify(cached.api, null, 2)}`)
             proxy.name = formatter({ proxy, api: cached.api, format })
-            if (geoEnabled) proxy._geo = cached.api
+            proxy._geo = cached.api
           }
           return
         }
@@ -94,7 +123,7 @@ async function operator(proxies = [], targetPlatform, context) {
         $.log(`[${proxy.name}] api: ${JSON.stringify(api, null, 2)}`)
         if (status == 200) {
           proxy.name = formatter({ proxy, api, format })
-          if (geoEnabled) proxy._geo = api
+          proxy._geo = api
           if (cacheEnabled) {
             $.info(`[${proxy.name}] 设置成功缓存`)
             cache.set(id, { api })
@@ -105,6 +134,8 @@ async function operator(proxies = [], targetPlatform, context) {
             cache.set(id, {})
           }
         }
+      } else {
+        proxy._incompatible = true
       }
     } catch (e) {
       $.error(`[${proxy.name}] ${e.message ?? e}`)
