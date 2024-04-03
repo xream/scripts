@@ -16,12 +16,16 @@
  * - [show_latency] 显示延迟. 默认不显示
  * - [keep_incompatible] 保留当前客户端不兼容的协议. 默认不保留.
  * - [cache] 使用缓存, 默认不使用缓存
+ * - [telegram_bot_token] Telegram Bot Token
+ * - [telegram_chat_id] Telegram Chat ID
  */
 
-async function operator(proxies = [], targetPlatform, context) {
+async function operator(proxies = [], targetPlatform, env) {
   const $ = $substore
   const { isLoon, isSurge } = $.env
   if (!isLoon && !isSurge) throw new Error('仅支持 Loon 和 Surge(ability=http-client-policy)')
+  const telegram_chat_id = $arguments.telegram_chat_id
+  const telegram_bot_token = $arguments.telegram_bot_token
   const cacheEnabled = $arguments.cache
   const cache = scriptResourceCache
   const method = $arguments.method || 'head'
@@ -30,6 +34,11 @@ async function operator(proxies = [], targetPlatform, context) {
   const url = decodeURIComponent($arguments.url || 'http://www.apple.com/library/test/success.html')
   const target = isLoon ? 'Loon' : isSurge ? 'Surge' : undefined
   const validProxies = []
+  const incompatibleProxies = []
+  const failedProxies = []
+  const sub = env.source[proxies?.[0]?.subName]
+  const subName = sub?.displayName || sub?.name
+
   const batches = []
   const concurrency = parseInt($arguments.concurrency || 10) // 一组并发数
   for (let i = 0; i < proxies.length; i += concurrency) {
@@ -39,6 +48,20 @@ async function operator(proxies = [], targetPlatform, context) {
 
   for (const batch of batches) {
     await Promise.all(batch.map(check))
+  }
+
+  if (telegram_chat_id && telegram_bot_token && failedProxies.length > 0) {
+    const text = `\`${subName}\` 节点测试:\n${failedProxies
+      .map(proxy => `❌ [${proxy.type}] \`${proxy.name}\``)
+      .join('\n')}`
+    await http({
+      method: 'post',
+      url: `https://api.telegram.org/bot${telegram_bot_token}/sendMessage`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ chat_id: telegram_chat_id, text, parse_mode: 'MarkdownV2' }),
+    })
   }
 
   return validProxies
@@ -99,11 +122,13 @@ async function operator(proxies = [], targetPlatform, context) {
             $.info(`[${proxy.name}] 设置失败缓存`)
             cache.set(id, {})
           }
+          failedProxies.push(proxy)
         }
       } else {
         if (keepIncompatible) {
           validProxies.push(proxy)
         }
+        incompatibleProxies.push(proxy)
       }
     } catch (e) {
       $.error(`[${proxy.name}] ${e.message ?? e}`)
@@ -111,6 +136,7 @@ async function operator(proxies = [], targetPlatform, context) {
         $.info(`[${proxy.name}] 设置失败缓存`)
         cache.set(id, {})
       }
+      failedProxies.push(proxy)
     }
   }
   // 请求
