@@ -1,12 +1,12 @@
 #!name=Crypto
-#!desc=获取标记价格(欧易 API)
+#!desc=获取标记价格(USDT)
 #!author=@xream https://t.me/zhetengsha
-#!arguments=TIMEOUT:5,RETRIES:1,RETRY_DELAY:1,UPDATE-INTERVAL:-1,ICON:bitcoinsign.circle,ICON-COLOR:#EF8F1C,SWAP:BTC
-#!arguments-desc=1 为开启, 0 为关闭\n\nTIMEOUT:\n超时设置(单位: 秒)\n\nRETRIES:\n请求重试次数\n\nRETRY_DELAY:\n请求重试等待时间(单位: 秒)\n\nUPDATE-INTERVAL:\n面板刷新时间\n您可以在这里指定一个小的时间（例如1），以使面板每次自动更新。\n\nSWAP:\n格式 BTC,ETH\n限速：10次/2s\n文档 https://www.okx.com/docs-v5/zh/#public-data-rest-api-get-mark-price
+#!arguments=TIMEOUT:5,RETRIES:1,RETRY_DELAY:1,UPDATE-INTERVAL:-1,ICON:bitcoinsign.circle,ICON-COLOR:#EF8F1C,SWAP:BTC,API:okx
+#!arguments-desc=TIMEOUT:\n超时设置(单位: 秒)\n\nRETRIES:\n请求重试次数\n\nRETRY_DELAY:\n请求重试等待时间(单位: 秒)\n\nUPDATE-INTERVAL:\n面板刷新时间\n您可以在这里指定一个小的时间（例如1），以使面板每次自动更新。\n\nSWAP:\n格式 BTC,ETH\n\nAPI:\n欧易: okx, 币安 binance\n有些币欧易接口查不到\n\n其中欧易限速：10次/2s\n欧易文档 https://www.okx.com/docs-v5/zh/#public-data-rest-api-get-mark-price\n\n币安风控严格, 需要设置分流 api.binance.com
 
 [Script]
 # Panel
-Crypto Panel = type=generic,timeout=120,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/crypto/crypto.js,argument="icon={{{ICON}}}&icon-color={{{ICON-COLOR}}}&TIMEOUT={{{TIMEOUT}}}&RETRIES={{{RETRIES}}}&RETRY_DELAY={{{RETRY_DELAY}}}&SWAP={{{SWAP}}}"
+Crypto Panel = type=generic,timeout=120,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/crypto/crypto.js,argument="icon={{{ICON}}}&icon-color={{{ICON-COLOR}}}&TIMEOUT={{{TIMEOUT}}}&RETRIES={{{RETRIES}}}&RETRY_DELAY={{{RETRY_DELAY}}}&SWAP={{{SWAP}}}&API={{{API}}}"
 
 [Panel]
 Crypto Panel = script-name=Crypto Panel,update-interval={{{UPDATE-INTERVAL}}}

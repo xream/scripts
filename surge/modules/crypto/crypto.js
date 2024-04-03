@@ -18,32 +18,59 @@ let result = {}
 let title = ''
 let content = ''
 !(async () => {
+  title = 'Crypto'
   let swaps = []
   for (const swap of ($.lodash_get(arg, 'SWAP') || 'BTC')
     .split(/,|，/gi)
     .map(i => i.trim())
     .filter(i => i.length)) {
     try {
-      const instId = `${swap}-USD-SWAP`
-      $.log(`查询 ${instId}`)
-      const res = await http({
-        url: `https://www.okx.com/api/v5/public/mark-price`,
-        params: { instId },
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36 Edg/109.0.1518.14',
-        },
-      })
-      let body = String($.lodash_get(res, 'body') || $.lodash_get(res, 'rawBody'))
-      try {
-        body = JSON.parse(body)
-      } catch (e) {}
-      $.log($.toStr(body, null, 2))
-      const code = $.lodash_get(body, 'code')
-      const msg = $.lodash_get(body, 'msg')
-      if (String(code) !== '0') throw new Error(`${code} ${msg || 'code 不为 0'}`)
-      const markPx = $.lodash_get(body, 'data.0.markPx')
-      swaps.push({ swap, markPx })
+      if ($.lodash_get(arg, 'API') === 'binance') {
+        title = 'Crypto(币安)'
+        const symbol = `${swap}USDT`
+        $.log(`查询 ${symbol}`)
+        const res = await http({
+          url: `https://api.binance.com/api/v3/ticker/price`,
+          params: { symbol },
+          headers: {
+            'User-Agent':
+              'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36 Edg/109.0.1518.14',
+          },
+        })
+        let body = String($.lodash_get(res, 'body') || $.lodash_get(res, 'rawBody'))
+        try {
+          body = JSON.parse(body)
+        } catch (e) {}
+        $.log($.toStr(body, null, 2))
+        const code = $.lodash_get(body, 'code')
+        const msg = $.lodash_get(body, 'msg')
+        const id = $.lodash_get(body, 'symbol')
+        if (!id) throw new Error(`${code} ${msg || '未返回 symbol'}`)
+        const price = $.lodash_get(body, 'price')
+        swaps.push({ swap, price })
+      } else {
+        title = 'Crypto(欧易)'
+        const instId = `${swap}-USDT-SWAP`
+        $.log(`查询 ${instId}`)
+        const res = await http({
+          url: `https://www.okx.com/api/v5/public/mark-price`,
+          params: { instId },
+          headers: {
+            'User-Agent':
+              'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36 Edg/109.0.1518.14',
+          },
+        })
+        let body = String($.lodash_get(res, 'body') || $.lodash_get(res, 'rawBody'))
+        try {
+          body = JSON.parse(body)
+        } catch (e) {}
+        $.log($.toStr(body, null, 2))
+        const code = $.lodash_get(body, 'code')
+        const msg = $.lodash_get(body, 'msg')
+        if (String(code) !== '0') throw new Error(`${code} ${msg || 'code 不为 0'}`)
+        const price = $.lodash_get(body, 'data.0.markPx')
+        swaps.push({ swap, price })
+      }
     } catch (e) {
       $.logErr(e)
       $.logErr($.toStr(e))
@@ -52,10 +79,9 @@ let content = ''
   }
 
   content = `${swaps
-    .map(({ swap, markPx, error }) => (error ? `${swap}: ${error}` : `${swap}: 💲${Number(markPx).toFixed(4)}`))
+    .map(({ swap, price, error }) => (error ? `${swap}: ${error}` : `${swap}: 💲${Number(price).toFixed(4)}`))
     .join('\n')}\n执行时间: ${new Date().toTimeString().split(' ')[0]}`
 
-  title = 'Crypto'
   if (isTile()) {
     await notify('Crypto', '面板', '查询完成')
   } else if (!isPanel()) {
