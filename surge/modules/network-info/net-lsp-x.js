@@ -1315,7 +1315,7 @@ const DOMAIN_RESOLVERS = {
       },
     })
     const answers = resp.body.split(';').map(i => i.split(',')[0])
-    if (answers.length === 0) {
+    if (answers.length === 0 || String(answers) === '0') {
       throw new Error('域名解析无结果')
     }
     return answers[answers.length - 1]
