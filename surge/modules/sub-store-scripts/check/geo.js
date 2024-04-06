@@ -11,10 +11,10 @@
  * - [concurrency] 并发数 默认 10
  * - [timeout] 请求超时(单位: 毫秒) 默认 5000
  * - [method] 请求方法. 默认 get
- * - [api] 测落地的 API 接口. 默认为 http://ip-api.com/json?lang=zh-CN
- * - [format] 自定义格式, 从 节点(proxy) 和 API 接口响应(api) 中取数据. 默认为: {{api.country}} {{api.isp}} - {{proxy.name}}
+ * - [api] 测落地的 API . 默认为 http://ip-api.com/json?lang=zh-CN
+ * - [format] 自定义格式, 从 节点(proxy) 和 落地 API 响应(api)中取数据. 默认为: {{api.country}} {{api.isp}} - {{proxy.name}}
  * - [cache] 使用缓存, 默认不使用缓存
- * - [geo] 在节点上附加 _geo 字段, 默认不附加
+ * - [geo] 在节点上附加 _geo 字段(API 响应数据), 默认不附加
  * - [incompatible] 在节点上附加 _incompatible 字段来标记当前客户端不兼容该协议, 默认不附加
  * - [remove_incompatible] 移除当前客户端不兼容的协议. 默认不移除.
  * - [remove_failed] 移除失败的节点. 默认不移除.
@@ -31,7 +31,7 @@ async function operator(proxies = [], targetPlatform, context) {
   const surge_http_api_key = $arguments.surge_http_api_key
   const surge_http_api_enabled = surge_http_api
   if (!surge_http_api_enabled && !isLoon && !isSurge)
-    throw new Error('仅支持 Loon 和 Surge(ability=http-client-policy) 或 配置 HTTP API')
+    throw new Error('请使用 Loon, Surge(ability=http-client-policy) 或 配置 HTTP API')
   const remove_failed = $arguments.remove_failed
   const remove_incompatible = $arguments.remove_incompatible
   const incompatibleEnabled = $arguments.incompatible

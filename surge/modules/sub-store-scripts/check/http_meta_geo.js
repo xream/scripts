@@ -19,8 +19,8 @@
  * - [concurrency] 并发数 默认 10
  * - [timeout] 请求超时(单位: 毫秒) 默认 5000
  * - [method] 请求方法. 默认 get
- * - [api] 测落地的 API 接口. 默认为 http://ip-api.com/json?lang=zh-CN
- * - [format] 自定义格式, 从 节点(proxy) 和 API 接口响应(api) 中取数据. 默认为: {{api.country}} {{api.isp}} - {{proxy.name}}
+ * - [api] 测落地的 API . 默认为 http://ip-api.com/json?lang=zh-CN
+ * - [format] 自定义格式, 从 节点(proxy) 和 API 响应(api) 中取数据. 默认为: {{api.country}} {{api.isp}} - {{proxy.name}}
  * - [cache] 使用缓存, 默认不使用缓存
  * - [geo] 在节点上附加 _geo 字段, 默认不附加
  * - [incompatible] 在节点上附加 _incompatible 字段来标记当前客户端不兼容该协议, 默认不附加

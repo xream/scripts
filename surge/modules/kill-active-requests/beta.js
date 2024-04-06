@@ -9,8 +9,8 @@ if (typeof $argument != 'undefined') {
 let result = {}
 !(async () => {
   if (isPanel()) {
-    console.log($input)
-    console.log($trigger)
+    // console.log($input)
+    // console.log($trigger)
     if ($trigger === 'button') {
       const { requests = [] } = (await httpAPI('/v1/requests/active', 'GET')) || {}
       // console.log(requests.map(i => i.URL))
@@ -46,6 +46,18 @@ let result = {}
         }
     </script></head><body><h1>找到 ${requests.length} 个活跃请求</h1><h2>已尝试打断</h2><button id="btn" onclick="location.reload()">刷新</button></body></html>`,
       },
+    }
+  } else if (arg?.TYPE == 'CRON' && arg?.CRON_RULE) {
+    const { requests = [] } = (await httpAPI('/v1/requests/active', 'GET')) || {}
+    for await (const { id, rule, url, URL } of requests) {
+      const re = new RegExp(arg?.CRON_RULE)
+      if (re.test(rule)) {
+        console.log(`${url || URL}, ${rule} 匹配规则 ${arg?.CRON_RULE}`)
+        await httpAPI('/v1/requests/kill', 'POST', { id })
+      }
+    }
+    if (arg?.CRON_NOTIFY == 1) {
+      $notification.post('定时任务', '打断请求', `${requests.length} 个`)
     }
   } else {
     // console.log(JSON.stringify($network, null, 2))

@@ -4,3 +4,4 @@ headers.js
 index.js
 sms-forward.js
 parser-local.js
+tmp/*.js
