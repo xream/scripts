@@ -29,7 +29,9 @@ let result = {}
   } else if (isRequest()) {
     const { requests = [] } = (await httpAPI('/v1/requests/active', 'GET')) || {}
     await kill()
-    $notification.post('找到', `${requests.length} 个活跃请求`, `已尝试打断`)
+    if(arg?.REQ_NOTIFY == 1) {
+      $notification.post('找到', `${requests.length} 个活跃请求`, `已尝试打断`)
+    }
     result = {
       response: {
         status: 200,
