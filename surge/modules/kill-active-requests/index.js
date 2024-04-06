@@ -27,39 +27,58 @@ let result = {}
     // console.log(requests.map(i => i.URL))
     result = { title: `活跃请求数: ${requests.length}`, content: '点击一键打断', ...arg }
   } else if (isRequest()) {
-    const { requests = [] } = (await httpAPI('/v1/requests/active', 'GET')) || {}
-    await kill()
-    if(arg?.REQ_NOTIFY == 1) {
-      $notification.post('找到', `${requests.length} 个活跃请求`, `已尝试打断`)
-    }
-    result = {
-      response: {
-        status: 200,
-        headers: { 'Content-Type': 'text/html' },
-        body: `<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script>
-        window.onload = () => {
-          const btn = document.getElementById("btn");
-          btn.disabled = true;
-          btn.innerHTML = "刷新中...";
-          setTimeout(function() {
-            btn.disabled = false;
-            btn.innerHTML = "刷新";
-          }, 1000);
+    const params = parseQueryString($request.url)
+    if (params?.REQ_RULE) {
+      const { requests = [] } = (await httpAPI('/v1/requests/active', 'GET')) || {}
+      let count = 0
+      for await (const { id, rule, url, URL } of requests) {
+        const re = new RegExp(params?.REQ_RULE)
+        if(re.test(rule)) {
+          console.log(`${url || URL}, ${rule} 匹配规则 ${params?.REQ_RULE}`)
+          count++
+          await httpAPI('/v1/requests/kill', 'POST', { id })
         }
-    </script></head><body><h1>找到 ${requests.length} 个活跃请求</h1><h2>已尝试打断</h2><button id="btn" onclick="location.reload()">刷新</button></body></html>`,
-      },
+      }
+      if (arg?.REQ_NOTIFY == 1) {
+        $notification.post('请求', '打断请求', `${count} 个`)
+      }
+    } else {
+      const { requests = [] } = (await httpAPI('/v1/requests/active', 'GET')) || {}
+      await kill()
+      if(arg?.REQ_NOTIFY == 1) {
+        $notification.post('找到', `${requests.length} 个活跃请求`, `已尝试打断`)
+      }
+      result = {
+        response: {
+          status: 200,
+          headers: { 'Content-Type': 'text/html' },
+          body: `<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script>
+          window.onload = () => {
+            const btn = document.getElementById("btn");
+            btn.disabled = true;
+            btn.innerHTML = "刷新中...";
+            setTimeout(function() {
+              btn.disabled = false;
+              btn.innerHTML = "刷新";
+            }, 1000);
+          }
+      </script></head><body><h1>找到 ${requests.length} 个活跃请求</h1><h2>已尝试打断</h2><button id="btn" onclick="location.reload()">刷新</button></body></html>`,
+        },
+      }
     }
   } else if(arg?.TYPE == 'CRON' && arg?.CRON_RULE) {
     const { requests = [] } = (await httpAPI('/v1/requests/active', 'GET')) || {}
+    let count = 0
     for await (const { id, rule, url, URL } of requests) {
       const re = new RegExp(arg?.CRON_RULE)
       if(re.test(rule)) {
         console.log(`${url || URL}, ${rule} 匹配规则 ${arg?.CRON_RULE}`)
+        count++
         await httpAPI('/v1/requests/kill', 'POST', { id })
       }
     }
     if (arg?.CRON_NOTIFY == 1) {
-      $notification.post('定时任务', '打断请求', `${requests.length} 个`)
+      $notification.post('定时任务', '打断请求', `${count} 个`)
     }
   }else {
     // console.log(JSON.stringify($network, null, 2))
@@ -126,4 +145,19 @@ function httpAPI(path = '', method = 'POST', body = null) {
 }
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
+}
+// 参数 与其他脚本逻辑一致
+function parseQueryString(url) {
+  const queryString = url.split('?')[1] // 获取查询字符串部分
+  const regex = /([^=&]+)=([^&]*)/g // 匹配键值对的正则表达式
+  const params = {}
+  let match
+
+  while ((match = regex.exec(queryString))) {
+    const key = decodeURIComponent(match[1]) // 解码键
+    const value = decodeURIComponent(match[2]) // 解码值
+    params[key] = value // 将键值对添加到对象中
+  }
+
+  return params
 }
