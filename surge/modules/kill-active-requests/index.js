@@ -42,6 +42,13 @@ let result = {}
       if (arg?.REQ_NOTIFY == 1) {
         $notification.post('请求', '打断请求', `${count} 个`)
       }
+      result = {
+        response: {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ count, rule: params?.REQ_RULE }),
+        },
+      }
     } else {
       const { requests = [] } = (await httpAPI('/v1/requests/active', 'GET')) || {}
       await kill()
