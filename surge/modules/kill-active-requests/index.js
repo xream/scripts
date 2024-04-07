@@ -6,6 +6,20 @@ if (typeof $argument != 'undefined') {
   arg = Object.fromEntries($argument.split('&').map(item => item.split('=')))
 }
 
+if (/^\d+$/.test(arg?.TIMEOUT)) {
+  console.log(`超时参数 ${arg?.TIMEOUT} 秒`)
+  setTimeout(() => {
+    console.log(`超时 ${arg?.TIMEOUT - 1}`)
+    $done({
+      response: {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ error: `超时 ${arg?.TIMEOUT - 1} 秒` }),
+      },
+    })
+  }, (arg?.TIMEOUT - 1) * 1000)
+}
+
 let result = {}
 !(async () => {
   if (isPanel()) {
@@ -118,6 +132,14 @@ let result = {}
     const msg = `${e.message || e}`
     if (isPanel()) {
       result = { title: '❌', content: msg, ...arg }
+    } else if (isRequest()) {
+      result = {
+        response: {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ error: msg }),
+        },
+      }
     } else {
       $notification.post('网络变化', `❌ 打断请求`, msg)
     }
