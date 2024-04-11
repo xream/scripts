@@ -1,0 +1,9 @@
+#!name=Rick and Morty
+#!desc=定时推送 Rick and Morty 中的角色. API 来自网络. 仅供学习交流使用
+#!author=@xream https://t.me/zhetengsha
+#!arguments=MODE:0,CRON_EXP:0 * * * *,TIMEOUT:5,RETRIES:1,RETRY_DELAY:1,ENGINE:auto,SCRIPT_WAKE_SYSTEM:0,SCRIPT_TIMEOUT:120
+#!arguments-desc=CRON_EXP:\n定时的 cron 表达式\n默认为每小时一次\n\nTIMEOUT:\n超时设置(单位: 秒)\n\nRETRIES:\n请求重试次数\n\nRETRY_DELAY:\n请求重试等待时间(单位: 秒)\n\nENGINE:\n默认为自动使用 webview 引擎, 可设为指定 jsc\n\nSCRIPT_WAKE_SYSTEM:\n定时任务脚本的 wake-system\n\nSCRIPT_TIMEOUT:\n脚本超时时间(单位: 秒)
+
+[Script]
+Rick and Morty 定时任务=type=cron,cronexp="{{{CRON_EXP}}}",timeout={{{SCRIPT_TIMEOUT}}},script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/rickandmorty/rickandmorty.js,argument="TIMEOUT={{{TIMEOUT}}}&RETRIES={{{RETRIES}}}&RETRY_DELAY={{{RETRY_DELAY}}}",engine={{{ENGINE}}},wake-system={{{SCRIPT_WAKE_SYSTEM}}}
+
