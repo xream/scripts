@@ -24,11 +24,15 @@
  * - [show_latency] 显示延迟. 默认不显示
  * - [keep_incompatible] 保留当前客户端不兼容的协议. 默认不保留.
  * - [cache] 使用缓存, 默认不使用缓存
+ * - [telegram_bot_token] Telegram Bot Token
+ * - [telegram_chat_id] Telegram Chat ID
  */
 
-async function operator(proxies = [], targetPlatform, context) {
+async function operator(proxies = [], targetPlatform, env) {
   const cacheEnabled = $arguments.cache
   const cache = scriptResourceCache
+  const telegram_chat_id = $arguments.telegram_chat_id
+  const telegram_bot_token = $arguments.telegram_bot_token
   const http_meta_host = $arguments.http_meta_host ?? '127.0.0.1'
   const http_meta_port = $arguments.http_meta_port ?? 9876
   const http_meta_protocol = $arguments.http_meta_protocol ?? 'http'
@@ -46,6 +50,10 @@ async function operator(proxies = [], targetPlatform, context) {
   const validProxies = []
   const incompatibleProxies = []
   const internalProxies = []
+  const failedProxies = []
+  const sub = env.source[proxies?.[0]?.subName]
+  const subName = sub?.displayName || sub?.name
+
   proxies.map((proxy, index) => {
     try {
       const node = ProxyUtils.produce([proxy], 'ClashMeta', 'internal')?.[0]
@@ -128,6 +136,20 @@ async function operator(proxies = [], targetPlatform, context) {
     $.error(e)
   }
 
+  if (telegram_chat_id && telegram_bot_token && failedProxies.length > 0) {
+    const text = `\`${subName}\` 节点测试:\n${failedProxies
+      .map(proxy => `❌ [${proxy.type}] \`${proxy.name}\``)
+      .join('\n')}`
+    await http({
+      method: 'post',
+      url: `https://api.telegram.org/bot${telegram_bot_token}/sendMessage`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ chat_id: telegram_chat_id, text, parse_mode: 'MarkdownV2' }),
+    })
+  }
+
   return keepIncompatible ? [...validProxies, ...incompatibleProxies] : validProxies
 
   async function check(proxy) {
@@ -184,6 +206,7 @@ async function operator(proxies = [], targetPlatform, context) {
           $.info(`[${proxy.name}] 设置失败缓存`)
           cache.set(id, {})
         }
+        failedProxies.push(proxy)
       }
     } catch (e) {
       $.error(`[${proxy.name}] ${e.message ?? e}`)
@@ -191,6 +214,7 @@ async function operator(proxies = [], targetPlatform, context) {
         $.info(`[${proxy.name}] 设置失败缓存`)
         cache.set(id, {})
       }
+      failedProxies.push(proxy)
     }
   }
   // 请求
