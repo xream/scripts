@@ -105,7 +105,7 @@ const MONITOR_NUMBER = arg?.MONITOR_NUMBER ?? 3
           Virtualization: '',
           BootTime: now,
           CountryCode: countryCode.toLowerCase(),
-          Version: '',
+          Version: '0.0.1',
         },
         status: {
           CPU: 0,
@@ -137,7 +137,7 @@ const MONITOR_NUMBER = arg?.MONITOR_NUMBER ?? 3
     $.debug($.toStr(url, {}, null, 2))
     const queryObject = parseQueryString($request.url)
     $.debug('参数', $.toStr(queryObject, {}, null, 2))
-    const server_id = parseInt(url.match(/\api\/v1\/monitor\/(\d+)(\?|$)/)?.[1] ?? 1, 10)
+    const server_id = parseInt(url.match(/\/api\/v1\/monitor\/(\d+)(\?|$)/)?.[1] ?? 1, 10)
     const data = {
       monitor_id: 1,
       server_id,
