@@ -38,6 +38,10 @@ const MONITOR_NAME = arg?.MONITOR_NAME ?? 'Apple'
 const MONITOR_URL = arg?.MONITOR_URL ?? 'http://www.apple.com/library/test/success.html'
 const MONITOR_METHOD = arg?.MONITOR_METHOD ?? 'HEAD'
 const MONITOR_NUMBER = arg?.MONITOR_NUMBER ?? 3
+let FIXED_IP = arg?.FIXED_IP
+if (FIXED_IP === '-') FIXED_IP = ''
+let FIXED_CODE = arg?.FIXED_CODE
+if (FIXED_CODE === '-') FIXED_CODE = ''
 
 !(async () => {
   if (isResponse()) {
@@ -54,7 +58,16 @@ const MONITOR_NUMBER = arg?.MONITOR_NUMBER ?? 3
       let countryCode = ''
       const cache = $.getjson(CACHE_KEY, {})
       const now = Date.now()
-      if (cache?.time && now - cache.time < CACHE_S * 1000 && cache.ip && cache.countryCode) {
+      const isFixedIPValid = isIP(FIXED_IP)
+      const isFixedCodeValid = /^[a-z]{2}$/i.test(FIXED_CODE)
+      if (FIXED_IP || FIXED_CODE) {
+        if (!isFixedIPValid) throw new Error('FIXED_IP 应该为合法的 IP')
+        if (!isFixedCodeValid) throw new Error('FIXED_CODE 应为 合法的 ISO 3166-1 二位字母代码')
+      }
+      if (isFixedIPValid && isFixedCodeValid) {
+        ip = FIXED_IP
+        countryCode = FIXED_CODE
+      } else if (cache?.time && now - cache.time < CACHE_S * 1000 && cache.ip && cache.countryCode) {
         ip = cache.ip
         countryCode = cache.countryCode
       } else {
