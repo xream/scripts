@@ -14,7 +14,7 @@
  * - [retry_delay] 重试延时(单位: 毫秒) 默认 1000
  * - [concurrency] 并发数 默认 10
  * - [client] GPT 检测的客户端类型. 默认 iOS
- * - [method] 请求方法. 默认 head, 如果不支持, 可设为 get
+ * - [method] 请求方法. 默认 get
  * - [cache] 使用缓存, 默认不使用缓存
  */
 
@@ -24,7 +24,7 @@ async function operator(proxies = [], targetPlatform, context) {
   if (!isLoon && !isSurge) throw new Error('仅支持 Loon 和 Surge(ability=http-client-policy)')
   const cacheEnabled = $arguments.cache
   const cache = scriptResourceCache
-  const method = $arguments.method || 'head'
+  const method = $arguments.method || 'get'
   const url = $arguments.client === 'Android' ? `https://android.chat.openai.com` : `https://ios.chat.openai.com`
   const target = isLoon ? 'Loon' : isSurge ? 'Surge' : undefined
   const batches = []
@@ -74,13 +74,20 @@ async function operator(proxies = [], targetPlatform, context) {
           'policy-descriptor': node,
           node,
         })
-        const status = parseInt(res.status || res.statusCode || 200)
+        const status = parseInt(res.status ?? res.statusCode ?? 200)
+        let body = String(res.body ?? res.rawBody)
+        try {
+          body = JSON.parse(body)
+        } catch (e) {}
+        // $.info(`body ${JSON.stringify(body, null, 2)}`)
+        const msg = body?.error?.error_type || body?.cf_details
         let latency = ''
         latency = `${Date.now() - startedAt}`
-        $.info(`[${proxy.name}] status: ${status}, latency: ${latency}`)
+        $.info(`[${proxy.name}] status: ${status}, msg: ${msg}, latency: ${latency}`)
         // cf 拦截是 400 错误, 403 就是没被拦截, 走到了未鉴权的逻辑
         // https://zset.cc/archives/34/
-        if (status == 403) {
+        // 更新: 403 的时候, 还得看响应
+        if (status == 403 && !['unsupported_country'].includes(msg)) {
           proxy.name = `[GPT] ${proxy.name}`
           if (cacheEnabled) {
             $.info(`[${proxy.name}] 设置成功缓存`)
