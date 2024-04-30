@@ -25,6 +25,12 @@ if (isNaN(ID) || ID <= 1) {
   $.error('无效的 ID, 使用默认值 65535')
   ID = 65535
 }
+let UPTIME = arg?.UPTIME ?? 65535
+UPTIME = parseInt(UPTIME, 10)
+if (isNaN(UPTIME) || UPTIME <= 1) {
+  $.error('无效的 UPTIME, 使用默认值 0')
+  UPTIME = 0
+}
 const NAME = arg?.NAME ?? '未命名的设备'
 const PLATFORM = arg?.PLATFORM ?? $.getEnv() ?? '未知平台'
 const VERSION = arg?.VERSION ?? '未知版本'
@@ -57,7 +63,7 @@ if (FIXED_CODE === '-') FIXED_CODE = ''
       let ip = ''
       let countryCode = ''
       const cache = $.getjson(CACHE_KEY, {})
-      const now = Date.now()
+      const now = Math.round(new Date().getTime() / 1000)
       const isFixedIPValid = isIP(FIXED_IP)
       const isFixedCodeValid = /^[a-z]{2}$/i.test(FIXED_CODE)
       if (FIXED_IP || FIXED_CODE) {
@@ -116,7 +122,7 @@ if (FIXED_CODE === '-') FIXED_CODE = ''
           SwapTotal: 1024,
           Arch: '',
           Virtualization: '',
-          BootTime: now,
+          BootTime: now - UPTIME,
           CountryCode: countryCode.toLowerCase(),
           Version: '0.0.1',
         },
@@ -129,7 +135,7 @@ if (FIXED_CODE === '-') FIXED_CODE = ''
           NetOutTransfer: 0,
           NetInSpeed: 0,
           NetOutSpeed: 0,
-          Uptime: 0,
+          Uptime: UPTIME,
           Load1: 0,
           Load5: 0,
           Load15: 0,
