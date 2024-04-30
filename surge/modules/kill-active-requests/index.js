@@ -20,6 +20,11 @@ if (/^\d+$/.test(arg?.TIMEOUT)) {
   }, (arg?.TIMEOUT - 1) * 1000)
 }
 
+let DISMISS = 0
+if (/^\d+$/.test(arg?.DISMISS)) {
+  DISMISS = parseInt(arg?.DISMISS, 10)
+}
+
 let result = {}
 !(async () => {
   if (isPanel()) {
@@ -34,7 +39,7 @@ let result = {}
       //   // console.log(res)
       // }
       await kill()
-      $notification.post('找到', `${requests.length} 个活跃请求`, `已尝试打断`)
+      $notification.post('面板触发', '打断请求', `🅰 活跃请求数: ${requests.length}`, { 'auto-dismiss': DISMISS })
     }
     // await delay(1000)
     const { requests = [] } = (await httpAPI('/v1/requests/active', 'GET')) || {}
@@ -47,14 +52,14 @@ let result = {}
       let count = 0
       for await (const { id, rule, url, URL } of requests) {
         const re = new RegExp(params?.REQ_RULE)
-        if(re.test(rule)) {
-          console.log(`${url || URL}, ${rule} 匹配规则 ${params?.REQ_RULE}`)
+        if (re.test(rule)) {
+          console.log(`🅰 ${url || URL}, ${rule} 匹配规则 ${params?.REQ_RULE}`)
           count++
           await httpAPI('/v1/requests/kill', 'POST', { id })
         }
       }
       if (arg?.REQ_NOTIFY == 1) {
-        $notification.post('请求', '打断请求', `${count} 个`)
+        $notification.post('请求触发', '', `🅰 活跃请求数: ${requests.length}\n🅂 打断请求数: ${count}`, { 'auto-dismiss': DISMISS })
       }
       result = {
         response: {
@@ -66,8 +71,8 @@ let result = {}
     } else {
       const { requests = [] } = (await httpAPI('/v1/requests/active', 'GET')) || {}
       await kill()
-      if(arg?.REQ_NOTIFY == 1) {
-        $notification.post('找到', `${requests.length} 个活跃请求`, `已尝试打断`)
+      if (arg?.REQ_NOTIFY == 1) {
+        $notification.post('请求触发', '打断请求', `🅰 活跃请求数: ${requests.length}`, { 'auto-dismiss': DISMISS })
       }
       result = {
         response: {
@@ -87,21 +92,21 @@ let result = {}
         },
       }
     }
-  } else if(arg?.TYPE == 'CRON' && arg?.CRON_RULE) {
+  } else if (arg?.TYPE == 'CRON' && arg?.CRON_RULE) {
     const { requests = [] } = (await httpAPI('/v1/requests/active', 'GET')) || {}
     let count = 0
     for await (const { id, rule, url, URL } of requests) {
       const re = new RegExp(arg?.CRON_RULE)
-      if(re.test(rule)) {
-        console.log(`${url || URL}, ${rule} 匹配规则 ${arg?.CRON_RULE}`)
+      if (re.test(rule)) {
+        console.log(`🅰 ${url || URL}, ${rule} 匹配规则 ${arg?.CRON_RULE}`)
         count++
         await httpAPI('/v1/requests/kill', 'POST', { id })
       }
     }
     if (arg?.CRON_NOTIFY == 1) {
-      $notification.post('定时任务', '打断请求', `${count} 个`)
+      $notification.post('定时任务', '', `🅰 活跃请求数: ${requests.length}\n🅂 打断请求数: ${count}`, { 'auto-dismiss': DISMISS })
     }
-  }else {
+  } else {
     // console.log(JSON.stringify($network, null, 2))
     let wifi = $network.wifi && $network.wifi.bssid
     if (wifi) {
@@ -120,7 +125,7 @@ let result = {}
         // }
         await kill()
         if (arg?.EVENT_NOTIFY == 1) {
-          $notification.post('网络变化', '打断请求', `${requests.length} 个`)
+          $notification.post('网络变化', '打断请求', `🅰 活跃请求数: ${requests.length}`, { 'auto-dismiss': DISMISS })
         }
       }
       $persistentStore.write('', 'last_network')
@@ -141,7 +146,7 @@ let result = {}
         },
       }
     } else {
-      $notification.post('网络变化', `❌ 打断请求`, msg)
+      $notification.post('网络变化', `❌ 打断请求`, msg, { 'auto-dismiss': DISMISS })
     }
   })
   .finally(() => $done(result))
