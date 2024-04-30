@@ -43,19 +43,26 @@ async function operator(proxies = [], targetPlatform, context) {
   const url = `https://speed.cloudflare.com/__down?bytes=${bytes}`
   const regex = new RegExp($arguments.regex || '.*') // 如果未设置正则表达式，则匹配所有节点
   const percentage = parseFloat($arguments.percentage || 0) // 获取删除百分比
-  const whitelist_regex = new RegExp($arguments.whitelist_regex || '') // 白名单正则表达式
-  const blacklist_regex = new RegExp($arguments.blacklist_regex || '') // 黑名单正则表达式
+  const whitelist_regex = $arguments.whitelist_regex ? new RegExp($arguments.whitelist_regex) : null // 白名单正则表达式
+  const blacklist_regex = $arguments.blacklist_regex ? new RegExp($arguments.blacklist_regex) : null // 黑名单正则表达式
 
   const $ = $substore
   const validProxies = []
   const incompatibleProxies = []
   const internalProxies = []
   const blacklistedProxies = [] // 用于存储黑名单节点
-  proxies.map((proxy, index) => {
+
+  proxies.forEach((proxy, index) => {
     try {
       const node = ProxyUtils.produce([proxy], 'ClashMeta', 'internal')?.[0]
-      if (node && regex.test(node.name)) {
-        if (blacklist_regex.test(node.name)) {
+      if (!node || !node.name) {
+        if (keepIncompatible) {
+          incompatibleProxies.push(proxy)
+        }
+        return
+      }
+      if (regex.test(node.name)) {
+        if (blacklist_regex && blacklist_regex.test(node.name)) {
           blacklistedProxies.push(node) // 加入黑名单列表
         } else {
           internalProxies.push({ ...node, _proxies_index: index }) // 加入待测列表
@@ -135,44 +142,73 @@ async function operator(proxies = [], targetPlatform, context) {
   } catch (e) {
     $.error(e)
   }
-  const sortedProxies = validProxies
-    .map((proxy, index) => ({
-      ...proxy,
-      originalIndex: index,
-    }))
-    .sort((a, b) => {
+
+  // 根据正则表达式分组
+  const proxyGroups = {}
+  validProxies.forEach(proxy => {
+    if (!proxy || !proxy.name) return
+    let groupName = null
+    for (const key of regex.source.split('|')) {
+      if (new RegExp(key).test(proxy.name)) {
+        groupName = key
+        break
+      }
+    }
+    if (!groupName) {
+      groupName = 'default' // 未匹配任何正则的节点归为默认组
+    }
+    if (!proxyGroups[groupName]) {
+      proxyGroups[groupName] = []
+    }
+    proxyGroups[groupName].push(proxy)
+  })
+
+  // 对每个分组进行删除操作
+  for (const groupName in proxyGroups) {
+    const groupProxies = proxyGroups[groupName]
+    groupProxies.sort((a, b) => {
+      if (!a || !b || !a.name || !b.name) return 0
       const speedA = parseInt(a.name.match(/^\[(\d+) M\]/)[1])
       const speedB = parseInt(b.name.match(/^\[(\d+) M\]/)[1])
       return speedB - speedA // 降序排列
     })
-  // 根据百分比计算要删除的节点数量
-  const numToDelete = Math.round((sortedProxies.length * percentage) / 100)
-  // 从后往前删除节点，保持排序，并跳过白名单节点
-  const indexesToDelete = []
-  let deletedCount = 0
-  for (let i = sortedProxies.length - 1; i >= 0 && deletedCount < numToDelete; i--) {
-    const proxy = sortedProxies[i]
-    if (whitelist_regex.test(proxy.name)) {
-      continue // 跳过白名单节点
+
+    const numToDelete = Math.floor((groupProxies.length * percentage) / 100)
+    for (let i = 0; i < numToDelete; i++) {
+      // 修改循环条件
+      const proxy = groupProxies[groupProxies.length - 1] // 获取最后一个节点
+      if (!proxy || !proxy.name) continue
+
+      // 检查白名单和黑名单
+      if (whitelist_regex && whitelist_regex.test(proxy.name)) {
+        // 在白名单中的节点标记为 [LS]
+        proxy.name = proxy.name.replace(/^\[\d+ M\]/, '[LS]')
+      } else if (!blacklist_regex || !blacklist_regex.test(proxy.name)) {
+        // 不在黑名单中的节点删除
+        groupProxies.pop() // 从末尾删除节点
+      }
     }
-    indexesToDelete.push(proxy.originalIndex)
-    deletedCount++
   }
-  for (let i = indexesToDelete.length - 1; i >= 0; i--) {
-    validProxies.splice(indexesToDelete[i], 1)
+
+  // 将分组后的节点合并到结果列表
+  validProxies.length = 0
+  for (const groupName in proxyGroups) {
+    validProxies.push(...proxyGroups[groupName])
   }
+
   // 去除速度标记
   validProxies.forEach(proxy => {
+    if (!proxy || !proxy.name) return
     proxy.name = proxy.name.replace(/^\[\d+ M\] /, '')
   })
+
   // 将黑名单节点添加到结果列表
   validProxies.push(...blacklistedProxies)
 
   return keepIncompatible ? [...validProxies, ...incompatibleProxies] : validProxies
 
   async function check(proxy) {
-    // $.info(`[${proxy.name}] 检测`)
-    // $.info(`检测 ${JSON.stringify(proxy, null, 2)}`)
+    if (!proxy) return
     const id = cacheEnabled
       ? `http-meta:speed:${JSON.stringify(
           Object.fromEntries(
@@ -180,7 +216,6 @@ async function operator(proxies = [], targetPlatform, context) {
           )
         )}`
       : undefined
-    // $.info(`检测 ${id}`)
     try {
       const cached = cache.get(id)
       if (cacheEnabled && cached) {
@@ -193,7 +228,6 @@ async function operator(proxies = [], targetPlatform, context) {
         }
         return
       }
-      // $.info(JSON.stringify(proxy, null, 2))
       const index = internalProxies.indexOf(proxy)
       const startedAt = Date.now()
       const res = await http({
@@ -244,11 +278,9 @@ async function operator(proxies = [], targetPlatform, context) {
       try {
         return await $.http[METHOD]({ ...opt, timeout: TIMEOUT })
       } catch (e) {
-        // $.error(e)
         if (count < RETRIES) {
           count++
           const delay = RETRY_DELAY * count
-          // $.info(`第 ${count} 次请求失败: ${e.message ?? e}, 等待 ${delay / 1000}s 后重试`)
           await $.wait(delay)
           return await fn()
         } else {
