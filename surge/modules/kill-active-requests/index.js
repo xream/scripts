@@ -53,7 +53,7 @@ let result = {}
       for await (const { id, rule, url, URL } of requests) {
         const re = new RegExp(params?.REQ_RULE)
         if (re.test(rule)) {
-          console.log(`🅰 ${url || URL}, ${rule} 匹配规则 ${params?.REQ_RULE}`)
+          console.log(`🅁 ${url || URL}, ${rule} 匹配规则 ${params?.REQ_RULE}`)
           count++
           await httpAPI('/v1/requests/kill', 'POST', { id })
         }
@@ -98,7 +98,7 @@ let result = {}
     for await (const { id, rule, url, URL } of requests) {
       const re = new RegExp(arg?.CRON_RULE)
       if (re.test(rule)) {
-        console.log(`🅰 ${url || URL}, ${rule} 匹配规则 ${arg?.CRON_RULE}`)
+        console.log(`🅁 ${url || URL}, ${rule} 匹配规则 ${arg?.CRON_RULE}`)
         count++
         await httpAPI('/v1/requests/kill', 'POST', { id })
       }
