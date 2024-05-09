@@ -13,10 +13,12 @@
  * - [retries] 重试次数 默认 1
  * - [retry_delay] 重试延时(单位: 毫秒) 默认 1000
  * - [concurrency] 并发数 默认 10
- * - [timeout] 请求超时(单位: 毫秒) 默认 5000
+ * - [internal] 使用内部方法获取 IP 信息. 默认 false
+ *              目前仅支持 Surge, 数据来自 GeoIP 数据库. 要求节点服务器为 IP. 本脚本不进行域名解析 可在节点操作中添加域名解析
  * - [method] 请求方法. 默认 get
+ * - [timeout] 请求超时(单位: 毫秒) 默认 5000
  * - [api] 测入口的 API . 默认为 http://ip-api.com/json/{{proxy.server}}?lang=zh-CN
- * - [format] 自定义格式, 从 节点(proxy) 和 入口 API 响应(api)中取数据. 默认为: {{api.country}} {{api.isp}} - {{proxy.name}}
+ * - [format] 自定义格式, 从 节点(proxy) 和 入口(api)中取数据. 默认为: {{api.country}} {{api.isp}} - {{proxy.name}} 当使用 internal 时, 为 {{api.countryCode}} {{api.aso}} - {{proxy.name}}
  * - [valid] 验证 api 请求是否合法. 默认: ProxyUtils.isIP('{{api.ip || api.query}}')
  * - [cache] 使用缓存, 默认不使用缓存
  * - [entrance] 在节点上附加 _entrance 字段(API 响应数据), 默认不附加
@@ -25,14 +27,20 @@
 
 async function operator(proxies = [], targetPlatform, context) {
   const $ = $substore
-
+  const { isSurge } = $.env
+  const internal = $arguments.internal
+  let valid = $arguments.valid || `ProxyUtils.isIP('{{api.ip || api.query}}')`
+  let format = $arguments.format || `{{api.country}} {{api.isp}} - {{proxy.name}}`
+  if (internal) {
+    if (!isSurge) throw new Error('仅 Surge 支持使用内部方法获取 IP 信息')
+    format = $arguments.format || `{{api.countryCode}} {{api.aso}} - {{proxy.name}}`
+    valid = $arguments.valid || `"{{api.countryCode}}".length === 2`
+  }
   const remove_failed = $arguments.remove_failed
   const entranceEnabled = $arguments.entrance
   const cacheEnabled = $arguments.cache
   const cache = scriptResourceCache
-  const format = $arguments.format || `{{api.country}} {{api.isp}} - {{proxy.name}}`
   const method = $arguments.method || 'get'
-  const valid = $arguments.valid || `ProxyUtils.isIP('{{api.ip || api.query}}')`
   const url = $arguments.api || `http://ip-api.com/json/{{proxy.server}}?lang=zh-CN`
   const batches = []
   const concurrency = parseInt($arguments.concurrency || 10) // 一组并发数
@@ -87,36 +95,58 @@ async function operator(proxies = [], targetPlatform, context) {
       }
       // 请求
       const startedAt = Date.now()
-      const res = await http({
-        method,
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3.1 Mobile/15E148 Safari/604.1',
-        },
-        url: formatter({ proxy, format: url }),
-      })
-      let api = String(lodash_get(res, 'body'))
-      try {
-        api = JSON.parse(api)
-      } catch (e) {}
-      const status = parseInt(res.status || res.statusCode || 200)
-      let latency = ''
-      latency = `${Date.now() - startedAt}`
-      $.info(`[${proxy.name}] status: ${status}, latency: ${latency}`)
-      $.log(`[${proxy.name}] api: ${JSON.stringify(api, null, 2)}`)
-      if (status == 200 && eval(formatter({ api, format: valid }))) {
-        proxy.name = formatter({ proxy, api, format })
-        proxy._entrance = api
-        if (cacheEnabled) {
-          $.info(`[${proxy.name}] 设置成功缓存`)
-          cache.set(id, { api })
+      let api = {}
+      if (internal) {
+        api = {
+          countryCode: $utils.geoip(proxy.server),
+          aso: $utils.ipaso(proxy.server),
+        }
+        $.info(`[${proxy.name}] countryCode: ${api.countryCode}, aso: ${api.aso}`)
+        if (api.countryCode && api.aso && eval(formatter({ api, format: valid }))) {
+          proxy.name = formatter({ proxy, api, format })
+          proxy._entrance = api
+          if (cacheEnabled) {
+            $.info(`[${proxy.name}] 设置成功缓存`)
+            cache.set(id, { api })
+          }
+        } else {
+          if (cacheEnabled) {
+            $.info(`[${proxy.name}] 设置失败缓存`)
+            cache.set(id, {})
+          }
         }
       } else {
-        if (cacheEnabled) {
-          $.info(`[${proxy.name}] 设置失败缓存`)
-          cache.set(id, {})
+        const res = await http({
+          method,
+          headers: {
+            'User-Agent':
+              'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3.1 Mobile/15E148 Safari/604.1',
+          },
+          url: formatter({ proxy, format: url }),
+        })
+        api = String(lodash_get(res, 'body'))
+        try {
+          api = JSON.parse(api)
+        } catch (e) {}
+        const status = parseInt(res.status || res.statusCode || 200)
+        let latency = ''
+        latency = `${Date.now() - startedAt}`
+        $.info(`[${proxy.name}] status: ${status}, latency: ${latency}`)
+        if (status == 200 && eval(formatter({ api, format: valid }))) {
+          proxy.name = formatter({ proxy, api, format })
+          proxy._entrance = api
+          if (cacheEnabled) {
+            $.info(`[${proxy.name}] 设置成功缓存`)
+            cache.set(id, { api })
+          }
+        } else {
+          if (cacheEnabled) {
+            $.info(`[${proxy.name}] 设置失败缓存`)
+            cache.set(id, {})
+          }
         }
       }
+      $.log(`[${proxy.name}] api: ${JSON.stringify(api, null, 2)}`)
     } catch (e) {
       $.error(`[${proxy.name}] ${e.message ?? e}`)
       if (cacheEnabled) {
