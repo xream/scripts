@@ -30,7 +30,7 @@
 
 async function operator(proxies = [], targetPlatform, context) {
   const $ = $substore
-  const { isLoon, isSurge } = $.env
+  const { isLoon, isSurge, isNode } = $.env
   const internal = $arguments.internal
   let format = $arguments.format || '{{api.country}} {{api.isp}} - {{proxy.name}}'
   let url = $arguments.api || 'http://ip-api.com/json?lang=zh-CN'

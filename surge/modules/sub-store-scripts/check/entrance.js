@@ -14,7 +14,11 @@
  * - [retry_delay] 重试延时(单位: 毫秒) 默认 1000
  * - [concurrency] 并发数 默认 10
  * - [internal] 使用内部方法获取 IP 信息. 默认 false
- *              目前仅支持 Surge/Loon(build >= 692) 等有 $utils.ipaso 和 $utils.geoip API 的 App, 数据来自 GeoIP 数据库. 要求节点服务器为 IP. 本脚本不进行域名解析 可在节点操作中添加域名解析
+ *              支持一下几种运行环境:
+ *              1. Surge/Loon(build >= 692) 等有 $utils.ipaso 和 $utils.geoip API 的 App
+ *              2. Node.js 版 Sub-Store, 设置环境变量 SUB_STORE_MMDB_COUNTRY_PATH 和 SUB_STORE_MMDB_ASN_PATH, 或 传入 mmdb_country_path 和 mmdb_asn_path 参数(分别为 MaxMind GeoLite2 Country 和 GeoLite2 ASN 数据库 的路径)
+ *              数据来自 GeoIP 数据库
+ *              ⚠️ 要求节点服务器为 IP. 本脚本不进行域名解析 可在节点操作中添加域名解析
  * - [method] 请求方法. 默认 get
  * - [timeout] 请求超时(单位: 毫秒) 默认 5000
  * - [api] 测入口的 API . 默认为 http://ip-api.com/json/{{proxy.server}}?lang=zh-CN
@@ -25,26 +29,36 @@
  * - [cache] 使用缓存, 默认不使用缓存
  * - [entrance] 在节点上附加 _entrance 字段(API 响应数据), 默认不附加
  * - [remove_failed] 移除失败的节点. 默认不移除.
+ * - [mmdb_country_path] 见 internal
+ * - [mmdb_asn_path] 见 internal
  */
 
 async function operator(proxies = [], targetPlatform, context) {
   const $ = $substore
-  // const { isLoon, isSurge } = $.env
+  const { isNode } = $.env
   const internal = $arguments.internal
+  const mmdb_country_path = $arguments.mmdb_country_path
+  const mmdb_asn_path = $arguments.mmdb_asn_path
   let valid = $arguments.valid || `ProxyUtils.isIP('{{api.ip || api.query}}')`
   let format = $arguments.format || `{{api.country}} {{api.isp}} - {{proxy.name}}`
+  let utils
   if (internal) {
-    // if (isSurge) {
-    //   //
-    // } else if (isLoon) {
-    //   const build = $loon.match(/\((\d+)\)$/)?.[1]
-    //   if (build < 692) throw new Error('Loon 版本过低, 请升级到 build 692 及以上版本')
-    // } else {
-    //   throw new Error('仅 Surge/Loon 支持使用内部方法获取 IP 信息')
-    // }
-    if (typeof $utils === 'undefined' || typeof $utils.geoip === 'undefined' || typeof $utils.ipaso === 'undefined') {
-      $.error(`目前仅支持 Surge/Loon(build >= 692) 等有 $utils.ipaso 和 $utils.geoip API 的 App`)
-      throw new Error('不支持使用内部方法获取 IP 信息, 请查看日志')
+    if (isNode) {
+      utils = new ProxyUtils.MMDB({ country: mmdb_country_path, asn: mmdb_asn_path })
+    } else {
+      // if (isSurge) {
+      //   //
+      // } else if (isLoon) {
+      //   const build = $loon.match(/\((\d+)\)$/)?.[1]
+      //   if (build < 692) throw new Error('Loon 版本过低, 请升级到 build 692 及以上版本')
+      // } else {
+      //   throw new Error('仅 Surge/Loon 支持使用内部方法获取 IP 信息')
+      // }
+      if (typeof $utils === 'undefined' || typeof $utils.geoip === 'undefined' || typeof $utils.ipaso === 'undefined') {
+        $.error(`目前仅支持 Surge/Loon(build >= 692) 等有 $utils.ipaso 和 $utils.geoip API 的 App`)
+        throw new Error('不支持使用内部方法获取 IP 信息, 请查看日志')
+      }
+      utils = $utils
     }
     format = $arguments.format || `{{api.countryCode}} {{api.aso}} - {{proxy.name}}`
     valid = $arguments.valid || `"{{api.countryCode}}".length === 2`
@@ -111,8 +125,8 @@ async function operator(proxies = [], targetPlatform, context) {
       let api = {}
       if (internal) {
         api = {
-          countryCode: $utils.geoip(proxy.server),
-          aso: $utils.ipaso(proxy.server),
+          countryCode: utils.geoip(proxy.server),
+          aso: utils.ipaso(proxy.server),
         }
         $.info(`[${proxy.name}] countryCode: ${api.countryCode}, aso: ${api.aso}`)
         if (api.countryCode && api.aso && eval(formatter({ api, format: valid }))) {
