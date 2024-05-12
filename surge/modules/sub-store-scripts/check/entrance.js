@@ -18,8 +18,10 @@
  * - [method] 请求方法. 默认 get
  * - [timeout] 请求超时(单位: 毫秒) 默认 5000
  * - [api] 测入口的 API . 默认为 http://ip-api.com/json/{{proxy.server}}?lang=zh-CN
- * - [format] 自定义格式, 从 节点(proxy) 和 入口(api)中取数据. 默认为: {{api.country}} {{api.isp}} - {{proxy.name}} 当使用 internal 时, 为 {{api.countryCode}} {{api.aso}} - {{proxy.name}}
+ * - [format] 自定义格式, 从 节点(proxy) 和 入口(api)中取数据. 默认为: {{api.country}} {{api.isp}} - {{proxy.name}}
+ *            当使用 internal 时, 默认为 {{api.countryCode}} {{api.aso}} - {{proxy.name}}
  * - [valid] 验证 api 请求是否合法. 默认: ProxyUtils.isIP('{{api.ip || api.query}}')
+ *           当使用 internal 时, 默认为 "{{api.countryCode}}".length === 2
  * - [cache] 使用缓存, 默认不使用缓存
  * - [entrance] 在节点上附加 _entrance 字段(API 响应数据), 默认不附加
  * - [remove_failed] 移除失败的节点. 默认不移除.

@@ -9,10 +9,15 @@
  * - [retries] 重试次数 默认 1
  * - [retry_delay] 重试延时(单位: 毫秒) 默认 1000
  * - [concurrency] 并发数 默认 10
+ * - [internal] 使用内部方法获取 IP 信息. 默认 false
+ *              (因为懒) 开启后, 将认为远程 API 返回的响应内容为纯文本 IP 地址, 并用于内部方法
+ *              目前仅支持 Surge/Loon(build >= 692) 等有 $utils.ipaso 和 $utils.geoip API 的 App, 数据来自 GeoIP 数据库
  * - [timeout] 请求超时(单位: 毫秒) 默认 5000
  * - [method] 请求方法. 默认 get
- * - [api] 测落地的 API . 默认为 http://ip-api.com/json?lang=zh-CN
+ * - [api] 测落地的 API. 默认为 http://ip-api.com/json?lang=zh-CN
+ *          当使用 internal 时, 默认为 http://checkip.amazonaws.com
  * - [format] 自定义格式, 从 节点(proxy) 和 落地 API 响应(api)中取数据. 默认为: {{api.country}} {{api.isp}} - {{proxy.name}}
+ *            当使用 internal 时, 默认为 {{api.countryCode}} {{api.aso}} - {{proxy.name}}
  * - [cache] 使用缓存, 默认不使用缓存
  * - [geo] 在节点上附加 _geo 字段(API 响应数据), 默认不附加
  * - [incompatible] 在节点上附加 _incompatible 字段来标记当前客户端不兼容该协议, 默认不附加
@@ -26,6 +31,25 @@
 async function operator(proxies = [], targetPlatform, context) {
   const $ = $substore
   const { isLoon, isSurge } = $.env
+  const internal = $arguments.internal
+  let format = $arguments.format || '{{api.country}} {{api.isp}} - {{proxy.name}}'
+  let url = $arguments.api || 'http://ip-api.com/json?lang=zh-CN'
+  if (internal) {
+    // if (isSurge) {
+    //   //
+    // } else if (isLoon) {
+    //   const build = $loon.match(/\((\d+)\)$/)?.[1]
+    //   if (build < 692) throw new Error('Loon 版本过低, 请升级到 build 692 及以上版本')
+    // } else {
+    //   throw new Error('仅 Surge/Loon 支持使用内部方法获取 IP 信息')
+    // }
+    if (typeof $utils === 'undefined' || typeof $utils.geoip === 'undefined' || typeof $utils.ipaso === 'undefined') {
+      $.error(`目前仅支持 Surge/Loon(build >= 692) 等有 $utils.ipaso 和 $utils.geoip API 的 App`)
+      throw new Error('不支持使用内部方法获取 IP 信息, 请查看日志')
+    }
+    format = $arguments.format || `{{api.countryCode}} {{api.aso}} - {{proxy.name}}`
+    url = $arguments.api || 'http://checkip.amazonaws.com'
+  }
   const surge_http_api = $arguments.surge_http_api
   const surge_http_api_protocol = $arguments.surge_http_api_protocol || 'http'
   const surge_http_api_key = $arguments.surge_http_api_key
@@ -38,9 +62,9 @@ async function operator(proxies = [], targetPlatform, context) {
   const geoEnabled = $arguments.geo
   const cacheEnabled = $arguments.cache
   const cache = scriptResourceCache
-  const format = $arguments.format || '{{api.country}} {{api.isp}} - {{proxy.name}}'
+
   const method = $arguments.method || 'get'
-  const url = $arguments.api || 'http://ip-api.com/json?lang=zh-CN'
+
   const target = isLoon ? 'Loon' : isSurge ? 'Surge' : undefined
   const batches = []
   const concurrency = parseInt($arguments.concurrency || 10) // 一组并发数
@@ -113,13 +137,22 @@ async function operator(proxies = [], targetPlatform, context) {
           node,
         })
         let api = String(lodash_get(res, 'body'))
-        try {
-          api = JSON.parse(api)
-        } catch (e) {}
         const status = parseInt(res.status || res.statusCode || 200)
         let latency = ''
         latency = `${Date.now() - startedAt}`
         $.info(`[${proxy.name}] status: ${status}, latency: ${latency}`)
+        if (internal) {
+          const ip = api.trim()
+          api = {
+            countryCode: $utils.geoip(ip),
+            aso: $utils.ipaso(ip),
+          }
+        } else {
+          try {
+            api = JSON.parse(api)
+          } catch (e) {}
+        }
+
         $.log(`[${proxy.name}] api: ${JSON.stringify(api, null, 2)}`)
         if (status == 200) {
           proxy.name = formatter({ proxy, api, format })
