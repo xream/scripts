@@ -14,7 +14,7 @@
  * - [retry_delay] 重试延时(单位: 毫秒) 默认 1000
  * - [concurrency] 并发数 默认 10
  * - [internal] 使用内部方法获取 IP 信息. 默认 false
- *              目前仅支持 Surge, 数据来自 GeoIP 数据库. 要求节点服务器为 IP. 本脚本不进行域名解析 可在节点操作中添加域名解析
+ *              目前仅支持 Surge/Loon(build >= 692) 等有 $utils.ipaso 和 $utils.geoip API 的 App, 数据来自 GeoIP 数据库. 要求节点服务器为 IP. 本脚本不进行域名解析 可在节点操作中添加域名解析
  * - [method] 请求方法. 默认 get
  * - [timeout] 请求超时(单位: 毫秒) 默认 5000
  * - [api] 测入口的 API . 默认为 http://ip-api.com/json/{{proxy.server}}?lang=zh-CN
@@ -27,12 +27,23 @@
 
 async function operator(proxies = [], targetPlatform, context) {
   const $ = $substore
-  const { isSurge } = $.env
+  // const { isLoon, isSurge } = $.env
   const internal = $arguments.internal
   let valid = $arguments.valid || `ProxyUtils.isIP('{{api.ip || api.query}}')`
   let format = $arguments.format || `{{api.country}} {{api.isp}} - {{proxy.name}}`
   if (internal) {
-    if (!isSurge) throw new Error('仅 Surge 支持使用内部方法获取 IP 信息')
+    // if (isSurge) {
+    //   //
+    // } else if (isLoon) {
+    //   const build = $loon.match(/\((\d+)\)$/)?.[1]
+    //   if (build < 692) throw new Error('Loon 版本过低, 请升级到 build 692 及以上版本')
+    // } else {
+    //   throw new Error('仅 Surge/Loon 支持使用内部方法获取 IP 信息')
+    // }
+    if (typeof $utils === 'undefined' || typeof $utils.geoip === 'undefined' || typeof $utils.ipaso === 'undefined') {
+      $.error(`目前仅支持 Surge/Loon(build >= 692) 等有 $utils.ipaso 和 $utils.geoip API 的 App`)
+      throw new Error('不支持使用内部方法获取 IP 信息, 请查看日志')
+    }
     format = $arguments.format || `{{api.countryCode}} {{api.aso}} - {{proxy.name}}`
     valid = $arguments.valid || `"{{api.countryCode}}".length === 2`
   }
