@@ -26,16 +26,19 @@ async function operator(proxies = [], targetPlatform, context) {
   const url = `https://speed.cloudflare.com/__down?bytes=${bytes}`
   const target = isLoon ? 'Loon' : isSurge ? 'Surge' : undefined
   const validProxies = []
-  const batches = []
   const concurrency = parseInt($arguments.concurrency || 1) // 一组并发数
-  for (let i = 0; i < proxies.length; i += concurrency) {
-    const batch = proxies.slice(i, i + concurrency)
-    batches.push(batch)
-  }
-
-  for (const batch of batches) {
-    await Promise.all(batch.map(check))
-  }
+  await executeAsyncTasks(
+    proxies.map(proxy => () => check(proxy)),
+    { concurrency }
+  )
+  // const batches = []
+  // for (let i = 0; i < proxies.length; i += concurrency) {
+  //   const batch = proxies.slice(i, i + concurrency)
+  //   batches.push(batch)
+  // }
+  // for (const batch of batches) {
+  //   await Promise.all(batch.map(check))
+  // }
 
   return validProxies
 
@@ -134,5 +137,47 @@ async function operator(proxies = [], targetPlatform, context) {
       }
     }
     return await fn()
+  }
+  function executeAsyncTasks(tasks, { wrap, result, concurrency = 1 } = {}) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let running = 0
+        const results = []
+
+        let index = 0
+
+        function executeNextTask() {
+          while (index < tasks.length && running < concurrency) {
+            const taskIndex = index++
+            const currentTask = tasks[taskIndex]
+            running++
+
+            currentTask()
+              .then(data => {
+                if (result) {
+                  results[taskIndex] = wrap ? { data } : data
+                }
+              })
+              .catch(error => {
+                if (result) {
+                  results[taskIndex] = wrap ? { error } : error
+                }
+              })
+              .finally(() => {
+                running--
+                executeNextTask()
+              })
+          }
+
+          if (running === 0) {
+            return resolve(result ? results : undefined)
+          }
+        }
+
+        await executeNextTask()
+      } catch (e) {
+        reject(e)
+      }
+    })
   }
 }

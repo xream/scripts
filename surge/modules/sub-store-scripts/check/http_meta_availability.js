@@ -108,16 +108,19 @@ async function operator(proxies = [], targetPlatform, env) {
   $.info(`等待 ${http_meta_start_delay / 1000} 秒后开始检测`)
   await $.wait(http_meta_start_delay)
 
-  const batches = []
   const concurrency = parseInt($arguments.concurrency || 10) // 一组并发数
-  for (let i = 0; i < internalProxies.length; i += concurrency) {
-    const batch = internalProxies.slice(i, i + concurrency)
-    batches.push(batch)
-  }
-
-  for (const batch of batches) {
-    await Promise.all(batch.map(check))
-  }
+  await executeAsyncTasks(
+    internalProxies.map(proxy => () => check(proxy)),
+    { concurrency }
+  )
+  // const batches = []
+  // for (let i = 0; i < internalProxies.length; i += concurrency) {
+  //   const batch = internalProxies.slice(i, i + concurrency)
+  //   batches.push(batch)
+  // }
+  // for (const batch of batches) {
+  //   await Promise.all(batch.map(check))
+  // }
 
   // stop http meta
   try {
@@ -241,5 +244,47 @@ async function operator(proxies = [], targetPlatform, env) {
       }
     }
     return await fn()
+  }
+  function executeAsyncTasks(tasks, { wrap, result, concurrency = 1 } = {}) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let running = 0
+        const results = []
+
+        let index = 0
+
+        function executeNextTask() {
+          while (index < tasks.length && running < concurrency) {
+            const taskIndex = index++
+            const currentTask = tasks[taskIndex]
+            running++
+
+            currentTask()
+              .then(data => {
+                if (result) {
+                  results[taskIndex] = wrap ? { data } : data
+                }
+              })
+              .catch(error => {
+                if (result) {
+                  results[taskIndex] = wrap ? { error } : error
+                }
+              })
+              .finally(() => {
+                running--
+                executeNextTask()
+              })
+          }
+
+          if (running === 0) {
+            return resolve(result ? results : undefined)
+          }
+        }
+
+        await executeNextTask()
+      } catch (e) {
+        reject(e)
+      }
+    })
   }
 }

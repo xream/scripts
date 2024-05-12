@@ -69,16 +69,20 @@ async function operator(proxies = [], targetPlatform, context) {
   const cache = scriptResourceCache
   const method = $arguments.method || 'get'
   const url = $arguments.api || `http://ip-api.com/json/{{proxy.server}}?lang=zh-CN`
-  const batches = []
   const concurrency = parseInt($arguments.concurrency || 10) // 一组并发数
-  for (let i = 0; i < proxies.length; i += concurrency) {
-    const batch = proxies.slice(i, i + concurrency)
-    batches.push(batch)
-  }
+  await executeAsyncTasks(
+    proxies.map(proxy => () => check(proxy)),
+    { concurrency }
+  )
 
-  for (const batch of batches) {
-    await Promise.all(batch.map(check))
-  }
+  // const batches = []
+  // for (let i = 0; i < proxies.length; i += concurrency) {
+  //   const batch = proxies.slice(i, i + concurrency)
+  //   batches.push(batch)
+  // }
+  // for (const batch of batches) {
+  //   await Promise.all(batch.map(check))
+  // }
 
   if (remove_failed) {
     proxies = proxies.filter(p => {
@@ -222,5 +226,47 @@ async function operator(proxies = [], targetPlatform, context) {
   function formatter({ proxy = {}, api = {}, format = '' }) {
     let f = format.replace(/\{\{(.*?)\}\}/g, '${$1}')
     return eval(`\`${f}\``)
+  }
+  function executeAsyncTasks(tasks, { wrap, result, concurrency = 1 } = {}) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let running = 0
+        const results = []
+
+        let index = 0
+
+        function executeNextTask() {
+          while (index < tasks.length && running < concurrency) {
+            const taskIndex = index++
+            const currentTask = tasks[taskIndex]
+            running++
+
+            currentTask()
+              .then(data => {
+                if (result) {
+                  results[taskIndex] = wrap ? { data } : data
+                }
+              })
+              .catch(error => {
+                if (result) {
+                  results[taskIndex] = wrap ? { error } : error
+                }
+              })
+              .finally(() => {
+                running--
+                executeNextTask()
+              })
+          }
+
+          if (running === 0) {
+            return resolve(result ? results : undefined)
+          }
+        }
+
+        await executeNextTask()
+      } catch (e) {
+        reject(e)
+      }
+    })
   }
 }
