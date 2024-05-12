@@ -1,6 +1,8 @@
 /**
  * 节点信息(适配 Surge/Loon 版 也可在任意平台上使用 HTTP API)
  *
+ * Node.js 版 可使用 http_meta_geo.js
+ *
  * 查看说明: https://t.me/zhetengsha/1269
  *
  * 欢迎加入 Telegram 群组 https://t.me/zhetengsha
@@ -15,7 +17,7 @@
  * - [timeout] 请求超时(单位: 毫秒) 默认 5000
  * - [method] 请求方法. 默认 get
  * - [api] 测落地的 API. 默认为 http://ip-api.com/json?lang=zh-CN
- *          当使用 internal 时, 默认为 http://checkip.amazonaws.com
+ *         当使用 internal 时, 默认为 http://checkip.amazonaws.com
  * - [format] 自定义格式, 从 节点(proxy) 和 落地 API 响应(api)中取数据. 默认为: {{api.country}} {{api.isp}} - {{proxy.name}}
  *            当使用 internal 时, 默认为 {{api.countryCode}} {{api.aso}} - {{proxy.name}}
  * - [cache] 使用缓存, 默认不使用缓存

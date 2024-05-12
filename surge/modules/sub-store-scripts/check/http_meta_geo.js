@@ -1,6 +1,8 @@
 /**
  *
- * 节点信息(适配 Surge/Loon 版)
+ * 节点信息(适配 Sub-Store Node.js 版)
+ * 
+ * App 版请使用 geo.js
  *
  * 查看说明: https://t.me/zhetengsha/1269
  *
@@ -18,14 +20,22 @@
  * - [retry_delay] 重试延时(单位: 毫秒) 默认 1000
  * - [concurrency] 并发数 默认 10
  * - [timeout] 请求超时(单位: 毫秒) 默认 5000
+ * - [internal] 使用内部方法获取 IP 信息. 默认 false
+                设置环境变量 SUB_STORE_MMDB_COUNTRY_PATH 和 SUB_STORE_MMDB_ASN_PATH, 或 传入 mmdb_country_path 和 mmdb_asn_path 参数(分别为 MaxMind GeoLite2 Country 和 GeoLite2 ASN 数据库 的路径)
+*              数据来自 GeoIP 数据库
+*              (因为懒) 开启后, 将认为远程 API 返回的响应内容为纯文本 IP 地址, 并用于内部方法
  * - [method] 请求方法. 默认 get
  * - [api] 测落地的 API . 默认为 http://ip-api.com/json?lang=zh-CN
+ *         当使用 internal 时, 默认为 http://checkip.amazonaws.com
  * - [format] 自定义格式, 从 节点(proxy) 和 API 响应(api) 中取数据. 默认为: {{api.country}} {{api.isp}} - {{proxy.name}}
+ *            当使用 internal 时, 默认为 {{api.countryCode}} {{api.aso}} - {{proxy.name}}
  * - [cache] 使用缓存, 默认不使用缓存
  * - [geo] 在节点上附加 _geo 字段, 默认不附加
  * - [incompatible] 在节点上附加 _incompatible 字段来标记当前客户端不兼容该协议, 默认不附加
  * - [remove_incompatible] 移除当前客户端不兼容的协议. 默认不移除.
  * - [remove_failed] 移除失败的节点. 默认不移除.
+ * - [mmdb_country_path] 见 internal
+ * - [mmdb_asn_path] 见 internal
  */
 
 async function operator(proxies = [], targetPlatform, context) {
@@ -41,9 +51,19 @@ async function operator(proxies = [], targetPlatform, context) {
   const http_meta_api = `${http_meta_protocol}://${http_meta_host}:${http_meta_port}`
   const http_meta_start_delay = parseFloat($arguments.http_meta_start_delay ?? 3000)
   const http_meta_proxy_timeout = parseFloat($arguments.http_meta_proxy_timeout ?? 10000)
-  const format = $arguments.format || '{{api.country}} {{api.isp}} - {{proxy.name}}'
   const method = $arguments.method || 'get'
-  const url = $arguments.api || 'http://ip-api.com/json?lang=zh-CN'
+
+  const internal = $arguments.internal
+  const mmdb_country_path = $arguments.mmdb_country_path
+  const mmdb_asn_path = $arguments.mmdb_asn_path
+  let format = $arguments.format || '{{api.country}} {{api.isp}} - {{proxy.name}}'
+  let url = $arguments.api || 'http://ip-api.com/json?lang=zh-CN'
+  let utils
+  if (internal) {
+    utils = new ProxyUtils.MMDB({ country: mmdb_country_path, asn: mmdb_asn_path })
+    format = $arguments.format || `{{api.countryCode}} {{api.aso}} - {{proxy.name}}`
+    url = $arguments.api || 'http://checkip.amazonaws.com'
+  }
 
   const $ = $substore
   const internalProxies = []
@@ -204,37 +224,59 @@ async function operator(proxies = [], targetPlatform, context) {
       // $.info(JSON.stringify(proxy, null, 2))
       const index = internalProxies.indexOf(proxy)
       const startedAt = Date.now()
-      const res = await http({
-        proxy: `http://${http_meta_host}:${http_meta_ports[index]}`,
-        method,
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3.1 Mobile/15E148 Safari/604.1',
-        },
-        url,
-      })
-      let api = String(lodash_get(res, 'body'))
-      try {
-        api = JSON.parse(api)
-      } catch (e) {}
-      const status = parseInt(res.status || res.statusCode || 200)
-      let latency = ''
-      latency = `${Date.now() - startedAt}`
-      $.info(`[${proxy.name}] status: ${status}, latency: ${latency}`)
-      $.log(`[${proxy.name}] api: ${JSON.stringify(api, null, 2)}`)
-      if (status == 200) {
-        proxies[proxy._proxies_index].name = formatter({ proxy: proxies[proxy._proxies_index], api, format })
-        proxies[proxy._proxies_index]._geo = api
-        if (cacheEnabled) {
-          $.info(`[${proxy.name}] 设置成功缓存`)
-          cache.set(id, { api })
+      let api = {}
+      if (internal) {
+        api = {
+          countryCode: utils.geoip(proxy.server),
+          aso: utils.ipaso(proxy.server),
+        }
+        $.info(`[${proxy.name}] countryCode: ${api.countryCode}, aso: ${api.aso}`)
+        if (api.countryCode && api.aso) {
+          proxies[proxy._proxies_index].name = formatter({ proxy: proxies[proxy._proxies_index], api, format })
+          proxies[proxy._proxies_index]._geo = api
+          if (cacheEnabled) {
+            $.info(`[${proxy.name}] 设置成功缓存`)
+            cache.set(id, { api })
+          }
+        } else {
+          if (cacheEnabled) {
+            $.info(`[${proxy.name}] 设置失败缓存`)
+            cache.set(id, {})
+          }
         }
       } else {
-        if (cacheEnabled) {
-          $.info(`[${proxy.name}] 设置失败缓存`)
-          cache.set(id, {})
+        const res = await http({
+          proxy: `http://${http_meta_host}:${http_meta_ports[index]}`,
+          method,
+          headers: {
+            'User-Agent':
+              'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3.1 Mobile/15E148 Safari/604.1',
+          },
+          url,
+        })
+        api = String(lodash_get(res, 'body'))
+        try {
+          api = JSON.parse(api)
+        } catch (e) {}
+        const status = parseInt(res.status || res.statusCode || 200)
+        let latency = ''
+        latency = `${Date.now() - startedAt}`
+        $.info(`[${proxy.name}] status: ${status}, latency: ${latency}`)
+        if (status == 200) {
+          proxies[proxy._proxies_index].name = formatter({ proxy: proxies[proxy._proxies_index], api, format })
+          proxies[proxy._proxies_index]._geo = api
+          if (cacheEnabled) {
+            $.info(`[${proxy.name}] 设置成功缓存`)
+            cache.set(id, { api })
+          }
+        } else {
+          if (cacheEnabled) {
+            $.info(`[${proxy.name}] 设置失败缓存`)
+            cache.set(id, {})
+          }
         }
       }
+      $.log(`[${proxy.name}] api: ${JSON.stringify(api, null, 2)}`)
     } catch (e) {
       $.error(`[${proxy.name}] ${e.message ?? e}`)
       if (cacheEnabled) {
