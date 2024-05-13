@@ -227,58 +227,47 @@ async function operator(proxies = [], targetPlatform, context) {
       // $.info(JSON.stringify(proxy, null, 2))
       const index = internalProxies.indexOf(proxy)
       const startedAt = Date.now()
-      let api = {}
+
+      const res = await http({
+        proxy: `http://${http_meta_host}:${http_meta_ports[index]}`,
+        method,
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3.1 Mobile/15E148 Safari/604.1',
+        },
+        url,
+      })
+      let api = String(lodash_get(res, 'body'))
+      const status = parseInt(res.status || res.statusCode || 200)
+      let latency = ''
+      latency = `${Date.now() - startedAt}`
+      $.info(`[${proxy.name}] status: ${status}, latency: ${latency}`)
       if (internal) {
+        const ip = api.trim()
         api = {
-          countryCode: utils.geoip(proxy.server),
-          aso: utils.ipaso(proxy.server),
-        }
-        $.info(`[${proxy.name}] countryCode: ${api.countryCode}, aso: ${api.aso}`)
-        if (api.countryCode && api.aso) {
-          proxies[proxy._proxies_index].name = formatter({ proxy: proxies[proxy._proxies_index], api, format })
-          proxies[proxy._proxies_index]._geo = api
-          if (cacheEnabled) {
-            $.info(`[${proxy.name}] 设置成功缓存`)
-            cache.set(id, { api })
-          }
-        } else {
-          if (cacheEnabled) {
-            $.info(`[${proxy.name}] 设置失败缓存`)
-            cache.set(id, {})
-          }
+          countryCode: utils.geoip(ip),
+          aso: utils.ipaso(ip),
         }
       } else {
-        const res = await http({
-          proxy: `http://${http_meta_host}:${http_meta_ports[index]}`,
-          method,
-          headers: {
-            'User-Agent':
-              'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3.1 Mobile/15E148 Safari/604.1',
-          },
-          url,
-        })
-        api = String(lodash_get(res, 'body'))
         try {
           api = JSON.parse(api)
         } catch (e) {}
-        const status = parseInt(res.status || res.statusCode || 200)
-        let latency = ''
-        latency = `${Date.now() - startedAt}`
-        $.info(`[${proxy.name}] status: ${status}, latency: ${latency}`)
-        if (status == 200) {
-          proxies[proxy._proxies_index].name = formatter({ proxy: proxies[proxy._proxies_index], api, format })
-          proxies[proxy._proxies_index]._geo = api
-          if (cacheEnabled) {
-            $.info(`[${proxy.name}] 设置成功缓存`)
-            cache.set(id, { api })
-          }
-        } else {
-          if (cacheEnabled) {
-            $.info(`[${proxy.name}] 设置失败缓存`)
-            cache.set(id, {})
-          }
+      }
+
+      if (status == 200) {
+        proxies[proxy._proxies_index].name = formatter({ proxy: proxies[proxy._proxies_index], api, format })
+        proxies[proxy._proxies_index]._geo = api
+        if (cacheEnabled) {
+          $.info(`[${proxy.name}] 设置成功缓存`)
+          cache.set(id, { api })
+        }
+      } else {
+        if (cacheEnabled) {
+          $.info(`[${proxy.name}] 设置失败缓存`)
+          cache.set(id, {})
         }
       }
+
       $.log(`[${proxy.name}] api: ${JSON.stringify(api, null, 2)}`)
     } catch (e) {
       $.error(`[${proxy.name}] ${e.message ?? e}`)
