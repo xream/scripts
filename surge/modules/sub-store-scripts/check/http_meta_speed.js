@@ -10,6 +10,7 @@
  * - [http_meta_protocol] 协议 默认: http
  * - [http_meta_host] 服务地址 默认: 127.0.0.1
  * - [http_meta_port] 端口号 默认: 9876
+ * - [http_meta_authorization] Authorization 默认无
  * - [http_meta_start_delay] 初始启动延时(单位: 毫秒) 默认: 3000
  * - [http_meta_proxy_timeout] 每个节点耗时(单位: 毫秒). 此参数是为了防止脚本异常退出未关闭核心. 设置过小将导致核心过早退出. 目前逻辑: 启动初始的延时 + 每个节点耗时. 默认: 10000
  *
@@ -29,6 +30,7 @@ async function operator(proxies = [], targetPlatform, context) {
   const http_meta_host = $arguments.http_meta_host ?? '127.0.0.1'
   const http_meta_port = $arguments.http_meta_port ?? 9876
   const http_meta_protocol = $arguments.http_meta_protocol ?? 'http'
+  const http_meta_authorization = $arguments.http_meta_authorization ?? ''
   const http_meta_api = `${http_meta_protocol}://${http_meta_host}:${http_meta_port}`
 
   const http_meta_start_delay = parseFloat($arguments.http_meta_start_delay ?? 3000)
@@ -72,6 +74,7 @@ async function operator(proxies = [], targetPlatform, context) {
     url: `${http_meta_api}/start`,
     headers: {
       'Content-type': 'application/json',
+      Authorization: http_meta_authorization,
     },
     body: JSON.stringify({
       proxies: internalProxies,
@@ -117,6 +120,7 @@ async function operator(proxies = [], targetPlatform, context) {
       url: `${http_meta_api}/stop`,
       headers: {
         'Content-type': 'application/json',
+        Authorization: http_meta_authorization,
       },
       body: JSON.stringify({
         pid: [http_meta_pid],
