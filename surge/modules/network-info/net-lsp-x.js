@@ -1289,6 +1289,7 @@ const DOMAIN_RESOLVERS = {
     const resp = await http({
       url: `http://223.6.6.6/resolve`,
       params: {
+        edns_client_subnet: '223.6.6.6/24',
         name: domain,
         short: 1,
         type: type === 'IPv6' ? 'AAAA' : 'A',
@@ -1307,6 +1308,7 @@ const DOMAIN_RESOLVERS = {
     const resp = await http({
       url: `http://119.28.28.28/d`,
       params: {
+        ip: '119.28.28.28',
         dn: domain,
         type: type === 'IPv6' ? 'AAAA' : 'A',
       },
