@@ -27,12 +27,7 @@ async function operator(proxies = [], targetPlatform, context) {
 
   let files = {}
 
-  let content = await produceArtifact({
-    type: 'subscription',
-    subscription: {},
-    content: 'proxies:\n' + proxies.map(proxy => '  - ' + JSON.stringify(proxy) + '\n').join(''),
-    platform,
-  })
+  let content = ProxyUtils.produce(proxies, platform)
 
   const manager = new ProxyUtils.Gist({
     token: GITHUB_TOKEN,
