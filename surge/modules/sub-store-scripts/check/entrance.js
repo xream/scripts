@@ -26,7 +26,8 @@
  *            当使用 internal 时, 默认为 {{api.countryCode}} {{api.aso}} - {{proxy.name}}
  * - [valid] 验证 api 请求是否合法. 默认: ProxyUtils.isIP('{{api.ip || api.query}}')
  *           当使用 internal 时, 默认为 "{{api.countryCode}}".length === 2
- * - [cache] 使用缓存, 默认不使用缓存
+ * - [cache] 使用缓存. 默认不使用缓存
+ * - [ignore_failed_error] 忽略失败缓存. 默认不忽略失败缓存. 若设置为忽略, 之前失败的结果即使有缓存也会再测一次
  * - [entrance] 在节点上附加 _entrance 字段(API 响应数据), 默认不附加
  * - [remove_failed] 移除失败的节点. 默认不移除.
  * - [mmdb_country_path] 见 internal
@@ -63,6 +64,7 @@ async function operator(proxies = [], targetPlatform, context) {
     format = $arguments.format || `{{api.countryCode}} {{api.aso}} - {{proxy.name}}`
     valid = $arguments.valid || `"{{api.countryCode}}".length === 2`
   }
+  const ignore_failed_error = $arguments.ignore_failed_error
   const remove_failed = $arguments.remove_failed
   const entranceEnabled = $arguments.entrance
   const cacheEnabled = $arguments.cache
@@ -116,13 +118,20 @@ async function operator(proxies = [], targetPlatform, context) {
     try {
       const cached = cache.get(id)
       if (cacheEnabled && cached) {
-        $.info(`[${proxy.name}] 使用缓存`)
         if (cached.api) {
+          $.info(`[${proxy.name}] 使用成功缓存`)
           $.log(`[${proxy.name}] api: ${JSON.stringify(cached.api, null, 2)}`)
           proxy.name = formatter({ proxy, api: cached.api, format })
           proxy._entrance = cached.api
+          return
+        } else {
+          if (ignore_failed_error) {
+            $.info(`[${proxy.name}] 忽略失败缓存`)
+          } else {
+            $.info(`[${proxy.name}] 使用失败缓存`)
+            return
+          }
         }
-        return
       }
       // 请求
       const startedAt = Date.now()

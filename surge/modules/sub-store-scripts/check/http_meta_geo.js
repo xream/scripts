@@ -30,7 +30,8 @@
  *         当使用 internal 时, 默认为 http://checkip.amazonaws.com
  * - [format] 自定义格式, 从 节点(proxy) 和 API 响应(api) 中取数据. 默认为: {{api.country}} {{api.isp}} - {{proxy.name}}
  *            当使用 internal 时, 默认为 {{api.countryCode}} {{api.aso}} - {{proxy.name}}
- * - [cache] 使用缓存, 默认不使用缓存
+ * - [cache] 使用缓存. 默认不使用缓存
+ * - [ignore_failed_error] 忽略失败缓存. 默认不忽略失败缓存. 若设置为忽略, 之前失败的结果即使有缓存也会再测一次
  * - [geo] 在节点上附加 _geo 字段, 默认不附加
  * - [incompatible] 在节点上附加 _incompatible 字段来标记当前客户端不兼容该协议, 默认不附加
  * - [remove_incompatible] 移除当前客户端不兼容的协议. 默认不移除.
@@ -42,6 +43,7 @@
 async function operator(proxies = [], targetPlatform, context) {
   const cacheEnabled = $arguments.cache
   const cache = scriptResourceCache
+  const ignore_failed_error = $arguments.ignore_failed_error
   const remove_failed = $arguments.remove_failed
   const remove_incompatible = $arguments.remove_incompatible
   const incompatibleEnabled = $arguments.incompatible
@@ -101,6 +103,11 @@ async function operator(proxies = [], targetPlatform, context) {
               format,
             })
             proxies[proxy._proxies_index]._geo = cached.api
+          } else {
+            if (ignore_failed_error) {
+              allCached = false
+              break
+            }
           }
         } else {
           allCached = false
@@ -216,8 +223,8 @@ async function operator(proxies = [], targetPlatform, context) {
     try {
       const cached = cache.get(id)
       if (cacheEnabled && cached) {
-        $.info(`[${proxy.name}] 使用缓存`)
         if (cached.api) {
+          $.info(`[${proxy.name}] 使用成功缓存`)
           $.log(`[${proxy.name}] api: ${JSON.stringify(cached.api, null, 2)}`)
           proxies[proxy._proxies_index].name = formatter({
             proxy: proxies[proxy._proxies_index],
@@ -225,8 +232,15 @@ async function operator(proxies = [], targetPlatform, context) {
             format,
           })
           if (geoEnabled) proxies[proxy._proxies_index]._geo = cached.api
+          return
+        } else {
+          if (ignore_failed_error) {
+            $.info(`[${proxy.name}] 忽略失败缓存`)
+          } else {
+            $.info(`[${proxy.name}] 使用失败缓存`)
+            return
+          }
         }
-        return
       }
       // $.info(JSON.stringify(proxy, null, 2))
       const index = internalProxies.indexOf(proxy)
