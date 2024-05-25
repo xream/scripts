@@ -823,13 +823,27 @@ async function getProxyInfo(ip, provider) {
         body = JSON.parse(body)
       } catch (e) {}
       PROXY_IP = ip || $.lodash_get(body, 'ip')
+      const companyType = $.lodash_get(body, 'company.type')
+      const asnType = $.lodash_get(body, 'asn.type')
       PROXY_INFO = [
         ['位置:', getflag(body.country), body.country.replace(/\s*中国\s*/, ''), body.region, body.city]
           .filter(i => i)
           .join(' '),
-        ['运营商:', $.lodash_get(body, 'company.name') || $.lodash_get(body, 'asn.name')].filter(i => i).join(' '),
+        [
+          '运营商:',
+          $.lodash_get(body, 'company.name') || $.lodash_get(body, 'asn.name') || '-',
+          companyType ? ` | ${companyType}` : '',
+        ]
+          .filter(i => i)
+          .join(' '),
         $.lodash_get(arg, 'ORG') == 1
-          ? ['组织:', $.lodash_get(body, 'asn.name') || $.lodash_get(body, 'org') || '-'].filter(i => i).join(' ')
+          ? [
+              '组织:',
+              $.lodash_get(body, 'asn.name') || $.lodash_get(body, 'org') || '-',
+              asnType ? ` | ${asnType}` : '',
+            ]
+              .filter(i => i)
+              .join(' ')
           : undefined,
         $.lodash_get(arg, 'ASN') == 1
           ? ['ASN:', $.lodash_get(body, 'asn.asn') || '-'].filter(i => i).join(' ')
