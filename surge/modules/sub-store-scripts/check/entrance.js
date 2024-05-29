@@ -25,7 +25,7 @@
  * - [format] 自定义格式, 从 节点(proxy) 和 入口(api)中取数据. 默认为: {{api.country}} {{api.isp}} - {{proxy.name}}
  *            当使用 internal 时, 默认为 {{api.countryCode}} {{api.aso}} - {{proxy.name}}
  * - [valid] 验证 api 请求是否合法. 默认: ProxyUtils.isIP('{{api.ip || api.query}}')
- *           当使用 internal 时, 默认为 "{{api.countryCode}}".length === 2
+ *           当使用 internal 时, 默认为 "{{api.countryCode || api.aso}}".length > 0
  * - [cache] 使用缓存. 默认不使用缓存
  * - [ignore_failed_error] 忽略失败缓存. 默认不忽略失败缓存. 若设置为忽略, 之前失败的结果即使有缓存也会再测一次
  * - [entrance] 在节点上附加 _entrance 字段(API 响应数据), 默认不附加
@@ -62,7 +62,7 @@ async function operator(proxies = [], targetPlatform, context) {
       utils = $utils
     }
     format = $arguments.format || `{{api.countryCode}} {{api.aso}} - {{proxy.name}}`
-    valid = $arguments.valid || `"{{api.countryCode}}".length === 2`
+    valid = $arguments.valid || `"{{api.countryCode || api.aso}}".length > 0`
   }
   const ignore_failed_error = $arguments.ignore_failed_error
   const remove_failed = $arguments.remove_failed
@@ -138,11 +138,11 @@ async function operator(proxies = [], targetPlatform, context) {
       let api = {}
       if (internal) {
         api = {
-          countryCode: utils.geoip(proxy.server),
-          aso: utils.ipaso(proxy.server),
+          countryCode: utils.geoip(proxy.server) || '',
+          aso: utils.ipaso(proxy.server) || '',
         }
         $.info(`[${proxy.name}] countryCode: ${api.countryCode}, aso: ${api.aso}`)
-        if (api.countryCode && api.aso && eval(formatter({ api, format: valid }))) {
+        if ((api.countryCode || api.aso) && eval(formatter({ api, format: valid }))) {
           proxy.name = formatter({ proxy, api, format })
           proxy._entrance = api
           if (cacheEnabled) {

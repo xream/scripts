@@ -162,8 +162,8 @@ async function operator(proxies = [], targetPlatform, context) {
         if (internal) {
           const ip = api.trim()
           api = {
-            countryCode: $utils.geoip(ip),
-            aso: $utils.ipaso(ip),
+            countryCode: $utils.geoip(ip) || '',
+            aso: $utils.ipaso(ip) || '',
           }
         } else {
           try {
