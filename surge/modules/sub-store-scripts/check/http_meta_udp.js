@@ -38,8 +38,13 @@ async function operator(proxies = [], targetPlatform, context) {
   const internalProxies = []
   proxies.map((proxy, index) => {
     try {
-      const node = ProxyUtils.produce([proxy], 'ClashMeta', 'internal')?.[0]
+      const node = ProxyUtils.produce([{ ...proxy }], 'ClashMeta', 'internal')?.[0]
       if (node) {
+        for (const key in proxy) {
+          if (/^_/i.test(key)) {
+            node[key] = proxy[key]
+          }
+        }
         // $.info(JSON.stringify(node, null, 2))
         internalProxies.push({ ...node, _proxies_index: index })
       }
