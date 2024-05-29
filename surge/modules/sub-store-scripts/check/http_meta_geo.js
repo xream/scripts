@@ -337,7 +337,7 @@ async function operator(proxies = [], targetPlatform, context) {
     return eval(`\`${f}\``)
   }
   function getCacheId({ proxy = {}, url, format }) {
-    return `http-meta:geo:${url}:${format}:${JSON.stringify(
+    return `http-meta:geo:${url}:${format}:${internal}:${JSON.stringify(
       Object.fromEntries(Object.entries(proxy).filter(([key]) => !/^(collectionName|subName|id|_.*)$/i.test(key)))
     )}`
   }
