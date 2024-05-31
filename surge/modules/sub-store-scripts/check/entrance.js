@@ -27,6 +27,7 @@
  * - [valid] 验证 api 请求是否合法. 默认: ProxyUtils.isIP('{{api.ip || api.query}}')
  *           当使用 internal 时, 默认为 "{{api.countryCode || api.aso}}".length > 0
  * - [cache] 使用缓存. 默认不使用缓存
+ * - [uniq_key] 设置缓存唯一键名包含的节点数据字段名匹配正则. 默认为 ^server$ 即服务器地址相同的节点共享缓存
  * - [ignore_failed_error] 忽略失败缓存. 默认不忽略失败缓存. 若设置为忽略, 之前失败的结果即使有缓存也会再测一次
  * - [entrance] 在节点上附加 _entrance 字段(API 响应数据), 默认不附加
  * - [remove_failed] 移除失败的节点. 默认不移除.
@@ -68,6 +69,7 @@ async function operator(proxies = [], targetPlatform, context) {
   const remove_failed = $arguments.remove_failed
   const entranceEnabled = $arguments.entrance
   const cacheEnabled = $arguments.cache
+  const uniq_key = $arguments.uniq_key || '^server$'
   const cache = scriptResourceCache
   const method = $arguments.method || 'get'
   const url = $arguments.api || `http://ip-api.com/json/{{proxy.server}}?lang=zh-CN`
@@ -111,7 +113,12 @@ async function operator(proxies = [], targetPlatform, context) {
     // $.info(`检测 ${JSON.stringify(proxy, null, 2)}`)
     const id = cacheEnabled
       ? `entrance:${url}:${format}:${internal}:${JSON.stringify(
-          Object.fromEntries(Object.entries(proxy).filter(([key]) => !/^(collectionName|subName|id|_.*)$/i.test(key)))
+          Object.fromEntries(
+            Object.entries(proxy).filter(([key]) => {
+              const re = new RegExp(uniq_key)
+              return re.test(key)
+            })
+          )
         )}`
       : undefined
     // $.info(`检测 ${id}`)
