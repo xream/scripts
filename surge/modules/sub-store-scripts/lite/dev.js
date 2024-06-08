@@ -6,8 +6,9 @@
  * - 兼容不同的 network(`vmess`, `vless` 的 `ws`, `h2`, `http` 和其他)
  * - 兼容 `vless` `reality` 的 `servername`
  * - 兼容 Shadow TLS 的 `shadow-tls-sni`
+ * - 兼容 `Trojan` 的 `sni`
  * - 兼容 QuanX, Surge, Loon, Shadowrocket, Stash 等客户端和 Node.js 环境
- * - 不能免的节点请先自己筛选掉
+ * - ⚠️ 不能免的节点请先自己筛选掉(例如筛除掉 非 443 端口的 TLS 节点)
  */
 
 const SUB_STORE_SCHEMA = {
@@ -129,12 +130,13 @@ function operator(proxies = []) {
     const type = _.get(p, 'type')
     const isReality = _.get(p, 'reality-opts')
     const isSnell = _.get(p, 'type') === 'snell'
+    const isTrojan = _.get(p, 'type') === 'trojan'
     // shadow-tls-password: Required
     const isShadowTLS = _.chain(p).get('shadow-tls-password').size().value() > 0
 
-    /* 只修改 vmess, vless, snell */
-    if (_.includes(['vmess', 'vless', 'snell'], type)) {
-      if (!network && !isReality && !isSnell && !isShadowTLS) {
+    /* 只修改 vmess, vless, snell, trojan */
+    if (_.includes(['vmess', 'vless', 'snell', 'trojan'], type)) {
+      if (!network && !isReality && !isSnell && !isShadowTLS && !isTrojan) {
         network = defaultNetwork
         _.set(p, 'network', defaultNetwork)
       }
@@ -168,7 +170,7 @@ function operator(proxies = []) {
             _.set(p, 'h2-opts.host', array ? [host] : host)
           } else if (network === 'http') {
             _.set(p, 'http-opts.headers.Host', array ? [host] : host)
-          } else {
+          } else if (network) {
             // 其他? 谁知道是数组还是字符串...先按字符串吧
             _.set(p, `${network}-opts.headers.Host`, host)
           }
