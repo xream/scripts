@@ -397,7 +397,7 @@ async function getDirectInfo(ip, provider) {
   let CN_IP
   let CN_INFO
   let isCN
-  const msg = `使用 ${provider || 'spcn'} 查询 ${ip ? ip : '分流'} 信息`
+  const msg = `使用 ${provider || 'pingan'} 查询 ${ip ? ip : '分流'} 信息`
   if (provider == 'cip') {
     try {
       const res = await http({
@@ -546,83 +546,6 @@ async function getDirectInfo(ip, provider) {
     } catch (e) {
       $.logErr(`${msg} 发生错误: ${e.message || e}`)
     }
-  } else if (provider == 'pingan') {
-    try {
-      const res = await http({
-        url: `https://rmb.${keyc}${keyd}.com.cn/itam/mas/linden/ip/request`,
-        params: { ip },
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0',
-        },
-      })
-      let body = String($.lodash_get(res, 'body'))
-      try {
-        body = JSON.parse(body)
-      } catch (e) {}
-
-      const countryCode = $.lodash_get(body, 'data.countryIsoCode')
-      isCN = countryCode === 'CN'
-      CN_IP = ip || $.lodash_get(body, 'data.ip')
-      CN_INFO = [
-        [
-          '位置:',
-          getflag(countryCode),
-          $.lodash_get(body, 'data.country').replace(/\s*中国\s*/, ''),
-          $.lodash_get(body, 'data.region'),
-          $.lodash_get(body, 'data.city'),
-        ]
-          .filter(i => i)
-          .join(' '),
-        ['运营商:', $.lodash_get(body, 'data.isp') || '-'].filter(i => i).join(' '),
-        $.lodash_get(arg, 'ORG') == 1
-          ? ['组织:', $.lodash_get(body, 'org') || '-'].filter(i => i).join(' ')
-          : undefined,
-      ]
-        .filter(i => i)
-        .join('\n')
-    } catch (e) {
-      $.logErr(`${msg} 发生错误: ${e.message || e}`)
-    }
-  } else if (provider == 'ipplus') {
-    try {
-      const res = await http({
-        url: `https://api.ip.plus${ip ? `/${encodeURIComponent(ip)}` : ''}`,
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0',
-        },
-      })
-      let body = String($.lodash_get(res, 'body'))
-      try {
-        body = JSON.parse(body)
-      } catch (e) {}
-
-      const countryCode = $.lodash_get(body, 'data.country_code')
-      isCN = countryCode === 'CN'
-      CN_IP = ip || $.lodash_get(body, 'data.ip')
-      CN_INFO = [
-        [
-          '位置:',
-          getflag(countryCode),
-          $.lodash_get(body, 'data.country').replace(/\s*中国\s*/, ''),
-          $.lodash_get(body, 'data.subdivisions'),
-          $.lodash_get(body, 'data.city'),
-        ]
-          .filter(i => i)
-          .join(' '),
-        $.lodash_get(arg, 'ORG') == 1
-          ? ['组织:', $.lodash_get(body, 'data.as_name') || '-'].filter(i => i).join(' ')
-          : undefined,
-        $.lodash_get(arg, 'ASN') == 1
-          ? ['ASN:', $.lodash_get(body, 'data.asn') || '-'].filter(i => i).join(' ')
-          : undefined,
-      ]
-        .filter(i => i)
-        .join('\n')
-    } catch (e) {
-      $.logErr(`${msg} 发生错误: ${e.message || e}`)
-    }
   } else if (provider == 'muhan') {
     try {
       const res = await http({
@@ -693,72 +616,78 @@ async function getDirectInfo(ip, provider) {
     } catch (e) {
       $.logErr(`${msg} 发生错误: ${e.message || e}`)
     }
+  } else if (ip && provider == 'spcn') {
+    try {
+      const res = await http({
+        url: `https://api-v3.${keya}${bay}.cn/ip`,
+        params: { ip },
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36 Edg/109.0.1518.14',
+        },
+      })
+      let body = String($.lodash_get(res, 'body'))
+      try {
+        body = JSON.parse(body)
+      } catch (e) {}
+      const countryCode = $.lodash_get(body, 'data.countryCode')
+      isCN = countryCode === 'CN'
+      CN_IP = ip || $.lodash_get(body, 'data.ip')
+      CN_INFO = [
+        [
+          '位置:',
+          getflag(countryCode),
+          $.lodash_get(body, 'data.country').replace(/\s*中国\s*/, ''),
+          $.lodash_get(body, 'data.province'),
+          $.lodash_get(body, 'data.city'),
+          $.lodash_get(body, 'data.district'),
+        ]
+          .filter(i => i)
+          .join(' '),
+        ['运营商:', $.lodash_get(body, 'data.operator') || $.lodash_get(body, 'data.isp') || '-']
+          .filter(i => i)
+          .join(' '),
+      ]
+        .filter(i => i)
+        .join('\n')
+    } catch (e) {
+      $.logErr(`${msg} 发生错误: ${e.message || e}`)
+    }
   } else {
     try {
-      if (ip) {
-        const res = await http({
-          url: `https://api-v3.${keya}${bay}.cn/ip`,
-          params: { ip },
-          headers: {
-            'User-Agent':
-              'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36 Edg/109.0.1518.14',
-          },
-        })
-        let body = String($.lodash_get(res, 'body'))
-        try {
-          body = JSON.parse(body)
-        } catch (e) {}
-        const countryCode = $.lodash_get(body, 'data.countryCode')
-        isCN = countryCode === 'CN'
-        CN_IP = ip || $.lodash_get(body, 'data.ip')
-        CN_INFO = [
-          [
-            '位置:',
-            getflag(countryCode),
-            $.lodash_get(body, 'data.country').replace(/\s*中国\s*/, ''),
-            $.lodash_get(body, 'data.province'),
-            $.lodash_get(body, 'data.city'),
-            $.lodash_get(body, 'data.district'),
-          ]
-            .filter(i => i)
-            .join(' '),
-          ['运营商:', $.lodash_get(body, 'data.operator') || $.lodash_get(body, 'data.isp') || '-']
-            .filter(i => i)
-            .join(' '),
+      const res = await http({
+        url: `https://rmb.${keyc}${keyd}.com.cn/itam/mas/linden/ip/request`,
+        params: { ip },
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0',
+        },
+      })
+      let body = String($.lodash_get(res, 'body'))
+      try {
+        body = JSON.parse(body)
+      } catch (e) {}
+
+      const countryCode = $.lodash_get(body, 'data.countryIsoCode')
+      isCN = countryCode === 'CN'
+      CN_IP = ip || $.lodash_get(body, 'data.ip')
+      CN_INFO = [
+        [
+          '位置:',
+          getflag(countryCode),
+          $.lodash_get(body, 'data.country').replace(/\s*中国\s*/, ''),
+          $.lodash_get(body, 'data.region'),
+          $.lodash_get(body, 'data.city'),
         ]
           .filter(i => i)
-          .join('\n')
-      } else {
-        const res = await http({
-          url: `https://for${keyb}.${keya}${bay}.cn/api/location/info`,
-          headers: {
-            'User-Agent':
-              'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36 Edg/109.0.1518.14',
-          },
-        })
-        let body = String($.lodash_get(res, 'body'))
-        try {
-          body = JSON.parse(body)
-        } catch (e) {}
-        const countryCode = body.country_code
-        isCN = countryCode === 'CN'
-        CN_IP = body.ip
-        CN_INFO = [
-          [
-            '位置:',
-            getflag(countryCode),
-            body.country.replace(/\s*中国\s*/, ''),
-            body.province,
-            body.city,
-            body.distinct,
-          ]
-            .filter(i => i)
-            .join(' '),
-          ['运营商:', body.net_str || body.operator || body.isp].filter(i => i).join(' '),
-        ]
-          .filter(i => i)
-          .join('\n')
-      }
+          .join(' '),
+        ['运营商:', $.lodash_get(body, 'data.isp') || '-'].filter(i => i).join(' '),
+        $.lodash_get(arg, 'ORG') == 1
+          ? ['组织:', $.lodash_get(body, 'org') || '-'].filter(i => i).join(' ')
+          : undefined,
+      ]
+        .filter(i => i)
+        .join('\n')
     } catch (e) {
       $.logErr(`${msg} 发生错误: ${e.message || e}`)
     }
