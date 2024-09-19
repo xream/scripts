@@ -53,7 +53,7 @@ async function operator(proxies = [], targetPlatform, env) {
   const incompatibleProxies = []
   const internalProxies = []
   const failedProxies = []
-  const sub = env.source[proxies?.[0]?.subName]
+  const sub = env.source[proxies?.[0]?._subName || proxies?.[0]?.subName]
   const subName = sub?.displayName || sub?.name
 
   proxies.map((proxy, index) => {

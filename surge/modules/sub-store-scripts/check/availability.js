@@ -36,7 +36,7 @@ async function operator(proxies = [], targetPlatform, env) {
   const validProxies = []
   const incompatibleProxies = []
   const failedProxies = []
-  const sub = env.source[proxies?.[0]?.subName]
+  const sub = env.source[proxies?.[0]?._subName || proxies?.[0]?.subName]
   const subName = sub?.displayName || sub?.name
 
   const concurrency = parseInt($arguments.concurrency || 10) // 一组并发数
