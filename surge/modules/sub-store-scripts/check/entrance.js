@@ -47,6 +47,10 @@ async function operator(proxies = [], targetPlatform, context) {
   if (internal) {
     if (isNode) {
       utils = new ProxyUtils.MMDB({ country: mmdb_country_path, asn: mmdb_asn_path })
+      $.info(
+        `[MMDB] GeoLite2 Country 数据库文件路径: ${mmdb_country_path || eval('process.env.SUB_STORE_MMDB_ASN_PATH')}`
+      )
+      $.info(`[MMDB] GeoLite2 ASN 数据库文件路径: ${mmdb_asn_path || eval('process.env.SUB_STORE_MMDB_COUNTRY_PATH')}`)
     } else {
       // if (isSurge) {
       //   //
