@@ -2,8 +2,8 @@
 #!desc=搜索第一项插入 ChatGPT/Gemini, 链接 改为 Google
 #!author=@xream
 #!category=xream
-#!arguments=TYPE:ChatGPT,KEY,API:https://api.openai.com/v1/chat/completions,PROMPT:尽可能简单且快速地回答,TIMEOUT:30000,MODEL:gpt-3.5-turbo,MAX_TOKENS:50,TEMPERATURE:0.5
-#!arguments-desc=字面意思 应该能懂填啥\n\nTYPE: 目前支持 ChatGPT 和 Gemini\n\nAPI 部份应为完整的 URL, 例如: https://api.openai.com/v1/chat/completions\n\nℹ️ TYPE 为 Gemini 时\nAPI 默认为 https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent
+#!arguments=TYPE:ChatGPT,KEY,API:https://api.openai.com/v1/chat/completions,PROMPT:尽可能简单且快速地回答,TIMEOUT:30000,MODEL:gpt-4o-mini,MAX_TOKENS:50,TEMPERATURE:0.5
+#!arguments-desc=字面意思 应该能懂填啥\n\nTYPE: 目前支持 ChatGPT 和 Gemini\n\nAPI 部份应为完整的 URL, 例如: https://api.openai.com/v1/chat/completions\n\nℹ️ TYPE 为 Gemini 时\nMODEL 默认为 gemini-1.5-flash, API 默认为 https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent
 
 [General]
 force-http-engine-hosts = %APPEND% mime.baidu.com

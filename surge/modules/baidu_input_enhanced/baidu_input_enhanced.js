@@ -40,17 +40,25 @@ if (typeof $argument != 'undefined') {
     try {
       answer = `请求失败, 点击 "打开" 使用 Google 搜索`
       let KEY = $.lodash_get(arg, 'BIE_KEY') || $.getval('BIE_KEY') || ''
-      let MODEL = $.lodash_get(arg, 'BIE_MODEL') || $.getval('BIE_MODEL') || 'gpt-3.5-turbo'
+      let TYPE = $.lodash_get(arg, 'BIE_TYPE') || $.getval('BIE_TYPE') || 'ChatGPT'
+      let MODEL = $.lodash_get(arg, 'BIE_MODEL') || $.getval('BIE_MODEL') || 'gpt-4o-mini'
+
+      if (TYPE === 'Gemini' && MODEL === 'gpt-4o-mini') {
+        MODEL = 'gemini-1.5-flash'
+      }
       let PROMPT = $.lodash_get(arg, 'BIE_PROMPT') || $.getval('BIE_PROMPT') || '尽可能简单且快速地回答'
       let TEMPERATURE = parseFloat($.lodash_get(arg, 'BIE_TEMPERATURE') || $.getval('BIE_TEMPERATURE') || 0.5)
-      let MAX_TOKENS = parseInt($.lodash_get(arg, 'BIE_MAX_TOKENS') || $.getval('BIE_MAX_TOKENS') || 50)
+      let MAX_TOKENS = parseInt(
+        $.lodash_get(arg, 'BIE_MAX_TOKENS') ||
+          $.getval('BIE_MAX_TOKENS') ||
+          (TYPE === 'ChatGPT' && /^o1-/.test(MODEL) ? 1 : 0.5)
+      )
       let TIMEOUT = parseInt($.lodash_get(arg, 'BIE_TIMEOUT') || $.getval('BIE_TIMEOUT') || 30 * 1000)
-      let TYPE = $.lodash_get(arg, 'BIE_TYPE') || $.getval('BIE_TYPE') || 'ChatGPT'
 
       let API = $.lodash_get(arg, 'BIE_API') || $.getval('BIE_API')
       if (!API || API === 'https://api.openai.com/v1/chat/completions') {
         if (TYPE === 'Gemini') {
-          API = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent`
+          API = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`
         } else {
           API = 'https://api.openai.com/v1/chat/completions'
         }

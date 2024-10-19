@@ -1,4 +1,4 @@
-const NAME = `BIE`
+const NAME = `GTR`
 
 const $ = new Env(NAME)
 
@@ -11,160 +11,132 @@ if (typeof $argument != 'undefined') {
   arg = Object.fromEntries($argument.split('&').map(item => item.split('=')))
 }
 !(async () => {
-  if (!$.isResponse()) throw new Error('不是 response')
+  if (!$.isRequest()) throw new Error('不是 request')
 
-  $.log($response.body)
-
-  const resp = JSON.parse($response.body)
-
+  $.log('$request.url', $request.url)
   const queryObject = parseQueryString($request.url)
 
   $.log('参数', $.toStr(queryObject))
 
-  if (['image'].includes(queryObject.s_search_type)) return $.done({})
+  const { sl, tl = 'zh-Hans-CN', text } = queryObject
 
-  const input = queryObject.s_qr ?? ''
+  if (!text) throw new Error('需要翻译的内容 text 为空')
 
-  let answer = ''
-  const [_, __, cmd, param] = input.match(/(^(\w+)\s*?[:：]\s*)([\s\S]*)/i) || []
-  if (['eval', 'return'].includes(cmd)) {
-    answer = await Object.getPrototypeOf(async function () {}).constructor(
-      `${['return'].includes(cmd) ? 'return ' : ''}${param}`
-    )()
-  } else if (['cron'].includes(cmd)) {
-    const { error, result, output } = await httpAPI('/v1/scripting/cron/evaluate', 'POST', {
-      script_name: param,
-    })
-    answer = error || result || output
-  } else {
-    try {
-      answer = `请求失败, 点击 "打开" 使用 Google 搜索`
-      let KEY = $.lodash_get(arg, 'BIE_KEY') || $.getval('BIE_KEY') || ''
-      let TYPE = $.lodash_get(arg, 'BIE_TYPE') || $.getval('BIE_TYPE') || 'ChatGPT'
-      let MODEL = $.lodash_get(arg, 'BIE_MODEL') || $.getval('BIE_MODEL') || 'gpt-4o-mini'
+  const input = sl ? `将以下文本从 ${sl} 翻译为 ${tl}:\n${text}` : `将以下文本翻译为 ${tl}:\n${text}`
 
-      if (TYPE === 'Gemini' && MODEL === 'gpt-4o-mini') {
-        MODEL = 'gemini-1.5-flash'
-      }
-      let PROMPT = $.lodash_get(arg, 'BIE_PROMPT') || $.getval('BIE_PROMPT') || '尽可能简单且快速地回答'
-      let TEMPERATURE = parseFloat($.lodash_get(arg, 'BIE_TEMPERATURE') || $.getval('BIE_TEMPERATURE') || 0.5)
-      let MAX_TOKENS = parseInt(
-        $.lodash_get(arg, 'BIE_MAX_TOKENS') ||
-          $.getval('BIE_MAX_TOKENS') ||
-          (TYPE === 'ChatGPT' && /^o1-/.test(MODEL) ? 1 : 0.5)
-      )
-      let TIMEOUT = parseInt($.lodash_get(arg, 'BIE_TIMEOUT') || $.getval('BIE_TIMEOUT') || 30 * 1000)
+  let translated = ''
 
-      let API = $.lodash_get(arg, 'BIE_API') || $.getval('BIE_API')
-      if (!API || API === 'https://api.openai.com/v1/chat/completions') {
-        if (TYPE === 'Gemini') {
-          API = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`
-        } else {
-          API = 'https://api.openai.com/v1/chat/completions'
-        }
-      }
+  let TYPE = $.lodash_get(arg, 'GTR_TYPE') || $.getval('GTR_TYPE') || 'ChatGPT'
+  let MODEL = $.lodash_get(arg, 'GTR_MODEL') || $.getval('GTR_MODEL') || 'gpt-4o-mini'
 
-      $.log(
-        `TYPE: ${TYPE}, API: ${API}, KEY: ${KEY}, MODEL: ${MODEL}, PROMPT: ${PROMPT}, TEMPERATURE: ${TEMPERATURE}, MAX_TOKENS: ${MAX_TOKENS}, TIMEOUT: ${TIMEOUT}`
-      )
+  if (TYPE === 'Gemini' && MODEL === 'gpt-4o-mini') {
+    MODEL = 'gemini-1.5-flash'
+  }
 
-      const headers = {
-        'Content-Type': 'application/json',
-      }
-      // 不知道为啥 QX 上有问题
-      // const params = {}
-      if (TYPE === 'Gemini') {
-        // params.key = KEY
-        API = `${API}?key=${encodeURIComponent(KEY)}`
-      } else {
-        headers.Authorization = `Bearer ${KEY}`
-      }
-      const opts = {
-        timeout: TIMEOUT,
-        url: API,
-        headers,
-        // params,
-        body: JSON.stringify(
-          TYPE === 'Gemini'
-            ? {
-                contents: [{ role: 'user', parts: [{ text: `${PROMPT}\n${input}` }] }],
-              }
-            : {
-                model: MODEL,
-                messages: [
-                  {
-                    role: 'system',
-                    content: `${PROMPT}`,
-                  },
-                  {
-                    role: 'user',
-                    content: `${input}`,
-                  },
-                ],
-                max_tokens: MAX_TOKENS,
-                temperature: TEMPERATURE,
-              }
-        ),
-      }
+  let KEY = $.lodash_get(arg, 'GTR_KEY') || $.getval('GTR_KEY') || ''
+  let PROMPT = $.lodash_get(arg, 'GTR_PROMPT') || $.getval('GTR_PROMPT') || '尽可能简单且快速地回答'
+  let TEMPERATURE = parseFloat(
+    $.lodash_get(arg, 'GTR_TEMPERATURE') ||
+      $.getval('GTR_TEMPERATURE') ||
+      (TYPE === 'ChatGPT' && /^o1-/.test(MODEL) ? 1 : 0.5)
+  )
+  let MAX_TOKENS = parseInt($.lodash_get(arg, 'GTR_MAX_TOKENS') || $.getval('GTR_MAX_TOKENS') || 888)
+  let TIMEOUT = parseInt($.lodash_get(arg, 'GTR_TIMEOUT') || $.getval('GTR_TIMEOUT') || 30 * 1000)
 
-      $.log('请求', $.toStr(opts))
-
-      const res = await Promise.race([
-        $.http.post(opts),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), TIMEOUT)),
-      ])
-      $.log('ℹ️ res', $.toStr(res))
-      const status = $.lodash_get(res, 'status') || $.lodash_get(res, 'statusCode') || 200
-      $.log('ℹ️ res status', status)
-      let body = String($.lodash_get(res, 'body') || $.lodash_get(res, 'rawBody'))
-      $.log('ℹ️ res body', body)
-      try {
-        body = JSON.parse(body)
-      } catch (e) {}
-      answer =
-        TYPE === 'Gemini'
-          ? $.lodash_get(body, 'candidates.0.content.parts.0.text')
-          : $.lodash_get(body, 'choices.0.message.content')
-      $.log('ℹ️ answer', answer)
-    } catch (e) {
-      $.logErr(e)
+  let API = $.lodash_get(arg, 'GTR_API') || $.getval('GTR_API')
+  if (!API || API === 'https://api.openai.com/v1/chat/completions') {
+    if (TYPE === 'Gemini') {
+      API = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`
+    } else {
+      API = 'https://api.openai.com/v1/chat/completions'
     }
   }
-  resp.data.unshift({
-    tplid: 1000,
-    query: input,
-    keyword: input,
-    tpln: '\u767e\u79d1',
-    action_config: [],
-    intent: '',
-    title: input,
-    desc: answer,
-    image: '',
-    newpic: '',
-    url: `https://www.google.com/search?q=${encodeURIComponent(input)}`,
-    display: 'none',
-    share_info: {
-      title: input,
-      description: answer,
-      link: `https://www.google.com/search?q=${encodeURIComponent(input)}`,
-      image: '',
-      thumb: '',
-      gif: '',
-      video: '',
-    },
-    body_content: answer,
-  })
+
+  $.log(
+    `TYPE: ${TYPE}, API: ${API}, KEY: ${KEY}, MODEL: ${MODEL}, PROMPT: ${PROMPT}, TEMPERATURE: ${TEMPERATURE}, MAX_TOKENS: ${MAX_TOKENS}, TIMEOUT: ${TIMEOUT}`
+  )
+
+  const headers = {
+    'Content-Type': 'application/json',
+  }
+  // 不知道为啥 QX 上有问题
+  // const params = {}
+  if (TYPE === 'Gemini') {
+    // params.key = KEY
+    API = `${API}?key=${encodeURIComponent(KEY)}`
+  } else {
+    headers.Authorization = `Bearer ${KEY}`
+  }
+  const opts = {
+    timeout: TIMEOUT,
+    url: API,
+    headers,
+    // params,
+    body: JSON.stringify(
+      TYPE === 'Gemini'
+        ? {
+            contents: [{ role: 'user', parts: [{ text: `${PROMPT}\n${input}` }] }],
+          }
+        : {
+            model: MODEL,
+            messages: [
+              {
+                role: 'system',
+                content: `${PROMPT}`,
+              },
+              {
+                role: 'user',
+                content: `${input}`,
+              },
+            ],
+            max_tokens: MAX_TOKENS,
+            temperature: TEMPERATURE,
+          }
+    ),
+  }
+
+  $.log('请求', $.toStr(opts))
+
+  const res = await Promise.race([
+    $.http.post(opts),
+    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), TIMEOUT)),
+  ])
+  $.log('ℹ️ res', $.toStr(res))
+  const status = $.lodash_get(res, 'status') || $.lodash_get(res, 'statusCode') || 200
+  $.log('ℹ️ res status', status)
+  let body = String($.lodash_get(res, 'body') || $.lodash_get(res, 'rawBody'))
+  $.log('ℹ️ res body', body)
+  try {
+    body = JSON.parse(body)
+  } catch (e) {}
+  translated =
+    TYPE === 'Gemini'
+      ? $.lodash_get(body, 'candidates.0.content.parts.0.text')
+      : $.lodash_get(body, 'choices.0.message.content')
+  $.log('ℹ️ translated', translated)
+
   result = {
-    body: JSON.stringify(resp),
+    response: {
+      status: 200,
+      headers: { 'Content-Type': 'text/html' },
+      body: `<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="https://unpkg.com/simpledotcss/simple.min.css"><style>pre code { white-space: pre-wrap; } h2, h3 { margin-top: 0 } blockquote { margin-inline-start: 0; margin-inline-end: 0; margin-block: 0 }</style></head><body><pre><code>${translated}</pre></code><pre><code>${text}</pre></code></body></html>`,
+    },
   }
 })()
   .catch(async e => {
     $.logErr(e)
     const msg = `${$.lodash_get(e, 'message') || $.lodash_get(e, 'error') || e}`
+    result = {
+      response: {
+        status: 500,
+        headers: { 'Content-Type': 'text/html' },
+        body: `<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="https://unpkg.com/simpledotcss/simple.min.css"><style>pre { overflow: unset } pre code { white-space: pre-wrap; }</style></head><body><section><h1>错误</h1><pre><code>${msg}</pre></code></section></body></html>`,
+      },
+    }
     // if ($.isShadowrocket() && msg.includes(`未能完成操作`)) {
-    //   $.log(`百度输入法魔改`, `⚠️`, msg)
+    //   $.log(`Google Translate Redirect `, `⚠️`, msg)
     // } else {
-    await notify(`百度输入法魔改`, `❌`, msg)
+    // await notify(`Google Translate Redirect `, `❌`, msg)
     // }
     result = {}
   })
@@ -172,15 +144,6 @@ if (typeof $argument != 'undefined') {
     $.log($.toStr(result))
     $.done(result)
   })
-
-// Surge HTTP API
-function httpAPI(path = '', method = 'POST', body = null) {
-  return new Promise(resolve => {
-    $httpAPI(method, path, body, result => {
-      resolve(result)
-    })
-  })
-}
 
 // 参数 与其他脚本逻辑一致
 function parseQueryString(url) {
