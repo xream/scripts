@@ -8,6 +8,8 @@
 
 可查看 [资源整合导航](https://t.me/zhetengsha/2)
 
+部分 Surge 资源已收录到 [LoonKissSurge Repository](https://surge.qingr.moe)
+
 ## 免责声明
 
 本仓库或本仓库相关的仓库, 以下简称为本仓库.
