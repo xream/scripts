@@ -13,7 +13,7 @@
  * - [concurrency] 并发数 默认 10
  * - [internal] 使用内部方法获取 IP 信息. 默认 false
  *              (因为懒) 开启后, 将认为远程 API 返回的响应内容为纯文本 IP 地址, 并用于内部方法
- *              目前仅支持 Surge/Loon(build >= 692) 等有 $utils.ipaso 和 $utils.geoip API 的 App, 数据来自 GeoIP 数据库
+ *              目前仅支持 Surge/Loon(build >= 692) 等有 $utils.ipaso,  $utils.ipasn 和 $utils.geoip API 的 App, 数据来自 GeoIP 数据库
  * - [timeout] 请求超时(单位: 毫秒) 默认 5000
  * - [method] 请求方法. 默认 get
  * - [api] 测落地的 API. 默认为 http://ip-api.com/json?lang=zh-CN
@@ -164,6 +164,7 @@ async function operator(proxies = [], targetPlatform, context) {
           api = {
             countryCode: $utils.geoip(ip) || '',
             aso: $utils.ipaso(ip) || '',
+            asn: $utils.ipasn(ip) || '',
           }
         } else {
           try {
