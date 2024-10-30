@@ -274,6 +274,7 @@ async function operator(proxies = [], targetPlatform, context) {
         api = {
           countryCode: utils.geoip(ip) || '',
           aso: utils.ipaso(ip) || '',
+          asn: (utils.ipasn ? utils.ipasn(ip) : '') || '',
         }
       } else {
         try {
