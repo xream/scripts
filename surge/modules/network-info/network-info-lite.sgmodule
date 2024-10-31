@@ -2,8 +2,11 @@
 #!desc=使用 GeoIP 数据库查询 国内外 IP 信息. 完整版请使用 网络信息 𝕏
 #!author=@xream https://t.me/zhetengsha
 #!category=xream
-#!arguments=DOMESTIC_IPv4:https://4.ipw.cn,FOREIGN_IPv4:https://api-ipv4.ip.sb/ip,TIMEOUT:5,RETRIES:1,RETRY_DELAY:1,UPDATE-INTERVAL:-1,ICON:globe.asia.australia,ICON-COLOR:#6699FF
-#!arguments-desc=1 为开启, 0 为关闭\n · [DOMESTIC_IPv4]: 国内 IP 查询接口\n · [FOREIGN_IPv4]: 国外 IP 查询接口\n · [TIMEOUT]: 超时设置(单位: 秒)\n · [RETRIES]: 请求重试次数\n · [RETRY_DELAY]: 请求重试等待时间(单位: 秒)\n · [UPDATE-INTERVAL]: 面板刷新时间\n您可以在这里指定一个小的时间（例如1），以使面板每次自动更新。
+#!arguments=DOMESTIC_POLICY:DIRECT,DOMESTIC_IPv4:https://4.ipw.cn,FOREIGN_IPv4:https://api-ipv4.ip.sb/ip,TIMEOUT:5,RETRIES:1,RETRY_DELAY:1,UPDATE-INTERVAL:-1,ICON:globe.asia.australia,ICON-COLOR:#6699FF
+#!arguments-desc=1 为开启, 0 为关闭\n · [DOMESTIC_POLICY]: 默认接口的国内分流策略(防止某些人 .cn 都不好好分流)\n · [DOMESTIC_IPv4]: 国内 IP 查询接口\n · [FOREIGN_IPv4]: 国外 IP 查询接口\n · [TIMEOUT]: 超时设置(单位: 秒)\n · [RETRIES]: 请求重试次数\n · [RETRY_DELAY]: 请求重试等待时间(单位: 秒)\n · [UPDATE-INTERVAL]: 面板刷新时间. 您可以在这里指定一个小的时间（例如1），以使面板每次自动更新。
+
+[Rule]
+DOMAIN-SUFFIX,ipw.cn,{{{DOMESTIC_POLICY}}}
 
 [Script]
 # Panel
