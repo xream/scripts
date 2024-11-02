@@ -5,6 +5,7 @@
  * - 支持修改 `host` 混淆, `path` 路径, `port` 端口, `method` 请求方式(网络为 `http` 时, 可能需要设置此项)
  * - 兼容不同的 network(`vmess`, `vless` 的 `ws`, `h2`, `http` 和其他)
  * - 兼容 `vless` `reality` 的 `servername`
+ * - 兼容 Snell 的 `obfs` 的 `host`
  * - 兼容 Shadow TLS 的 `shadow-tls-sni`
  * - 兼容 `Trojan` 的 `sni`
  * - 兼容 QuanX, Surge, Loon, Shadowrocket, Stash 等客户端和 Node.js 环境

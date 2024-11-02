@@ -14,7 +14,7 @@
 
 - 兼容 QuanX, Surge, Loon, Shadowrocket, Stash 等客户端和 Node.js 环境
 
-> 🆕 内测版 可打开查看 按需使用 https://raw.githubusercontent.com/xream/scripts/main/surge/modules/sub-store-scripts/lite/dev.js
+> 🆕 内测版 支持更多的协议 可打开查看 按需使用 https://raw.githubusercontent.com/xream/scripts/main/surge/modules/sub-store-scripts/lite/dev.js
 
 ## Sub-Store 脚本使用方法
 
