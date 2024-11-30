@@ -13,7 +13,7 @@
  * - [url] 检测的 URL. 需要 encodeURIComponent. 默认 http://www.apple.com/library/test/success.html
  * - [status] 合法的状态码. 默认 200
  * - [method] 请求方法. 默认 head, 如果测试 URL 不支持, 可设为 get
- * - [show_latency] 显示延迟. 默认不显示
+ * - [show_latency] 显示延迟. 默认不显示. 注: 即使不开启这个参数, 节点上也会添加一个 _latency 字段
  * - [keep_incompatible] 保留当前客户端不兼容的协议. 默认不保留.
  * - [cache] 使用缓存, 默认不使用缓存
  * - [telegram_bot_token] Telegram Bot Token
@@ -91,6 +91,7 @@ async function operator(proxies = [], targetPlatform, env) {
             validProxies.push({
               ...proxy,
               name: `${$arguments.show_latency ? `[${cached.latency}] ` : ''}${proxy.name}`,
+              _latency: cached.latency,
             })
           }
           return
@@ -116,6 +117,7 @@ async function operator(proxies = [], targetPlatform, env) {
           validProxies.push({
             ...proxy,
             name: `${$arguments.show_latency ? `[${latency}] ` : ''}${proxy.name}`,
+            _latency: latency,
           })
           if (cacheEnabled) {
             $.info(`[${proxy.name}] 设置成功缓存`)
