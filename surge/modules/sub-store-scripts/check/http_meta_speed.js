@@ -20,6 +20,7 @@
  * - [retry_delay] 重试延时(单位: 毫秒) 默认 1000
  * - [concurrency] 并发数 默认 1
  * - [size] 测速大小(单位 MB). 默认 10
+ * - [show_speed] 显示速度. 默认不显示. 注: 即使不开启这个参数, 节点上也会添加一个 _speed 字段
  * - [keep_incompatible] 保留当前客户端不兼容的协议. 默认不保留.
  * - [cache] 使用缓存, 默认不使用缓存
  */
@@ -136,7 +137,9 @@ async function operator(proxies = [], targetPlatform, context) {
     $.error(e)
   }
 
-  return keepIncompatible ? [...validProxies, ...incompatibleProxies] : validProxies
+  return (keepIncompatible ? [...validProxies, ...incompatibleProxies] : validProxies).sort(
+    (a, b) => b._speed - a._speed
+  )
 
   async function check(proxy) {
     // $.info(`[${proxy.name}] 检测`)
@@ -156,7 +159,8 @@ async function operator(proxies = [], targetPlatform, context) {
         if (cached.speed) {
           validProxies.push({
             ...proxy,
-            name: `[${cached.speed}] ${proxy.name}`,
+            name: `${$arguments.show_speed ? `[${cached.speed} M] ` : ''}${proxy.name}`,
+            _speed: cached.speed,
           })
         }
         return
@@ -175,13 +179,14 @@ async function operator(proxies = [], targetPlatform, context) {
       const status = parseInt(res.status || res.statusCode || 200)
       let latency = ''
       latency = `${Date.now() - startedAt}`
-      const speed = Math.round((bytes / 1024 / 1024 / (latency / 1000)) * 8) + ' M'
-      $.info(`[${proxy.name}] status: ${status}, latency: ${latency}, speed: ${speed}`)
+      const speed = Math.round((bytes / 1024 / 1024 / (latency / 1000)) * 8)
+      $.info(`[${proxy.name}] status: ${status}, latency: ${latency}, speed: ${speed} M`)
       // 判断响应
       if (speed) {
         validProxies.push({
           ...proxy,
-          name: `[${speed}] ${proxy.name}`,
+          name: `${$arguments.show_speed ? `[${speed} M] ` : ''}${proxy.name}`,
+          _speed: speed,
         })
         if (cacheEnabled) {
           $.info(`[${proxy.name}] 设置成功缓存`)
