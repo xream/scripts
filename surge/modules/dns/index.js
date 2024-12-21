@@ -14,7 +14,7 @@ function log(...args) {
 }
 log(`传入的 $argument: ${JSON.stringify(arg, null, 2)}`)
 
-const result = { addresses: [], ttl: parseInt(arg?.ttl || 60) }
+let result = { addresses: [], ttl: parseInt(arg?.ttl || 60) }
 !(async () => {
   let type = arg?.type || 'A,AAAA'
   type = type.split(/\s*,\s*/).filter(i => ['A', 'AAAA'].includes(i))

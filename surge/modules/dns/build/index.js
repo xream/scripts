@@ -3327,7 +3327,7 @@ var result = { addresses: [], ttl: parseInt(arg?.ttl || 60) };
   const url = arg?.doh || "https://8.8.4.4/dns-query";
   const domain = $domain;
   const timeout = parseInt(arg?.timeout || 2);
-  const edns = arg?.edns || "223.6.6.6";
+  const edns = arg?.edns || "114.114.114.114";
   log(`[${domain}] 使用 ${url} 查询 ${type} 结果`);
   const res = await Promise.all(type.map((i) => query({
     url,
@@ -3347,8 +3347,14 @@ var result = { addresses: [], ttl: parseInt(arg?.ttl || 60) };
     });
   });
   log(`[${domain}] 使用 ${url} 查询 ${type} 结果: ${JSON.stringify(result, null, 2)}`);
+  if (result.addresses.length === 0) {
+    throw new Error(`[${domain}] 使用 ${url} 查询 ${type} 结果为空`);
+  }
 })().catch(async (e) => {
   log(e);
+  if (`${arg?.fallback}` === "1") {
+    result = {};
+  }
 }).finally(async () => {
   $done(result);
 });
