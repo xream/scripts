@@ -20,6 +20,7 @@
  * - [retry_delay] 重试延时(单位: 毫秒) 默认 1000
  * - [concurrency] 并发数 默认 10
  * - [url] 检测的 URL. 需要 encodeURIComponent. 默认 http://www.apple.com/library/test/success.html
+ * - [ua] 请求头 User-Agent. 需要 encodeURIComponent. 默认 Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3.1 Mobile/15E148 Safari/604.1
  * - [status] 合法的状态码. 默认 200
  * - [method] 请求方法. 默认 head, 如果测试 URL 不支持, 可设为 get
  * - [show_latency] 显示延迟. 默认不显示. 注: 即使不开启这个参数, 节点上也会添加一个 _latency 字段
@@ -47,7 +48,10 @@ async function operator(proxies = [], targetPlatform, env) {
   const keepIncompatible = $arguments.keep_incompatible
   const validStatus = parseInt($arguments.status || 200)
   const url = decodeURIComponent($arguments.url || 'http://www.apple.com/library/test/success.html')
-
+  const ua = decodeURIComponent(
+    $arguments.ua ||
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3.1 Mobile/15E148 Safari/604.1'
+  )
   const $ = $substore
   const validProxies = []
   const incompatibleProxies = []
@@ -195,8 +199,7 @@ async function operator(proxies = [], targetPlatform, env) {
         proxy: `http://${http_meta_host}:${http_meta_ports[index]}`,
         method,
         headers: {
-          'User-Agent':
-            'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3.1 Mobile/15E148 Safari/604.1',
+          'User-Agent': ua,
         },
         url,
       })
