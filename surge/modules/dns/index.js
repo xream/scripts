@@ -21,7 +21,7 @@ const result = { addresses: [], ttl: parseInt(arg?.ttl || 60) }
   const url = arg?.doh || 'https://8.8.4.4/dns-query'
   const domain = $domain
   const timeout = parseInt(arg?.timeout || 2)
-  const edns = arg?.edns || '223.6.6.6'
+  const edns = arg?.edns || '114.114.114.114'
   log(`[${domain}] 使用 ${url} 查询 ${type} 结果`)
   const res = await Promise.all(type.map(i => query({
     url,
