@@ -1,0 +1,15 @@
+{
+  "name": "dns",
+  "module": "index.js",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "buffer": "^6.0.3",
+    "dns-packet": "^5.6.1"
+  }
+}
