@@ -1,11 +1,11 @@
 #!name=DNS 脚本
 #!desc=纯脚本实现 DNS 查询, 支持 EDNS Client Subnet (ECS)
 #!category=xream
-#!arguments=type:"A,AAAA",doh:"https://8.8.4.4/dns-query",ttl:"60",timeout:"2",edns:"114.114.114.114",fallback:1,log:0
-#!arguments-desc=type: 查询类型, 不需要 IPv6, 就填 A\n\nttl: 默认 TTL\n\nedns: EDNS Client Subnet (ECS). 只需要填 IP\n\nfallback: 开启回退到常规 DNS 查询. 1 为开启\n\nlog: 是否打印日志. 1 为开启
+#!arguments=type:"A,AAAA",doh:"https://8.8.4.4/dns-query",ttl:"60",timeout:"2",edns:"114.114.114.114",fallback:1,log:0,policy:0
+#!arguments-desc=type: 查询类型, 不需要 IPv6, 就填 A\nttl: 默认 TTL\nedns: EDNS Client Subnet (ECS). 只需要填 IP\nfallback: 开启回退到常规 DNS 查询. 1 为开启\nlog: 是否打印日志. 1 为开启\npolicy: 设置请求使用的策略. 0 为关闭
 
 [Script]
-DNS.js = type=dns,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/dns/build/index.js,desc=DNS.js,argument="type={{{type}}}&doh={{{doh}}}&ttl={{{ttl}}}&timeout={{{timeout}}}&edns={{{edns}}}&log={{{log}}}&fallback={{{fallback}}}"
+DNS.js = type=dns,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/dns/build/index.js,desc=DNS.js,argument="type={{{type}}}&doh={{{doh}}}&ttl={{{ttl}}}&timeout={{{timeout}}}&edns={{{edns}}}&log={{{log}}}&fallback={{{fallback}}}&policy={{{policy}}}"
 
 [Host]
 * = script:DNS.js

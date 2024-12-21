@@ -105,7 +105,8 @@ async function query({ url, domain, type = 'A', timeout, edns }) {
       // body: buf,
       'binary-mode': true,
       encoding: null, // 使用 null 编码以确保响应是原始二进制数据
-      timeout
+      timeout,
+      policy: `${arg?.policy}` === '0' ? undefined : arg?.policy,
   });
 
   return dnsPacket.decode(Buffer.from(res.body));

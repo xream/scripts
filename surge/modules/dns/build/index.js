@@ -3396,7 +3396,8 @@ async function query({ url, domain, type = "A", timeout, edns }) {
     },
     "binary-mode": true,
     encoding: null,
-    timeout
+    timeout,
+    policy: `${arg?.policy}` === "0" ? undefined : arg?.policy
   });
   return dnsPacket.decode(Buffer.from(res.body));
 }
