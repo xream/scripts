@@ -41,9 +41,15 @@ const result = { addresses: [], ttl: parseInt(arg?.ttl || 60) }
     })
   })
   log(`[${domain}] 使用 ${url} 查询 ${type} 结果: ${JSON.stringify(result, null, 2)}`)
+  if (result.addresses.length === 0) {
+    throw new Error(`[${domain}] 使用 ${url} 查询 ${type} 结果为空`)
+  }
 })()
   .catch(async e => {
     log(e)
+    if(`${arg?.fallback}` === '1') {
+      result = {}
+    }
   })
   .finally(async () => {
     $done(result)
