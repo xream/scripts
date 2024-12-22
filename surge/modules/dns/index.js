@@ -18,7 +18,8 @@ let result = { addresses: [], ttl: parseInt(arg?.ttl || 60) }
 !(async () => {
   let type = arg?.type || 'A,AAAA'
   type = type.split(/\s*,\s*/).filter(i => ['A', 'AAAA'].includes(i))
-  const url = arg?.doh || 'https://8.8.4.4/dns-query'
+  let doh = arg?.doh || 'https://8.8.4.4/dns-query,https://9.9.9.11/dns-query'
+  doh = doh.split(/\s*,\s*/).filter(i => /https?:\/\//.test(i))
   const domain = $domain
   const timeout = parseInt(arg?.timeout || 2)
   let edns
@@ -34,28 +35,45 @@ let result = { addresses: [], ttl: parseInt(arg?.ttl || 60) }
   }
   edns = edns || '114.114.114.114'
   log(`使用 edns: ${edns}`)
-  log(`[${domain}] 使用 ${url} 查询 ${type} 结果`)
-  const res = await Promise.all(type.map(i => query({
-    url,
-    domain,
-    type: i,
-    timeout,
-    edns,
-  })))
-  res.forEach(i => {
-    i.answers.forEach(ans => {
-      if (ans.type === 'A' || ans.type === 'AAAA') {
-        result.addresses.push(ans.data)
-        if (ans.ttl > 0) {
-          result.ttl = ans.ttl
+  
+  log(`[${domain}] 使用 ${doh.join(', ')} 查询 ${type} 结果`)
+  const promises = doh.map(async url => {
+    const res = await Promise.all(type.map(i => query({
+      url,
+      domain,
+      type: i,
+      timeout,
+      edns,
+    })))
+
+    const addresses = []
+    let ttl = parseInt(arg?.ttl || 60)
+    
+    res.forEach(i => {
+      i.answers.forEach(ans => {
+        if (type.includes(ans.type)) {
+          addresses.push(ans.data)
+          if (ans.ttl > 0) {
+            ttl = ans.ttl
+          }
         }
-      }
+      })
     })
+    
+    if (addresses.length === 0) {
+      throw new Error(`[${domain}] ${url} 查询结果为空`)
+    }
+    
+    return {
+      url,
+      addresses,
+      ttl,
+    }
+  
   })
-  log(`[${domain}] 使用 ${url} 查询 ${type} 结果: ${JSON.stringify(result, null, 2)}`)
-  if (result.addresses.length === 0) {
-    throw new Error(`[${domain}] 使用 ${url} 查询 ${type} 结果为空`)
-  }
+  const { url, addresses, ttl } = await Promise.any(promises)
+  log(`[${domain}] 最快响应来自: ${url}`)
+  result = {addresses, ttl}
 })()
   .catch(async e => {
     log(e)
