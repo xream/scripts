@@ -21,7 +21,17 @@ let result = { addresses: [], ttl: parseInt(arg?.ttl || 60) }
   const url = arg?.doh || 'https://8.8.4.4/dns-query'
   const domain = $domain
   const timeout = parseInt(arg?.timeout || 2)
-  const edns = arg?.edns || '114.114.114.114'
+  let edns = arg?.edns
+  if(edns === 'auto') {
+    try {
+      edns = JSON.parse(await $persistentStore.read('lastNetworkInfoEvent'))?.CN_IP
+      log(`从持久化缓存解析 CN_IP: ${edns}`)
+    } catch (e) {
+      log(`从持久化缓存解析 CN_IP 失败: ${e}`)
+    }
+  }
+  edns = edns || '114.114.114.114'
+  log(`使用 edns: ${edns}`)
   log(`[${domain}] 使用 ${url} 查询 ${type} 结果`)
   const res = await Promise.all(type.map(i => query({
     url,
