@@ -18,7 +18,7 @@ let result = { addresses: [], ttl: parseInt(arg?.ttl || 60) }
 !(async () => {
   let type = arg?.type || 'A,AAAA'
   type = type.split(/\s*,\s*/).filter(i => ['A', 'AAAA'].includes(i))
-  let doh = arg?.doh || 'https://8.8.4.4/dns-query,https://9.9.9.11/dns-query'
+  let doh = arg?.doh || 'https://8.8.4.4/dns-query'
   doh = doh.split(/\s*,\s*/).filter(i => /https?:\/\//.test(i))
   const domain = $domain
   const timeout = parseInt(arg?.timeout || 2)
