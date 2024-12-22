@@ -5,7 +5,11 @@ async function operator(proxies = [], targetPlatform, env) {
   let subInfo
   if (sub.source === 'local' && !['localFirst', 'remoteFirst'].includes(sub.mergeSources)) {
     if (sub.subUserinfo) {
-      subInfo = sub.subUserinfo
+      if (/^https?:\/\//.test(sub.subUserinfo)) {
+        subInfo = await getFlowHeaders(undefined, undefined, undefined, sub.proxy, sub.subUserinfo)
+      } else {
+        subInfo = sub.subUserinfo
+      }
     }
   } else {
     let url = `${sub.url}`
@@ -32,7 +36,11 @@ async function operator(proxies = [], targetPlatform, env) {
     args = { ...urlArgs, ...args }
     if (!args.noFlow) {
       if (sub.subUserinfo) {
-        subInfo = sub.subUserinfo
+        if (/^https?:\/\//.test(sub.subUserinfo)) {
+          subInfo = await getFlowHeaders(undefined, undefined, undefined, sub.proxy, sub.subUserinfo)
+        } else {
+          subInfo = sub.subUserinfo
+        }
       } else {
         subInfo = await getFlowHeaders(url)
       }
