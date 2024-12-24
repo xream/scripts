@@ -41,8 +41,17 @@ async function operator(proxies = [], targetPlatform, env) {
   const validProxies = []
   const incompatibleProxies = []
   const failedProxies = []
-  const sub = env.source[proxies?.[0]?._subName || proxies?.[0]?.subName]
-  const subName = sub?.displayName || sub?.name
+  let name = ''
+  for (const [key, value] of Object.entries(env.source)) {
+    if (!key.startsWith('_')) {
+      name = value.displayName || value.name
+      break
+    }
+  }
+  if (!name) {
+    const collection = env.source._collection
+    name = collection.displayName || collection.name
+  }
 
   const concurrency = parseInt($arguments.concurrency || 10) // 一组并发数
   await executeAsyncTasks(
@@ -60,7 +69,7 @@ async function operator(proxies = [], targetPlatform, env) {
   // }
 
   if (telegram_chat_id && telegram_bot_token && failedProxies.length > 0) {
-    const text = `\`${subName}\` 节点测试:\n${failedProxies
+    const text = `\`${name}\` 节点测试:\n${failedProxies
       .map(proxy => `❌ [${proxy.type}] \`${proxy.name}\``)
       .join('\n')}`
     await http({
