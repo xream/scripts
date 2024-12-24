@@ -105,7 +105,7 @@ async function operator(proxies = [], targetPlatform, context) {
   $.info(`等待 ${http_meta_start_delay / 1000} 秒后开始检测`)
   await $.wait(http_meta_start_delay)
 
-  const concurrency = parseInt($arguments.concurrency || 10) // 一组并发数
+  const concurrency = parseInt($arguments.concurrency || 1) // 一组并发数
   await executeAsyncTasks(
     internalProxies.map(proxy => () => check(proxy)),
     { concurrency }
