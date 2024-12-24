@@ -22,6 +22,10 @@
  * - [client] GPT 检测的客户端类型. 默认 iOS
  * - [method] 请求方法. 默认 get
  * - [cache] 使用缓存, 默认不使用缓存
+ * 关于缓存时长
+ * 当使用相关脚本时, 若在对应的脚本中使用参数开启缓存, 可设置持久化缓存 sub-store-csr-expiration-time 的值来自定义默认缓存时长, 默认为 172800000 (48 * 3600 * 1000, 即 48 小时)
+ * 🎈Loon 可在插件中设置
+ * 其他平台同理, 持久化缓存数据在 JSON 里
  */
 
 async function operator(proxies = [], targetPlatform, context) {

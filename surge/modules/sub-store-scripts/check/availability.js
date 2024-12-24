@@ -16,9 +16,13 @@
  * - [method] 请求方法. 默认 head, 如果测试 URL 不支持, 可设为 get
  * - [show_latency] 显示延迟. 默认不显示. 注: 即使不开启这个参数, 节点上也会添加一个 _latency 字段
  * - [keep_incompatible] 保留当前客户端不兼容的协议. 默认不保留.
- * - [cache] 使用缓存, 默认不使用缓存
  * - [telegram_bot_token] Telegram Bot Token
  * - [telegram_chat_id] Telegram Chat ID
+ * - [cache] 使用缓存, 默认不使用缓存
+ * 关于缓存时长
+ * 当使用相关脚本时, 若在对应的脚本中使用参数开启缓存, 可设置持久化缓存 sub-store-csr-expiration-time 的值来自定义默认缓存时长, 默认为 172800000 (48 * 3600 * 1000, 即 48 小时)
+ * 🎈Loon 可在插件中设置
+ * 其他平台同理, 持久化缓存数据在 JSON 里
  */
 
 async function operator(proxies = [], targetPlatform, env) {

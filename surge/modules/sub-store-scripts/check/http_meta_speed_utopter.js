@@ -20,11 +20,15 @@
  * - [concurrency] 并发数 默认 1
  * - [size] 测速大小(单位 MB). 默认 10
  * - [keep_incompatible] 保留当前客户端不兼容的协议. 默认不保留.
- * - [cache] 使用缓存, 默认不使用缓存
  * - [regex] 正则表达式，仅匹配的节点会被测速
  * - [percentage] 删除测速结果后X%的节点, X作为参数传入
  * - [whitelist_regex] 白名单正则表达式，匹配的节点不会被删除
  * - [blacklist_regex] 黑名单正则表达式，匹配的节点不会被测速，但会被保留
+ * - [cache] 使用缓存, 默认不使用缓存
+ * 关于缓存时长
+ * 当使用相关脚本时, 若在对应的脚本中使用参数开启缓存, 可设置持久化缓存 sub-store-csr-expiration-time 的值来自定义默认缓存时长, 默认为 172800000 (48 * 3600 * 1000, 即 48 小时)
+ * 🎈Loon 可在插件中设置
+ * 其他平台同理, 持久化缓存数据在 JSON 里
  */
 
 async function operator(proxies = [], targetPlatform, context) {

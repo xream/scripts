@@ -30,7 +30,6 @@
  *         当使用 internal 时, 默认为 http://checkip.amazonaws.com
  * - [format] 自定义格式, 从 节点(proxy) 和 API 响应(api) 中取数据. 默认为: {{api.country}} {{api.isp}} - {{proxy.name}}
  *            当使用 internal 时, 默认为 {{api.countryCode}} {{api.aso}} - {{proxy.name}}
- * - [cache] 使用缓存. 默认不使用缓存
  * - [ignore_failed_error] 忽略失败缓存. 默认不忽略失败缓存. 若设置为忽略, 之前失败的结果即使有缓存也会再测一次
  * - [geo] 在节点上附加 _geo 字段, 默认不附加
  * - [incompatible] 在节点上附加 _incompatible 字段来标记当前客户端不兼容该协议, 默认不附加
@@ -38,6 +37,11 @@
  * - [remove_failed] 移除失败的节点. 默认不移除.
  * - [mmdb_country_path] 见 internal
  * - [mmdb_asn_path] 见 internal
+ * - [cache] 使用缓存. 默认不使用缓存
+ * 关于缓存时长
+ * 当使用相关脚本时, 若在对应的脚本中使用参数开启缓存, 可设置持久化缓存 sub-store-csr-expiration-time 的值来自定义默认缓存时长, 默认为 172800000 (48 * 3600 * 1000, 即 48 小时)
+ * 🎈Loon 可在插件中设置
+ * 其他平台同理, 持久化缓存数据在 JSON 里
  */
 
 async function operator(proxies = [], targetPlatform, context) {
