@@ -177,6 +177,7 @@ async function operator(proxies = [], targetPlatform, env) {
       },
       body: JSON.stringify({ chat_id: telegram_chat_id, text, parse_mode: 'MarkdownV2' }),
       retries: 0,
+      timeout: 5000,
     })
   }
 
