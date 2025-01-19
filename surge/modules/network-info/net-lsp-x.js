@@ -772,12 +772,22 @@ async function getProxyInfo(ip, provider) {
 
   if (provider == 'ipinfo') {
     try {
+      let token = $.lodash_get(arg, 'LANDING_IPv4_KEY')
+      if (!token) throw new Error('请在 LANDING_IPv4_KEY 填写 ipinfo 的 token')
+      token = token
+        .split(/,|，/)
+        .map(i => i.trim())
+        .filter(i => i)
+      token = token[Math.floor(Math.random() * token.length)]
+      if (token.length > 1) {
+        $.log(`随机使用 ipinfo 的 token: ${token}`)
+      }
       const res = await http({
         ...(ip ? {} : getNodeOpt()),
-
-        url: `https://ipinfo.io/widget/${ip ? encodeURIComponent(ip) : ''}`,
+        url: ip
+          ? `https://ipinfo.io/${encodeURIComponent(ip)}/json?token=${encodeURIComponent(token)}`
+          : `https://ipinfo.io/json?token=${encodeURIComponent(token)}`,
         headers: {
-          Referer: 'https://ipinfo.io/',
           'User-Agent':
             'Mozilla/5.0 (iPhone CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1 Edg/109.0.0.0',
         },
@@ -787,51 +797,14 @@ async function getProxyInfo(ip, provider) {
         body = JSON.parse(body)
       } catch (e) {}
       PROXY_IP = ip || $.lodash_get(body, 'ip')
-      const companyType = $.lodash_get(body, 'company.type')
-      const asnType = $.lodash_get(body, 'asn.type')
       PROXY_INFO = [
         ['位置:', getflag(body.country), body.country.replace(/\s*中国\s*/, ''), body.region, body.city]
           .filter(i => i)
           .join(' '),
-        [
-          '运营商:',
-          $.lodash_get(body, 'company.name') || $.lodash_get(body, 'asn.name') || '-',
-          companyType ? ` | ${companyType}` : '',
-        ]
-          .filter(i => i)
-          .join(' '),
-        $.lodash_get(arg, 'ORG') == 1
-          ? [
-              '组织:',
-              $.lodash_get(body, 'asn.name') || $.lodash_get(body, 'org') || '-',
-              asnType ? ` | ${asnType}` : '',
-            ]
-              .filter(i => i)
-              .join(' ')
-          : undefined,
-        $.lodash_get(arg, 'ASN') == 1
-          ? ['ASN:', $.lodash_get(body, 'asn.asn') || '-'].filter(i => i).join(' ')
-          : undefined,
+        ['运营商:', $.lodash_get(body, 'org') || '-'].filter(i => i).join(' '),
       ]
         .filter(i => i)
         .join('\n')
-      if (!ip && $.lodash_get(arg, 'PRIVACY') == '1') {
-        const privacyObj = $.lodash_get(body, 'privacy') || {}
-        let privacy = []
-        const privacyMap = {
-          true: '✓',
-          false: '✗',
-          '': '-',
-        }
-        Object.keys(privacyObj).forEach(key => {
-          privacy.push(`${key.toUpperCase()}: ${privacyMap[privacyObj[key]]}`)
-        })
-        if (privacy.length > 0) {
-          PROXY_PRIVACY = `隐私安全:\n${privacy.join('\n')}`
-        } else {
-          PROXY_PRIVACY = `隐私安全: -`
-        }
-      }
     } catch (e) {
       $.logErr(`${msg} 发生错误: ${e.message || e}`)
     }

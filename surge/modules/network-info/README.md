@@ -38,7 +38,7 @@
 
 · `ORG` 显示 ORG 信息
 
-· `PRIVACY` (当落地为 ipwhois, ipinfo 时)显示 Privacy/Security 等信息
+· `PRIVACY` (当落地为 ipwhois 时)显示 Privacy/Security 等信息
 
 · `FLAG` 是否显示国旗
 
