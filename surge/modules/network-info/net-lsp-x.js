@@ -328,7 +328,7 @@ async function getDirectRequestInfo({ PROXIES = [] } = {}) {
   const { CN_IP, CN_INFO } = await getDirectInfo(undefined, $.lodash_get(arg, 'DOMESTIC_IPv4'))
   const { POLICY } = await getRequestInfo(
     new RegExp(
-      `cip\\.cc|for${keyb}\\.${keya}${bay}\\.cn|rmb\\.${keyc}${keyd}\\.com\\.cn|api-v3\\.${keya}${bay}\\.cn|ipservice\\.ws\\.126\\.net|api\\.bilibili\\.com|api\\.live\\.bilibili\\.com|myip\\.ipip\\.net|ip\\.ip233\\.cn|ua${keye}\\.wo${keyf}x\\.cn|ip\\.im|ips\\.market\\.alicloudapi\\.com|api\\.ip\\.plus|appc\.${keyg}${keyh}\.com`
+      `cip\\.cc|for${keyb}\\.${keya}${bay}\\.cn|rmb\\.${keyc}${keyd}\\.com\\.cn|api-v3\\.${keya}${bay}\\.cn|ipservice\\.ws\\.126\\.net|api\\.bilibili\\.com|api\\.live\\.bilibili\\.com|myip\\.ipip\\.net|ip\\.ip233\\.cn|ua${keye}\\.wo${keyf}x\\.cn|ip\\.im|ips\\.market\\.alicloudapi\\.com|api\\.ip\\.plus|appc\\.${keyg}${keyh}\\.com|webapi\\.designkit\\.com|dashi\\.163\\.com`
     ),
     PROXIES
   )
@@ -446,6 +446,61 @@ async function getDirectInfo(ip, provider) {
           .filter(i => i)
           .join(' '),
         ['运营商:', $.lodash_get(body, 'data.owner')].filter(i => i).join(' '),
+      ]
+        .filter(i => i)
+        .join('\n')
+    } catch (e) {
+      $.logErr(`${msg} 发生错误: ${e.message || e}`)
+    }
+  } else if (!ip && provider == 'designkit') {
+    try {
+      const res = await http({
+        url: `https://webapi.designkit.com/common/ip_location`,
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36 Edg/109.0.1518.14',
+        },
+      })
+      let body = String($.lodash_get(res, 'body'))
+      try {
+        body = JSON.parse(body)
+      } catch (e) {}
+      let data = $.lodash_get(body, 'data')
+      const ip = Object.keys(data)?.[0]
+      data = data[ip]
+      const countryCode = data?.nation_code
+      isCN = countryCode === 'CN'
+      CN_IP = ip
+      CN_INFO = [
+        ['位置:', getflag(countryCode), data?.province, data?.city].filter(i => i).join(' '),
+        ['运营商:', data?.isp].filter(i => i).join(' '),
+      ]
+        .filter(i => i)
+        .join('\n')
+    } catch (e) {
+      $.logErr(`${msg} 发生错误: ${e.message || e}`)
+    }
+  } else if (!ip && provider == '163') {
+    try {
+      const res = await http({
+        url: `https://dashi.163.com/fgw/mailsrv-ipdetail/detail`,
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36 Edg/109.0.1518.14',
+        },
+      })
+      let body = String($.lodash_get(res, 'body'))
+      try {
+        body = JSON.parse(body)
+      } catch (e) {}
+      let data = $.lodash_get(body, 'result')
+      const ip = data?.ip
+      const countryCode = data?.countryCode
+      isCN = countryCode === 'CN'
+      CN_IP = ip
+      CN_INFO = [
+        ['位置:', getflag(countryCode), data?.province, data?.city].filter(i => i).join(' '),
+        ['运营商:', data?.isp || data?.org].filter(i => i).join(' '),
       ]
         .filter(i => i)
         .join('\n')
