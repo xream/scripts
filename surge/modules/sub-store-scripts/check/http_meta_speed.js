@@ -162,7 +162,7 @@ async function operator(proxies = [], targetPlatform, context) {
         $.info(`[${proxy.name}] 使用缓存`)
         if (cached.speed) {
           validProxies.push({
-            ...proxy,
+            ...ProxyUtils.parse(JSON.stringify(proxy))[0],
             name: `${$arguments.show_speed ? `[${cached.speed} M] ` : ''}${proxy.name}`,
             _speed: cached.speed,
           })
@@ -188,7 +188,7 @@ async function operator(proxies = [], targetPlatform, context) {
       // 判断响应
       if (speed) {
         validProxies.push({
-          ...proxy,
+          ...ProxyUtils.parse(JSON.stringify(proxy))[0],
           name: `${$arguments.show_speed ? `[${speed} M] ` : ''}${proxy.name}`,
           _speed: speed,
         })

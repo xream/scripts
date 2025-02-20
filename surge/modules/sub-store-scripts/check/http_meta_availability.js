@@ -200,7 +200,7 @@ async function operator(proxies = [], targetPlatform, env) {
         $.info(`[${proxy.name}] 使用缓存`)
         if (cached.latency) {
           validProxies.push({
-            ...proxy,
+            ...ProxyUtils.parse(JSON.stringify(proxy))[0],
             name: `${$arguments.show_latency ? `[${cached.latency}] ` : ''}${proxy.name}`,
             _latency: cached.latency,
           })
@@ -225,7 +225,7 @@ async function operator(proxies = [], targetPlatform, env) {
       // 判断响应
       if (status == validStatus) {
         validProxies.push({
-          ...proxy,
+          ...ProxyUtils.parse(JSON.stringify(proxy))[0],
           name: `${$arguments.show_latency ? `[${latency}] ` : ''}${proxy.name}`,
           _latency: latency,
         })
