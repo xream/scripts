@@ -96,7 +96,7 @@ async function operator(proxies = [], targetPlatform, context) {
         // cf 拦截是 400 错误, 403 就是没被拦截, 走到了未鉴权的逻辑
         // https://zset.cc/archives/34/
         // 更新: 403 的时候, 还得看响应
-        if (status == 403 && !['unsupported_country'].includes(msg)) {
+        if (status == 403 && !/unsupported_country/.test(msg)) {
           proxy.name = `[GPT] ${proxy.name}`
           if (cacheEnabled) {
             $.info(`[${proxy.name}] 设置成功缓存`)
