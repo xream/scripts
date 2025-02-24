@@ -189,7 +189,7 @@ async function operator(proxies = [], targetPlatform, context) {
         body = JSON.parse(body)
       } catch (e) {}
       // $.info(`body ${JSON.stringify(body, null, 2)}`)
-      const msg = body?.error?.error_type || body?.cf_details
+      const msg = body?.error?.code || body?.error?.error_type || body?.cf_details
       let latency = ''
       latency = `${Date.now() - startedAt}`
       $.info(`[${proxy.name}] status: ${status}, msg: ${msg}, latency: ${latency}`)
