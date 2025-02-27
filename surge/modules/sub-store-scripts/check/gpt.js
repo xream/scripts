@@ -15,6 +15,8 @@
  * - [concurrency] 并发数 默认 10
  * - [client] GPT 检测的客户端类型. 默认 iOS
  * - [method] 请求方法. 默认 get
+ * - [gpt_prefix] 显示前缀. 默认为 "[GPT] "
+ 注: 节点上总是会添加一个 _gpt 字段, 可用于脚本筛选
  * - [cache] 使用缓存, 默认不使用缓存
  * 关于缓存时长
  * 当使用相关脚本时, 若在对应的脚本中使用参数开启缓存, 可设置持久化缓存 sub-store-csr-expiration-time 的值来自定义默认缓存时长, 默认为 172800000 (48 * 3600 * 1000, 即 48 小时)
@@ -28,6 +30,7 @@ async function operator(proxies = [], targetPlatform, context) {
   if (!isLoon && !isSurge) throw new Error('仅支持 Loon 和 Surge(ability=http-client-policy)')
   const cacheEnabled = $arguments.cache
   const cache = scriptResourceCache
+  const gptPrefix = $arguments.gpt_prefix ?? '[GPT] '
   const method = $arguments.method || 'get'
   const url = $arguments.client === 'Android' ? `https://android.chat.openai.com` : `https://ios.chat.openai.com`
   const target = isLoon ? 'Loon' : isSurge ? 'Surge' : undefined
@@ -67,7 +70,8 @@ async function operator(proxies = [], targetPlatform, context) {
         if (cacheEnabled && cached) {
           $.info(`[${proxy.name}] 使用缓存`)
           if (cached.gpt) {
-            proxy.name = `[GPT] ${proxy.name}`
+            proxy.name = `${gptPrefix}${proxy.name}`
+            proxy._gpt = true
           }
           return
         }
@@ -97,7 +101,8 @@ async function operator(proxies = [], targetPlatform, context) {
         // https://zset.cc/archives/34/
         // 更新: 403 的时候, 还得看响应
         if (status == 403 && !/unsupported_country/.test(msg)) {
-          proxy.name = `[GPT] ${proxy.name}`
+          proxy.name = `${gptPrefix}${proxy.name}`
+          proxy._gpt = true
           if (cacheEnabled) {
             $.info(`[${proxy.name}] 设置成功缓存`)
             cache.set(id, { gpt: true })

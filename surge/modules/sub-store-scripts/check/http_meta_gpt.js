@@ -21,6 +21,8 @@
  * - [concurrency] 并发数 默认 10
  * - [client] GPT 检测的客户端类型. 默认 iOS
  * - [method] 请求方法. 默认 get
+ * - [gpt_prefix] 显示前缀. 默认为 "[GPT] "
+ 注: 节点上总是会添加一个 _gpt 字段, 可用于脚本筛选
  * - [cache] 使用缓存, 默认不使用缓存
  * 关于缓存时长
  * 当使用相关脚本时, 若在对应的脚本中使用参数开启缓存, 可设置持久化缓存 sub-store-csr-expiration-time 的值来自定义默认缓存时长, 默认为 172800000 (48 * 3600 * 1000, 即 48 小时)
@@ -38,6 +40,7 @@ async function operator(proxies = [], targetPlatform, context) {
   const http_meta_api = `${http_meta_protocol}://${http_meta_host}:${http_meta_port}`
   const http_meta_start_delay = parseFloat($arguments.http_meta_start_delay ?? 3000)
   const http_meta_proxy_timeout = parseFloat($arguments.http_meta_proxy_timeout ?? 10000)
+  const gptPrefix = $arguments.gpt_prefix ?? '[GPT] '
   const method = $arguments.method || 'get'
   const url = $arguments.client === 'Android' ? `https://android.chat.openai.com` : `https://ios.chat.openai.com`
 
@@ -72,7 +75,8 @@ async function operator(proxies = [], targetPlatform, context) {
         const cached = cache.get(id)
         if (cached) {
           if (cached.gpt) {
-            proxies[proxy._proxies_index].name = `[GPT] ${proxies[proxy._proxies_index].name}`
+            proxies[proxy._proxies_index].name = `${gptPrefix}${proxies[proxy._proxies_index].name}`
+            proxies[proxy._proxies_index]._gpt = true
           }
         } else {
           allCached = false
@@ -167,7 +171,8 @@ async function operator(proxies = [], targetPlatform, context) {
       if (cacheEnabled && cached) {
         $.info(`[${proxy.name}] 使用缓存`)
         if (cached.gpt) {
-          proxies[proxy._proxies_index].name = `[GPT] ${proxies[proxy._proxies_index].name}`
+          proxies[proxy._proxies_index].name = `${gptPrefix}${proxies[proxy._proxies_index].name}`
+          proxies[proxy._proxies_index]._gpt = true
         }
         return
       }
@@ -197,7 +202,8 @@ async function operator(proxies = [], targetPlatform, context) {
       // https://zset.cc/archives/34/
       // 更新: 403 的时候, 还得看响应
       if (status == 403 && !/unsupported_country/.test(msg)) {
-        proxies[proxy._proxies_index].name = `[GPT] ${proxies[proxy._proxies_index].name}`
+        proxies[proxy._proxies_index].name = `${gptPrefix}${proxies[proxy._proxies_index].name}`
+        proxies[proxy._proxies_index]._gpt = true
         if (cacheEnabled) {
           $.info(`[${proxy.name}] 设置成功缓存`)
           cache.set(id, { gpt: true })
