@@ -7,10 +7,13 @@
 // ...
 // 可选参数: includeUnsupportedProxy 包含官方/商店版不支持的协议 SSR. 用法: `&includeUnsupportedProxy=true`
 
+// 支持传入订阅 URL. 参数为 url. 记得 url 需要 encodeURIComponent.
+// 例如: http://a.com?token=123 应使用 url=http%3A%2F%2Fa.com%3Ftoken%3D123
+
 // ⚠️ 如果 outbounds 为空, 自动创建 COMPATIBLE(direct) 并插入 防止报错
 log(`🚀 开始`)
 
-let { type, name, outbound, includeUnsupportedProxy } = $arguments
+let { type, name, outbound, includeUnsupportedProxy, url } = $arguments
 
 log(`传入参数 type: ${type}, name: ${name}, outbound: ${outbound}`)
 
@@ -25,16 +28,37 @@ try {
   throw new Error('配置文件不是合法的 JSON')
 }
 log(`② 获取订阅`)
-log(`将读取名称为 ${name} 的 ${type === 'collection' ? '组合' : ''}订阅`)
-let proxies = await produceArtifact({
-  name,
-  type,
-  platform: 'sing-box',
-  produceType: 'internal',
-  produceOpts: {
-    'include-unsupported-proxy': includeUnsupportedProxy,
-  },
-})
+
+let proxies
+if (url) {
+  log(`直接从 URL ${url} 读取订阅`)
+  proxies = await produceArtifact({
+    name,
+    type,
+    platform: 'sing-box',
+    produceType: 'internal',
+    produceOpts: {
+      'include-unsupported-proxy': includeUnsupportedProxy,
+    },
+    subscription: {
+      name,
+      url,
+      source: 'remote',
+    },
+  })
+} else {
+  log(`将读取名称为 ${name} 的 ${type === 'collection' ? '组合' : ''}订阅`)
+  proxies = await produceArtifact({
+    name,
+    type,
+    platform: 'sing-box',
+    produceType: 'internal',
+    produceOpts: {
+      'include-unsupported-proxy': includeUnsupportedProxy,
+    },
+  })
+}
+
 log(`③ outbound 规则解析`)
 const outbounds = outbound
   .split('🕳')
