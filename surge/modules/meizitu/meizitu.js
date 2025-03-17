@@ -37,9 +37,16 @@ const MODES = {
     .join(',')
   mode = mode.join(',')
   $.log('ℹ️ mode', mode, mode_text)
+  let proxy = $.lodash_get(arg, 'PROXY')
+  if (['pimg', 'ru', 'wp', 'bd', 'sg'].includes(proxy)) {
+    $.log(`ℹ️ proxy 有效: ${proxy}`)
+  } else {
+    proxy = undefined
+    $.log(`ℹ️ proxy 无效: ${proxy}`)
+  }
   const res = await http({
     url: `https://3650000.xyz/api`,
-    params: { type: 'json', mode: mode == '0' ? undefined : mode },
+    params: { type: 'json', proxy, mode: mode == '0' ? undefined : mode },
   })
   const status = $.lodash_get(res, 'status') || $.lodash_get(res, 'statusCode') || 200
   $.log('ℹ️ res status', status)
