@@ -16,8 +16,9 @@
  * - [client] GPT 检测的客户端类型. 默认 iOS
  * - [method] 请求方法. 默认 get
  * - [gpt_prefix] 显示前缀. 默认为 "[GPT] "
- 注: 节点上总是会添加一个 _gpt 字段, 可用于脚本筛选
+ 注: 节点上总是会添加一个 _gpt 字段, 可用于脚本筛选. 新增 _gpt_latency 字段, 指响应延迟
  * - [cache] 使用缓存, 默认不使用缓存
+ * - [disable_failed_cache] 禁用失败缓存. 即不缓存失败结果
  * 关于缓存时长
  * 当使用相关脚本时, 若在对应的脚本中使用参数开启缓存, 可设置持久化缓存 sub-store-csr-expiration-time 的值来自定义默认缓存时长, 默认为 172800000 (48 * 3600 * 1000, 即 48 小时)
  * 🎈Loon 可在插件中设置
@@ -29,6 +30,7 @@ async function operator(proxies = [], targetPlatform, context) {
   const { isLoon, isSurge } = $.env
   if (!isLoon && !isSurge) throw new Error('仅支持 Loon 和 Surge(ability=http-client-policy)')
   const cacheEnabled = $arguments.cache
+  const disableFailedCache = $arguments.disable_failed_cache
   const cache = scriptResourceCache
   const gptPrefix = $arguments.gpt_prefix ?? '[GPT] '
   const method = $arguments.method || 'get'
@@ -68,12 +70,18 @@ async function operator(proxies = [], targetPlatform, context) {
       if (node) {
         const cached = cache.get(id)
         if (cacheEnabled && cached) {
-          $.info(`[${proxy.name}] 使用缓存`)
           if (cached.gpt) {
             proxy.name = `${gptPrefix}${proxy.name}`
             proxy._gpt = true
+            proxy._gpt_latency = cached.gpt_latency
+            $.info(`[${proxy.name}] 使用成功缓存`)
+            return
+          } else if (disableFailedCache) {
+            $.info(`[${proxy.name}] 不使用失败缓存`)
+          } else {
+            $.info(`[${proxy.name}] 使用失败缓存`)
+            return
           }
-          return
         }
         // 请求
         const startedAt = Date.now()
@@ -94,8 +102,7 @@ async function operator(proxies = [], targetPlatform, context) {
         } catch (e) {}
         // $.info(`body ${JSON.stringify(body, null, 2)}`)
         const msg = body?.error?.code || body?.error?.error_type || body?.cf_details
-        let latency = ''
-        latency = `${Date.now() - startedAt}`
+        const latency = Date.now() - startedAt
         $.info(`[${proxy.name}] status: ${status}, msg: ${msg}, latency: ${latency}`)
         // cf 拦截是 400 错误, 403 就是没被拦截, 走到了未鉴权的逻辑
         // https://zset.cc/archives/34/
@@ -103,9 +110,10 @@ async function operator(proxies = [], targetPlatform, context) {
         if (status == 403 && !/unsupported_country/.test(msg)) {
           proxy.name = `${gptPrefix}${proxy.name}`
           proxy._gpt = true
+          proxy._gpt_latency = latency
           if (cacheEnabled) {
             $.info(`[${proxy.name}] 设置成功缓存`)
-            cache.set(id, { gpt: true })
+            cache.set(id, { gpt: true, gpt_latency: latency })
           }
         } else {
           if (cacheEnabled) {
