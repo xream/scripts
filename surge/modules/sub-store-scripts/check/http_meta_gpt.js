@@ -24,7 +24,7 @@
  * - [gpt_prefix] 显示前缀. 默认为 "[GPT] "
  注: 节点上总是会添加一个 _gpt 字段, 可用于脚本筛选. 新增 _gpt_latency 字段, 指响应延迟
  * - [cache] 使用缓存, 默认不使用缓存
- * - [disable_failed_cache] 禁用失败缓存. 即不缓存失败结果
+ * - [disable_failed_cache/ignore_failed_error] 禁用失败缓存. 即不缓存失败结果
  * 关于缓存时长
  * 当使用相关脚本时, 若在对应的脚本中使用参数开启缓存, 可设置持久化缓存 sub-store-csr-expiration-time 的值来自定义默认缓存时长, 默认为 172800000 (48 * 3600 * 1000, 即 48 小时)
  * 🎈Loon 可在插件中设置
@@ -33,7 +33,7 @@
 
 async function operator(proxies = [], targetPlatform, context) {
   const cacheEnabled = $arguments.cache
-  const disableFailedCache = $arguments.disable_failed_cache
+  const disableFailedCache = $arguments.disable_failed_cache || $arguments.ignore_failed_error
   const cache = scriptResourceCache
   const http_meta_host = $arguments.http_meta_host ?? '127.0.0.1'
   const http_meta_port = $arguments.http_meta_port ?? 9876

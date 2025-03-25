@@ -19,6 +19,7 @@
  * - [telegram_bot_token] Telegram Bot Token
  * - [telegram_chat_id] Telegram Chat ID
  * - [cache] 使用缓存, 默认不使用缓存
+ * - [disable_failed_cache/ignore_failed_error] 禁用失败缓存. 即不缓存失败结果
  * 关于缓存时长
  * 当使用相关脚本时, 若在对应的脚本中使用参数开启缓存, 可设置持久化缓存 sub-store-csr-expiration-time 的值来自定义默认缓存时长, 默认为 172800000 (48 * 3600 * 1000, 即 48 小时)
  * 🎈Loon 可在插件中设置
@@ -32,6 +33,7 @@ async function operator(proxies = [], targetPlatform, env) {
   const telegram_chat_id = $arguments.telegram_chat_id
   const telegram_bot_token = $arguments.telegram_bot_token
   const cacheEnabled = $arguments.cache
+  const disableFailedCache = $arguments.disable_failed_cache || $arguments.ignore_failed_error
   const cache = scriptResourceCache
   const method = $arguments.method || 'head'
   const keepIncompatible = $arguments.keep_incompatible
@@ -106,15 +108,20 @@ async function operator(proxies = [], targetPlatform, env) {
       if (node) {
         const cached = cache.get(id)
         if (cacheEnabled && cached) {
-          $.info(`[${proxy.name}] 使用缓存`)
           if (cached.latency) {
             validProxies.push({
               ...proxy,
               name: `${$arguments.show_latency ? `[${cached.latency}] ` : ''}${proxy.name}`,
               _latency: cached.latency,
             })
+            $.info(`[${proxy.name}] 使用成功缓存`)
+            return
+          } else if (disableFailedCache) {
+            $.info(`[${proxy.name}] 不使用失败缓存`)
+          } else {
+            $.info(`[${proxy.name}] 使用失败缓存`)
+            return
           }
-          return
         }
         // 请求
         const startedAt = Date.now()

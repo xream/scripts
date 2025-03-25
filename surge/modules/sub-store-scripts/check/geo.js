@@ -20,7 +20,6 @@
  *         当使用 internal 时, 默认为 http://checkip.amazonaws.com
  * - [format] 自定义格式, 从 节点(proxy) 和 落地 API 响应(api)中取数据. 默认为: {{api.country}} {{api.isp}} - {{proxy.name}}
  *            当使用 internal 时, 默认为 {{api.countryCode}} {{api.aso}} - {{proxy.name}}
- * - [ignore_failed_error] 忽略失败缓存. 默认不忽略失败缓存. 若设置为忽略, 之前失败的结果即使有缓存也会再测一次
  * - [geo] 在节点上附加 _geo 字段(API 响应数据), 默认不附加
  * - [incompatible] 在节点上附加 _incompatible 字段来标记当前客户端不兼容该协议, 默认不附加
  * - [remove_incompatible] 移除当前客户端不兼容的协议. 默认不移除.
@@ -29,6 +28,7 @@
  * - [surge_http_api_protocol] HTTP API 的 协议. 默认 http
  * - [surge_http_api_key] HTTP API 的 密码
  * - [cache] 使用缓存. 默认不使用缓存
+ * - [disable_failed_cache/ignore_failed_error] 禁用失败缓存. 即不缓存失败结果
  * 关于缓存时长
  * 当使用相关脚本时, 若在对应的脚本中使用参数开启缓存, 可设置持久化缓存 sub-store-csr-expiration-time 的值来自定义默认缓存时长, 默认为 172800000 (48 * 3600 * 1000, 即 48 小时)
  * 🎈Loon 可在插件中设置
@@ -64,7 +64,7 @@ async function operator(proxies = [], targetPlatform, context) {
   if (!surge_http_api_enabled && !isLoon && !isSurge)
     throw new Error('请使用 Loon, Surge(ability=http-client-policy) 或 配置 HTTP API')
 
-  const ignore_failed_error = $arguments.ignore_failed_error
+  const disableFailedCache = $arguments.disable_failed_cache || $arguments.ignore_failed_error
   const remove_failed = $arguments.remove_failed
   const remove_incompatible = $arguments.remove_incompatible
   const incompatibleEnabled = $arguments.incompatible
@@ -138,8 +138,8 @@ async function operator(proxies = [], targetPlatform, context) {
             proxy._geo = cached.api
             return
           } else {
-            if (ignore_failed_error) {
-              $.info(`[${proxy.name}] 忽略失败缓存`)
+            if (disableFailedCache) {
+              $.info(`[${proxy.name}] 不使用失败缓存`)
             } else {
               $.info(`[${proxy.name}] 使用失败缓存`)
               return
