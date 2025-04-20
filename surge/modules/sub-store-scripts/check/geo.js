@@ -20,6 +20,7 @@
  *         当使用 internal 时, 默认为 http://checkip.amazonaws.com
  * - [format] 自定义格式, 从 节点(proxy) 和 落地 API 响应(api)中取数据. 默认为: {{api.country}} {{api.isp}} - {{proxy.name}}
  *            当使用 internal 时, 默认为 {{api.countryCode}} {{api.aso}} - {{proxy.name}}
+ * - [regex] 使用正则表达式从落地 API 响应(api)中取数据. 格式为 a:x;b:y 此时将使用正则表达式 x 和 y 来从 api 中取数据, 赋值给 a 和 b. 然后可在 format 中使用 {{api.a}} 和 {{api.b}}
  * - [geo] 在节点上附加 _geo 字段(API 响应数据), 默认不附加
  * - [incompatible] 在节点上附加 _incompatible 字段来标记当前客户端不兼容该协议, 默认不附加
  * - [remove_incompatible] 移除当前客户端不兼容的协议. 默认不移除.
@@ -43,6 +44,7 @@ async function operator(proxies = [], targetPlatform, context) {
   const $ = $substore
   const { isLoon, isSurge, isNode } = $.env
   const internal = $arguments.internal
+  const regex = $arguments.regex
   let format = $arguments.format || '{{api.country}} {{api.isp}} - {{proxy.name}}'
   let url = $arguments.api || 'http://ip-api.com/json?lang=zh-CN'
   if (internal) {
@@ -125,7 +127,7 @@ async function operator(proxies = [], targetPlatform, context) {
     // $.info(`[${proxy.name}] 检测`)
     // $.info(`检测 ${JSON.stringify(proxy, null, 2)}`)
     const id = cacheEnabled
-      ? `geo:${url}:${format}:${internal}:${JSON.stringify(
+      ? `geo:${url}:${format}:${regex}:${internal}:${JSON.stringify(
           Object.fromEntries(Object.entries(proxy).filter(([key]) => !/^(collectionName|subName|id|_.*)$/i.test(key)))
         )}`
       : undefined
@@ -138,7 +140,7 @@ async function operator(proxies = [], targetPlatform, context) {
           if (cached.api) {
             $.info(`[${proxy.name}] 使用成功缓存`)
             $.log(`[${proxy.name}] api: ${JSON.stringify(cached.api, null, 2)}`)
-            proxy.name = formatter({ proxy, api: cached.api, format })
+            proxy.name = formatter({ proxy, api: cached.api, format, regex })
             proxy._geo = cached.api
             return
           } else {
@@ -182,7 +184,7 @@ async function operator(proxies = [], targetPlatform, context) {
 
         $.log(`[${proxy.name}] api: ${JSON.stringify(api, null, 2)}`)
         if (status == 200) {
-          proxy.name = formatter({ proxy, api, format })
+          proxy.name = formatter({ proxy, api, format, regex })
           proxy._geo = api
           if (cacheEnabled) {
             $.info(`[${proxy.name}] 设置成功缓存`)
@@ -272,7 +274,23 @@ async function operator(proxies = [], targetPlatform, context) {
     }
     return result
   }
-  function formatter({ proxy = {}, api = {}, format = '' }) {
+  function formatter({ proxy = {}, api = {}, format = '', regex = '' }) {
+    if (regex) {
+      const regexPairs = regex.split(/\s*;\s*/g).filter(Boolean)
+      const extracted = {}
+      for (const pair of regexPairs) {
+        const [key, pattern] = pair.split(/\s*:\s*/g).map(s => s.trim())
+        if (key && pattern) {
+          try {
+            const reg = new RegExp(pattern)
+            extracted[key] = (typeof api === 'string' ? api : JSON.stringify(api)).match(reg)?.[1]?.trim()
+          } catch (e) {
+            $.error(`正则表达式解析错误: ${e.message}`)
+          }
+        }
+      }
+      api = { ...api, ...extracted }
+    }
     let f = format.replace(/\{\{(.*?)\}\}/g, '${$1}')
     return eval(`\`${f}\``)
   }

@@ -30,6 +30,7 @@
  *         当使用 internal 时, 默认为 http://checkip.amazonaws.com
  * - [format] 自定义格式, 从 节点(proxy) 和 API 响应(api) 中取数据. 默认为: {{api.country}} {{api.isp}} - {{proxy.name}}
  *            当使用 internal 时, 默认为 {{api.countryCode}} {{api.aso}} - {{proxy.name}}
+ * - [regex] 使用正则表达式从落地 API 响应(api)中取数据. 格式为 a:x;b:y 此时将使用正则表达式 x 和 y 来从 api 中取数据, 赋值给 a 和 b. 然后可在 format 中使用 {{api.a}} 和 {{api.b}}
  * - [geo] 在节点上附加 _geo 字段, 默认不附加
  * - [incompatible] 在节点上附加 _incompatible 字段来标记当前客户端不兼容该协议, 默认不附加
  * - [remove_incompatible] 移除当前客户端不兼容的协议. 默认不移除.
@@ -69,6 +70,7 @@ async function operator(proxies = [], targetPlatform, context) {
   const internal = $arguments.internal
   const mmdb_country_path = $arguments.mmdb_country_path
   const mmdb_asn_path = $arguments.mmdb_asn_path
+  const regex = $arguments.regex
   let format = $arguments.format || '{{api.country}} {{api.isp}} - {{proxy.name}}'
   let url = $arguments.api || 'http://ip-api.com/json?lang=zh-CN'
   let utils
@@ -110,7 +112,7 @@ async function operator(proxies = [], targetPlatform, context) {
       let allCached = true
       for (var i = 0; i < internalProxies.length; i++) {
         const proxy = internalProxies[i]
-        const id = getCacheId({ proxy, url, format })
+        const id = getCacheId({ proxy, url, format, regex })
         const cached = cache.get(id)
         if (cached) {
           if (cached.api) {
@@ -118,6 +120,7 @@ async function operator(proxies = [], targetPlatform, context) {
               proxy: proxies[proxy._proxies_index],
               api: cached.api,
               format,
+              regex,
             })
             proxies[proxy._proxies_index]._geo = cached.api
           } else {
@@ -235,7 +238,7 @@ async function operator(proxies = [], targetPlatform, context) {
   async function check(proxy) {
     // $.info(`[${proxy.name}] 检测`)
     // $.info(`检测 ${JSON.stringify(proxy, null, 2)}`)
-    const id = cacheEnabled ? getCacheId({ proxy, url, format }) : undefined
+    const id = cacheEnabled ? getCacheId({ proxy, url, format, regex }) : undefined
     // $.info(`检测 ${id}`)
     try {
       const cached = cache.get(id)
@@ -247,6 +250,7 @@ async function operator(proxies = [], targetPlatform, context) {
             proxy: proxies[proxy._proxies_index],
             api: cached.api,
             format,
+            regex,
           })
           if (geoEnabled) proxies[proxy._proxies_index]._geo = cached.api
           return
@@ -291,7 +295,7 @@ async function operator(proxies = [], targetPlatform, context) {
       }
 
       if (status == 200) {
-        proxies[proxy._proxies_index].name = formatter({ proxy: proxies[proxy._proxies_index], api, format })
+        proxies[proxy._proxies_index].name = formatter({ proxy: proxies[proxy._proxies_index], api, format, regex })
         proxies[proxy._proxies_index]._geo = api
         if (cacheEnabled) {
           $.info(`[${proxy.name}] 设置成功缓存`)
@@ -350,12 +354,28 @@ async function operator(proxies = [], targetPlatform, context) {
     }
     return result
   }
-  function formatter({ proxy = {}, api = {}, format = '' }) {
+  function formatter({ proxy = {}, api = {}, format = '', regex = '' }) {
+    if (regex) {
+      const regexPairs = regex.split(/\s*;\s*/g).filter(Boolean)
+      const extracted = {}
+      for (const pair of regexPairs) {
+        const [key, pattern] = pair.split(/\s*:\s*/g).map(s => s.trim())
+        if (key && pattern) {
+          try {
+            const reg = new RegExp(pattern)
+            extracted[key] = (typeof api === 'string' ? api : JSON.stringify(api)).match(reg)?.[1]?.trim()
+          } catch (e) {
+            $.error(`正则表达式解析错误: ${e.message}`)
+          }
+        }
+      }
+      api = { ...api, ...extracted }
+    }
     let f = format.replace(/\{\{(.*?)\}\}/g, '${$1}')
     return eval(`\`${f}\``)
   }
-  function getCacheId({ proxy = {}, url, format }) {
-    return `http-meta:geo:${url}:${format}:${internal}:${JSON.stringify(
+  function getCacheId({ proxy = {}, url, format, regex }) {
+    return `http-meta:geo:${url}:${format}:${regex}:${internal}:${JSON.stringify(
       Object.fromEntries(Object.entries(proxy).filter(([key]) => !/^(collectionName|subName|id|_.*)$/i.test(key)))
     )}`
   }
