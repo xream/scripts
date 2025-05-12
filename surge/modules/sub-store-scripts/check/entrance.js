@@ -24,6 +24,7 @@
  * - [api] 测入口的 API . 默认为 http://ip-api.com/json/{{proxy.server}}?lang=zh-CN
  * - [format] 自定义格式, 从 节点(proxy) 和 入口(api)中取数据. 默认为: {{api.country}} {{api.isp}} - {{proxy.name}}
  *            当使用 internal 时, 默认为 {{api.countryCode}} {{api.aso}} - {{proxy.name}}
+ * - [regex] 使用正则表达式从落地 API 响应(api)中取数据. 格式为 a:x;b:y 此时将使用正则表达式 x 和 y 来从 api 中取数据, 赋值给 a 和 b. 然后可在 format 中使用 {{api.a}} 和 {{api.b}}
  * - [valid] 验证 api 请求是否合法. 默认: ProxyUtils.isIP('{{api.ip || api.query}}')
  *           当使用 internal 时, 默认为 "{{api.countryCode || api.aso}}".length > 0
  * - [uniq_key] 设置缓存唯一键名包含的节点数据字段名匹配正则. 默认为 ^server$ 即服务器地址相同的节点共享缓存
@@ -49,6 +50,7 @@ async function operator(proxies = [], targetPlatform, context) {
   const internal = $arguments.internal
   const mmdb_country_path = $arguments.mmdb_country_path
   const mmdb_asn_path = $arguments.mmdb_asn_path
+  const regex = $arguments.regex
   let valid = $arguments.valid || `ProxyUtils.isIP('{{api.ip || api.query}}')`
   let format = $arguments.format || `{{api.country}} {{api.isp}} - {{proxy.name}}`
   let utils
@@ -124,7 +126,7 @@ async function operator(proxies = [], targetPlatform, context) {
     // $.info(`[${proxy.name}] 检测`)
     // $.info(`检测 ${JSON.stringify(proxy, null, 2)}`)
     const id = cacheEnabled
-      ? `entrance:${url}:${format}:${internal}:${JSON.stringify(
+      ? `entrance:${url}:${format}:${regex}:${internal}:${JSON.stringify(
           Object.fromEntries(
             Object.entries(proxy).filter(([key]) => {
               const re = new RegExp(uniq_key)
@@ -140,7 +142,7 @@ async function operator(proxies = [], targetPlatform, context) {
         if (cached.api) {
           $.info(`[${proxy.name}] 使用成功缓存`)
           $.log(`[${proxy.name}] api: ${JSON.stringify(cached.api, null, 2)}`)
-          proxy.name = formatter({ proxy, api: cached.api, format })
+          proxy.name = formatter({ proxy, api: cached.api, format, regex })
           proxy._entrance = cached.api
           return
         } else {
@@ -161,8 +163,8 @@ async function operator(proxies = [], targetPlatform, context) {
           aso: utils.ipaso(proxy.server) || '',
         }
         $.info(`[${proxy.name}] countryCode: ${api.countryCode}, aso: ${api.aso}`)
-        if ((api.countryCode || api.aso) && eval(formatter({ api, format: valid }))) {
-          proxy.name = formatter({ proxy, api, format })
+        if ((api.countryCode || api.aso) && eval(formatter({ api, format: valid, regex }))) {
+          proxy.name = formatter({ proxy, api, format, regex })
           proxy._entrance = api
           if (cacheEnabled) {
             $.info(`[${proxy.name}] 设置成功缓存`)
@@ -191,8 +193,8 @@ async function operator(proxies = [], targetPlatform, context) {
         let latency = ''
         latency = `${Date.now() - startedAt}`
         $.info(`[${proxy.name}] status: ${status}, latency: ${latency}`)
-        if (status == 200 && eval(formatter({ api, format: valid }))) {
-          proxy.name = formatter({ proxy, api, format })
+        if (status == 200 && eval(formatter({ api, format: valid, regex }))) {
+          proxy.name = formatter({ proxy, api, format, regex })
           proxy._entrance = api
           if (cacheEnabled) {
             $.info(`[${proxy.name}] 设置成功缓存`)
@@ -251,7 +253,24 @@ async function operator(proxies = [], targetPlatform, context) {
     }
     return result
   }
-  function formatter({ proxy = {}, api = {}, format = '' }) {
+  function formatter({ proxy = {}, api = {}, format = '', regex = '' }) {
+    if (regex) {
+      const regexPairs = regex.split(/\s*;\s*/g).filter(Boolean)
+      const extracted = {}
+      for (const pair of regexPairs) {
+        const [key, pattern] = pair.split(/\s*:\s*/g).map(s => s.trim())
+        if (key && pattern) {
+          try {
+            const reg = new RegExp(pattern)
+            extracted[key] = (typeof api === 'string' ? api : JSON.stringify(api)).match(reg)?.[1]?.trim()
+          } catch (e) {
+            $.error(`正则表达式解析错误: ${e.message}`)
+          }
+        }
+      }
+      api = { ...api, ...extracted }
+    }
+
     let f = format.replace(/\{\{(.*?)\}\}/g, '${$1}')
     return eval(`\`${f}\``)
   }
