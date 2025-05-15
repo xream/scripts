@@ -1,7 +1,7 @@
-async function operator(proxies = [], targetPlatform, env) {
+async function operator(proxies = [], targetPlatform, context) {
   let args = $arguments || {}
   const { parseFlowHeaders, getFlowHeaders, flowTransfer, getRmainingDays } = flowUtils
-  const sub = env.source[proxies?.[0]?._subName || proxies?.[0]?.subName]
+  const sub = context.source[proxies?.[0]?._subName || proxies?.[0]?.subName]
   let subInfo
   if (sub.source === 'local' && !['localFirst', 'remoteFirst'].includes(sub.mergeSources)) {
     if (sub.subUserinfo) {
