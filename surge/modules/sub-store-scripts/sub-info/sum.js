@@ -7,8 +7,8 @@ async function operator(proxies = [], targetPlatform, context) {
   const COLLECTIONS_KEY = 'collections'
   const $ = $substore
   const { source } = context
-  if (!source._collection || Object.keys(source).length > 1)
-    throw new Error('暂时仅支持组合订阅, 请在组合订阅中使用此脚本')
+  const { _collection: collection } = source
+  if (!collection || Object.keys(source).length > 1) throw new Error('暂时仅支持组合订阅, 请在组合订阅中使用此脚本')
 
   const allSubs = $.read(SUBS_KEY) || []
   let uploadSum = 0
@@ -18,8 +18,23 @@ async function operator(proxies = [], targetPlatform, context) {
   let args = $arguments || {}
   const { parseFlowHeaders, getFlowHeaders, flowTransfer, getRmainingDays } = flowUtils
 
+  const subnames = [...collection.subscriptions]
+  let subscriptionTags = collection.subscriptionTags
+  if (Array.isArray(subscriptionTags) && subscriptionTags.length > 0) {
+    allSubs.forEach(sub => {
+      if (
+        Array.isArray(sub.tag) &&
+        sub.tag.length > 0 &&
+        !subnames.includes(sub.name) &&
+        sub.tag.some(tag => subscriptionTags.includes(tag))
+      ) {
+        subnames.push(sub.name)
+      }
+    })
+  }
+
   for await (const sub of allSubs) {
-    if (source._collection.subscriptions.includes(sub.name)) {
+    if (subnames.includes(sub.name)) {
       let subInfo
       if (sub.source === 'local' && !['localFirst', 'remoteFirst'].includes(sub.mergeSources)) {
         if (sub.subUserinfo) {
@@ -78,7 +93,7 @@ async function operator(proxies = [], targetPlatform, context) {
 
   const allCols = $.read(COLLECTIONS_KEY) || []
   for (var index = 0; index < allCols.length; index++) {
-    if (source._collection.name === allCols[index].name) {
+    if (collection.name === allCols[index].name) {
       // 写入订阅流量信息
       allCols[index].subUserinfo = `upload=${uploadSum}; download=${downloadSum}; total=${totalSum}`
       break
