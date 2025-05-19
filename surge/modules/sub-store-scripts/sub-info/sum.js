@@ -14,6 +14,7 @@ async function operator(proxies = [], targetPlatform, context) {
   let uploadSum = 0
   let downloadSum = 0
   let totalSum = 0
+  let expire
 
   let args = $arguments || {}
   const { parseFlowHeaders, getFlowHeaders, flowTransfer, getRmainingDays } = flowUtils
@@ -83,10 +84,14 @@ async function operator(proxies = [], targetPlatform, context) {
         const {
           total,
           usage: { upload, download },
+          expires,
         } = parseFlowHeaders(subInfo)
         if (upload > 0) uploadSum += upload
         if (download > 0) downloadSum += download
         if (total > 0) totalSum += total
+        if (expires && expires * 1000 > Date.now()) {
+          expire = expire ? Math.min(expire, expires) : expires
+        }
       }
     }
   }
@@ -95,7 +100,9 @@ async function operator(proxies = [], targetPlatform, context) {
   for (var index = 0; index < allCols.length; index++) {
     if (collection.name === allCols[index].name) {
       // 写入订阅流量信息
-      allCols[index].subUserinfo = `upload=${uploadSum}; download=${downloadSum}; total=${totalSum}`
+      allCols[index].subUserinfo = `upload=${uploadSum}; download=${downloadSum}; total=${totalSum}${
+        expire ? ` ; expire=${expire}` : ''
+      }`
       break
     }
   }
