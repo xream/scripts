@@ -19,13 +19,14 @@ log(`传入参数 type: ${type}, name: ${name}, outbound: ${outbound}`)
 
 type = /^1$|col|组合/i.test(type) ? 'collection' : 'subscription'
 
-log(`① 解析配置文件`)
+const parser = ProxyUtils.JSON5 || JSON
+log(`① 使用 ${ProxyUtils.JSON5 ? 'JSON5' : 'JSON'} 解析配置文件`)
 let config
 try {
-  config = JSON.parse($content ?? $files[0])
+  config = parser.parse($content ?? $files[0])
 } catch (e) {
   log(`${e.message ?? e}`)
-  throw new Error('配置文件不是合法的 JSON')
+  throw new Error(`配置文件不是合法的 ${ProxyUtils.JSON5 ? 'JSON5' : 'JSON'} 格式`)
 }
 log(`② 获取订阅`)
 
