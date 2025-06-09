@@ -12,10 +12,11 @@ async function operator(proxies = [], targetPlatform, context) {
   // justmysocks 为例
   // justmysocks 套了 cf 可能风控了
   // 可尝试这样:
-  // - 在浏览器里能打开一次 https://justmysocks5.net/members/getbwcounter.php?service=xxxx&id=xxxxxxxxxxxxxxxxxx
-  // - 打开任何一个可以查你浏览器当前 User-Agent 的网站, 复制你的 User-Agent
-  // - 编辑我脚本中的 User-Agent, 粘贴上你的 User-Agent
-  // - 保存并重试
+  // 1. 可以尝试套一个其他的服务 比如 https://proxy.api.030101.xyz/https://justmysocks5.net/members/getbwcounter.php?service=xxxx&id=xxxxxxxxxxxxxxxxxx
+  // 2. 在浏览器里能打开一次 https://justmysocks5.net/members/getbwcounter.php?service=xxxx&id=xxxxxxxxxxxxxxxxxx
+  // 打开任何一个可以查你浏览器当前 User-Agent 的网站, 复制你的 User-Agent
+  // 编辑我脚本中的 User-Agent, 粘贴上你的 User-Agent
+  // 保存并重试
   const res = await $.http.get({
     url: 'https://justmysocks5.net/members/getbwcounter.php?service=xxxx&id=xxxxxxxxxxxxxxxxxx',
     headers: {
