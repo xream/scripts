@@ -152,6 +152,10 @@ function operator(proxies = []) {
           _.set(p, 'shadow-tls-sni', host)
         } else if (isSnell) {
           _.set(p, 'obfs-opts.host', host)
+          if (_.get(p, 'version') === 5) {
+            /* snell v5 自带 quic (https://kb.nssurge.com/surge-knowledge-base/zh/release-notes/surge-mac-6-release-note#quic-proxy-mode), UDP over UDP 不免. 但是兼容 v4, 客户端设置 version 为 4 即可 */
+            _.set(p, 'version', 4)
+          }
         } else {
           /* 把 非 server 的部分都设置为 host */
           _.set(p, 'servername', host)
