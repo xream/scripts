@@ -1,7 +1,10 @@
 {
   "name": "dns",
-  "module": "index.js",
+  "module": "dns.js",
   "type": "module",
+  "scripts": {
+    "build": "bun build ./dns.js --outdir ./build --entry-naming [dir]/[name].[ext] --target browser --minify"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
