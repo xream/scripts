@@ -17,8 +17,8 @@ log(`传入的 $argument: ${JSON.stringify(arg, null, 2)}`)
 let result = { addresses: [], ttl: parseInt(arg?.ttl || 60) }
 !(async () => {
   let type = arg?.type
-  let doh = arg?.doh || 'https://8.8.4.4/dns-query'
-  doh = doh.split(/\s*,\s*/).filter(i => /https?:\/\//.test(i))
+  let doh3 = arg?.doh3 || 'h3://8.8.4.4/dns-query'
+  doh3 = doh3.split(/\s*,\s*/).filter(i => /h3?:\/\//.test(i))
   const domain = $domain
   const timeout = parseInt(arg?.timeout || 2)
   let edns
@@ -34,10 +34,10 @@ let result = { addresses: [], ttl: parseInt(arg?.ttl || 60) }
   }
   edns = edns || '114.114.114.114'
 
-  log(`[${domain}] 使用 ${doh.join(', ')} edns ${edns} 查询 ${type} 结果`)
+  log(`[${domain}] 使用 ${doh3.join(', ')} edns ${edns} 查询 ${type} 结果`)
   const defaultTtl = parseInt(arg?.ttl || 60)
   const queries = async types => {
-    const promises = doh.map(async url => {
+    const promises = doh3.map(async url => {
       const res = await Promise.all(
         types.map(type =>
           query({
