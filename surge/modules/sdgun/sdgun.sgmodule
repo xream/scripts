@@ -1,0 +1,31 @@
+#!name=SDGun 社区 Tablet 访问
+#!desc=替换 User-Agent, 修改 JS/CSS, 允许不安全的图片/视频资源, 视频链接 VLC 播放
+#!category=xream
+#!arguments=fontSize:5vw,imageVideoMaxWidth:50vw,imageVideoMaxHeight:50vh,video:sdgun_video
+#!arguments-desc=fontSize: 字体大小\nimageVideoMaxWidth: 图片视频最大宽度\nimageVideoMaxHeight: 图片视频最大高度\nvideo: 抓取视频链接使用 VLC 播放. 如需禁用, 请填一个英文井号 #
+
+[Header Rewrite]
+
+http-request ^https?:\/\/bbs\.sdgun\.com\.cn header-del User-Agent
+http-request ^https?:\/\/bbs\.sdgun\.com\.cn header-add User-Agent "Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1 Edg/135.0.0.0"
+
+
+# [URL Rewrite]
+
+# (^https?:\/\/bbs\.sdgun\.com\.cn\/forum\.php\?mod=viewthread&.*?mobile=)1(&.*?$|$) $1no$2 302
+# (^https?:\/\/bbs\.sdgun\.com\.cn\/forum-.*?\.html)(?!.*mobile=1) $1?mobile=1 302
+# (^https?:\/\/bbs\.sdgun\.com\.cn\/forum\.php\?gid=\d+)(?!.*mobile=1) $1&mobile=1 302
+
+
+[Body Rewrite]
+
+http-response "^https?:\/\/bbs\.sdgun\.com\.cn\/template\/.*?\/image\/common\.js" "(supporttouch\s*=\s*).*?(\r?\n)" "$1true;$2"
+http-response "^https?:\/\/bbs\.sdgun\.com\.cn\/template\/.*?\/image\/style\.css" "\/\*\ common\ \*\/" "html { font-size: {{{fontSize}}} !important; } img, video { max-width: {{{imageVideoMaxWidth}}} !important; max-height: {{{imageVideoMaxHeight}}} !important; }"
+
+[Script]
+
+{{{video}}} = type=http-request,pattern=^https?:\/\/picapp\.sdgun\.net\/video\/.*?\.mp4,script-path=https://raw.githubusercontent.com/xream/scripts/main/surge/modules/sdgun/sdgun_video.js,timeout=120
+
+[MITM]
+
+hostname = %APPEND% bbs.sdgun.com.cn, picapp.sdgun.net
