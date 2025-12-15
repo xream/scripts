@@ -11,8 +11,8 @@ $.isRequest = () => typeof $request !== 'undefined'
   $.debug($.toStr($request, {}, null, 2))
   if (
     $request.method === 'GET' &&
-    $request.headers['User-Agent']?.includes('|shuidan|') &&
-    $request.headers['Range'] === 'bytes=0-1'
+    ($request.headers['User-Agent'] || $request.headers['user-agent'])?.includes('|shuidan|') &&
+    ($request.headers['Range'] || $request.headers['range']) === 'bytes=0-1'
   ) {
     $.msg('SDGun 提取视频', '点击通知 打开 VLC 播放', `✅ ${$request.url}`, {
       $open: `vlc://${$request.url}`,
