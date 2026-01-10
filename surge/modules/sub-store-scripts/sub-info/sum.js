@@ -1,6 +1,6 @@
 // 合并组合订阅中单条订阅的流量 仅做流量加法
-// 这个是拉取订阅的时候 去写入流量信息
-// 所以可能是下一次才会在客户端里看到新的流量信息
+// 旧版是拉取订阅的时候 去写入流量信息 所以可能是下一次才会在客户端里看到新的流量信息
+// 新版 后端 >= 2.20.69 是实时的
 
 async function operator(proxies = [], targetPlatform, context) {
   const SUBS_KEY = 'subs'
@@ -95,18 +95,29 @@ async function operator(proxies = [], targetPlatform, context) {
       }
     }
   }
+  const subUserInfo = `upload=${uploadSum}; download=${downloadSum}; total=${totalSum}${
+    expire ? ` ; expire=${expire}` : ''
+  }`
 
+  // 旧版需要写入, 返回响应头里使用这个
   const allCols = $.read(COLLECTIONS_KEY) || []
   for (var index = 0; index < allCols.length; index++) {
     if (collection.name === allCols[index].name) {
       // 写入订阅流量信息
-      allCols[index].subUserinfo = `upload=${uploadSum}; download=${downloadSum}; total=${totalSum}${
-        expire ? ` ; expire=${expire}` : ''
-      }`
+      allCols[index].subUserinfo = subUserInfo
       break
     }
   }
   $.write(allCols, COLLECTIONS_KEY)
+
+  // 新版直接可以加到响应头里
+  if ($options) {
+    $options._res = {
+      headers: {
+        'subscription-userinfo': subUserInfo,
+      },
+    }
+  }
 
   return proxies
 }

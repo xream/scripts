@@ -1,5 +1,5 @@
-// 这个是拉取订阅的时候 去写入流量信息
-// 所以可能是下一次才会在客户端里看到新的流量信息
+// 旧版是拉取订阅的时候 去写入流量信息 所以可能是下一次才会在客户端里看到新的流量信息
+// 新版 后端 >= 2.20.69 是实时的
 
 async function operator(proxies = [], targetPlatform, context) {
   const SUBS_KEY = 'subs'
@@ -35,6 +35,9 @@ async function operator(proxies = [], targetPlatform, context) {
   const total = body.monthly_bw_limit_b
   const expire = 0 // 可以没有到期时间
 
+  const subUserinfo = `upload=${upload}; download=${download}; total=${total}${expire ? `; expire=${expire}` : ''}`
+
+  // 旧版需要写入, 返回响应头里使用这个
   const allSubs = $.read(SUBS_KEY) || []
   for (const name in source) {
     const sub = source[name]
@@ -43,9 +46,7 @@ async function operator(proxies = [], targetPlatform, context) {
       for (var index = 0; index < allSubs.length; index++) {
         if (sub.name === allSubs[index].name) {
           // 写入订阅流量信息
-          allSubs[index].subUserinfo = `upload=${upload}; download=${download}; total=${total}${
-            expire ? `; expire=${expire}` : ''
-          }`
+          allSubs[index].subUserinfo = subUserinfo
           break
         }
       }
@@ -53,6 +54,15 @@ async function operator(proxies = [], targetPlatform, context) {
     }
   }
   $.write(allSubs, SUBS_KEY)
+
+  // 新版直接可以加到响应头里
+  if ($options) {
+    $options._res = {
+      headers: {
+        'subscription-userinfo': subUserInfo,
+      },
+    }
+  }
 
   return proxies
 }
