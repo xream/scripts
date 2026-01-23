@@ -119,7 +119,25 @@ if (typeof $argument != 'undefined') {
     response: {
       status: 200,
       headers: { 'Content-Type': 'text/html' },
-      body: `<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="https://unpkg.com/simpledotcss/simple.min.css"><style>pre code { white-space: pre-wrap; } h2, h3 { margin-top: 0 } blockquote { margin-inline-start: 0; margin-inline-end: 0; margin-block: 0 }</style></head><body><pre><code>${translated}</pre></code><pre><code>${text}</pre></code></body></html>`,
+      body: `<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="https://unpkg.com/simpledotcss/simple.min.css">
+</head>
+
+<body>
+  <pre id="translated-md" style="display: none"><code>${translated}</pre></code>
+  <pre id="text-md" style="display: none"><code>${text}</pre></code>
+  <section id="translated"></section>
+  <section id="text"></section>
+  <script src="https://unpkg.com/marked/lib/marked.umd.js"></script>
+  <script>
+    document.getElementById('translated').innerHTML = marked.parse(document.getElementById('translated-md').textContent);
+    document.getElementById('text').innerHTML = marked.parse(document.getElementById('text-md').textContent);
+  </script>
+</body>
+
+</html>`,
     },
   }
 })()
