@@ -13,30 +13,30 @@ async function operator(proxies = [], targetPlatform, context) {
           .map(i => i.trim())
           .filter(i => i.length)?.[0] || ''
 
-      let $arguments = {}
-      const rawArgs = url.split('#')
+      let urlArgs = {}
+      rawArgs = url.split('#')
       url = url.split('#')[0]
       if (rawArgs.length > 1) {
         try {
           // 支持 `#${encodeURIComponent(JSON.stringify({arg1: "1"}))}`
-          $arguments = JSON.parse(decodeURIComponent(rawArgs[1]))
+          urlArgs = JSON.parse(decodeURIComponent(rawArgs[1]))
         } catch (e) {
           for (const pair of rawArgs[1].split('&')) {
             const key = pair.split('=')[0]
             const value = pair.split('=')[1]
             // 部分兼容之前的逻辑 const value = pair.split('=')[1] || true;
-            $arguments[key] = value == null || value === '' ? true : decodeURIComponent(value)
+            urlArgs[key] = value == null || value === '' ? true : decodeURIComponent(value)
           }
         }
       }
-      if (!$arguments.noFlow && /^https?/.test(url)) {
+      if (!urlArgs.noFlow && /^https?/.test(url)) {
         // forward flow headers
         flowInfo = await getFlowHeaders(
-          $arguments?.insecure ? `${url}#insecure` : url,
-          $arguments.flowUserAgent,
+          urlArgs?.insecure ? `${url}#insecure` : url,
+          urlArgs.flowUserAgent,
           undefined,
           sub.proxy,
-          $arguments.flowUrl
+          urlArgs.flowUrl
         )
         if (flowInfo) {
           const headers = normalizeFlowHeader(flowInfo, true)
@@ -45,6 +45,7 @@ async function operator(proxies = [], targetPlatform, context) {
           }
         }
       }
+      args = { ...urlArgs, ...args }
     } catch (err) {
       $.error(`订阅 ${sub.name} 获取流量信息时发生错误: ${JSON.stringify(err)}`)
       $.error(err?.message)
