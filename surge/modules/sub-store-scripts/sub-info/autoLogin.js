@@ -26,13 +26,16 @@ async function operator(proxies = [], targetPlatform, context) {
 
     // ⚠️ 从某个字段取, 分析了俩机场 有的是 domain 有的是 hosts
     api = configRes.hosts?.[0] || configRes.domain?.[0]
+    // 支持读取 api_path 字段拼接到 api 后面
+    const api_path = configRes.api_path
+    if (api_path) {
+      api = `${api}/${api_path}`
+    }
 
     $.info(`👀 API 地址: ===>${api}<===`)
 
-    // ⚠️ 登录接口 不同的机场好像不同 感觉这个没改的比较通用
+    // ⚠️ 登录接口 不同的机场可能不同
     const login = `${api}/passport/auth/login`
-    // 某个机场是这个地址
-    // const login = `${api}/aq/cv/passport/auth/login`
 
     $.info(`登录接口 ${login}, 进行登录`)
     let { body: loginRes } = await $.http.post({
@@ -53,10 +56,8 @@ async function operator(proxies = [], targetPlatform, context) {
     $.info(`👀 登录获取到的 auth_data ===>${auth_data}<===`)
   }
 
-  // ⚠️ 获取订阅接口 不同的机场好像不同 感觉这个没改的比较通用
+  // ⚠️ 获取订阅接口 不同的机场可能不同
   const subscribe = `${api}/user/getSubscribe`
-  // 某个机场是这个地址
-  // const subscribe = `${api}/aq/cv/user/getSubscribe`
 
   $.info(`订阅接口 ${subscribe}, 进行获取订阅`)
   let { body: subscribeRes } = await $.http.get({
