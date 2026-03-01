@@ -627,7 +627,9 @@ async function getDirectInfo(ip, provider) {
         ]
           .filter(i => i)
           .join(' '),
-        ['运营商:', $.lodash_get(body, 'result.operator')].filter(i => i).join(' '),
+        ['运营商:', $.lodash_get(body, 'result.operator') || $.lodash_get(body, 'result.company')]
+          .filter(i => i)
+          .join(' '),
       ]
         .filter(i => i)
         .join('\n')
