@@ -30,14 +30,16 @@ try {
 }
 log(`② 获取订阅`)
 
-let proxies
+let proxies = []
+let outbounds = []
+let endpoints = []
+let data = {}
 if (url) {
   log(`直接从 URL ${url} 读取订阅`)
-  proxies = await produceArtifact({
+  data = await produceArtifact({
     name,
     type,
     platform: 'sing-box',
-    produceType: 'internal',
     produceOpts: {
       'include-unsupported-proxy': includeUnsupportedProxy,
     },
@@ -49,19 +51,24 @@ if (url) {
   })
 } else {
   log(`将读取名称为 ${name} 的 ${type === 'collection' ? '组合' : ''}订阅`)
-  proxies = await produceArtifact({
+  data = await produceArtifact({
     name,
     type,
     platform: 'sing-box',
-    produceType: 'internal',
     produceOpts: {
       'include-unsupported-proxy': includeUnsupportedProxy,
     },
   })
+  console.log(data)
 }
+data = JSON.parse(data)
+outbounds = data.outbounds ?? []
+endpoints = data.endpoints ?? []
+proxies = [...outbounds, ...endpoints]
+log(`获取到 ${outbounds.length} 个节点, ${endpoints.length} 个端点`)
 
 log(`③ outbound 规则解析`)
-const outbounds = outbound
+const outboundRules = outbound
   .split('🕳')
   .filter(i => i)
   .map(i => {
@@ -72,8 +79,11 @@ const outbounds = outbound
   })
 
 log(`④ outbound 插入节点`)
+if (!Array.isArray(config.outbounds)) {
+  config.outbounds = []
+}
 config.outbounds.map(outbound => {
-  outbounds.map(([outboundPattern, tagRegex]) => {
+  outboundRules.map(([outboundPattern, tagRegex]) => {
     const outboundRegex = createOutboundRegExp(outboundPattern)
     if (outboundRegex.test(outbound.tag)) {
       if (!Array.isArray(outbound.outbounds)) {
@@ -94,7 +104,7 @@ const compatible_outbound = {
 let compatible
 log(`⑤ 空 outbounds 检查`)
 config.outbounds.map(outbound => {
-  outbounds.map(([outboundPattern, tagRegex]) => {
+  outboundRules.map(([outboundPattern, tagRegex]) => {
     const outboundRegex = createOutboundRegExp(outboundPattern)
     if (outboundRegex.test(outbound.tag)) {
       if (!Array.isArray(outbound.outbounds)) {
@@ -112,7 +122,11 @@ config.outbounds.map(outbound => {
   })
 })
 
-config.outbounds.push(...proxies)
+config.outbounds.push(...outbounds)
+if (!Array.isArray(config.endpoints)) {
+  config.endpoints = []
+}
+config.endpoints.push(...endpoints)
 
 $content = JSON.stringify(config, null, 2)
 
