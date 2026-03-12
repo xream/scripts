@@ -102,14 +102,20 @@ async function operator(proxies = [], targetPlatform, context) {
     if (date) {
       name = `${name} | ${date}`
     }
-    // 获取 proxies 的最后一项
-    const node = proxies[proxies.length - 1] || {
-      type: 'ss',
-      server: '1.0.0.1',
-      port: 80,
-      cipher: 'aes-128-gcm',
-      password: 'password',
-    }
+    // 获取 proxies 的最后一项，仅在类型为 ss、vmess 或 trojan 时使用，否则使用默认节点
+    // 其实也不是最好的方案, 仍然可能因为其他原因导致输出的时候被过滤掉, 暂时先这样吧. 有需要自己 fork 修改即可
+    let nodeCandidate = proxies[proxies.length - 1]
+    const allowedTypes = ['ss', 'vmess', 'trojan']
+    const node =
+      nodeCandidate && allowedTypes.includes(nodeCandidate.type)
+        ? nodeCandidate
+        : {
+            type: 'ss',
+            server: '1.0.0.1',
+            port: 80,
+            cipher: 'aes-128-gcm',
+            password: 'password',
+          }
     proxies.unshift({
       ...node,
       name,
