@@ -86,7 +86,7 @@ async function operator(proxies = [], targetPlatform, context) {
         let subUserInfo
         if (/^https?:\/\//.test(sub.subUserinfo)) {
           try {
-            subUserInfo = await getFlowHeaders(undefined, undefined, undefined, proxy || sub.proxy, sub.subUserinfo)
+            subUserInfo = await getFlowHeaders(undefined, undefined, undefined, sub.proxy, sub.subUserinfo)
           } catch (e) {
             $.error(
               `订阅 ${sub.name} 使用自定义流量链接 ${sub.subUserinfo} 获取流量信息时发生错误: ${JSON.stringify(e)}`
