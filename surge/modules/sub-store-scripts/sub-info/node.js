@@ -56,9 +56,18 @@ async function operator(proxies = [], targetPlatform, context) {
     let subUserInfo
     if (/^https?:\/\//.test(sub.subUserinfo)) {
       try {
-        subUserInfo = await getFlowHeaders(undefined, undefined, undefined, proxy || sub.proxy, sub.subUserinfo)
+        subUserInfo = await getFlowHeaders(
+          undefined,
+          undefined,
+          undefined,
+          sub.proxy,
+          sub.subUserinfo
+        )
       } catch (e) {
-        $.error(`订阅 ${sub.name} 使用自定义流量链接 ${sub.subUserinfo} 获取流量信息时发生错误: ${JSON.stringify(e)}`)
+        $.error(
+          `订阅 ${sub.name} 使用自定义流量链接 ${sub.subUserinfo} 获取流量信息时发生错误: ${e?.message ?? e}`
+        )
+        $.error(e?.stack)
       }
     } else {
       subUserInfo = sub.subUserinfo
@@ -87,7 +96,7 @@ async function operator(proxies = [], targetPlatform, context) {
         startDate: args.startDate,
         cycleDays: args.cycleDays,
       })
-    } catch (e) {}
+    } catch (e) { }
     let show = upload + download
     if (args.showRemaining) {
       show = total - show
