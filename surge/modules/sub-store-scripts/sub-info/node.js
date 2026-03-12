@@ -5,6 +5,7 @@ async function operator(proxies = [], targetPlatform, context) {
   const sub = context.source[proxies?.[0]?._subName || proxies?.[0]?.subName]
   let subInfo
   let flowInfo
+  let rawSubInfo = ''
   if (sub.source !== 'local' || ['localFirst', 'remoteFirst'].includes(sub.mergeSources)) {
     try {
       let url =
@@ -73,10 +74,37 @@ async function operator(proxies = [], targetPlatform, context) {
       subUserInfo = sub.subUserinfo
     }
 
-    const headers = normalizeFlowHeader([subUserInfo, flowInfo].filter(i => i).join(';'), true)
+    const parts = [subUserInfo, flowInfo]
+      .filter(i => i != null)
+      .map(i => (typeof i === 'string' ? i : JSON.stringify(i)))
+
+    const headers = normalizeFlowHeader(parts.join(';'), true)
+
     if (headers?.['subscription-userinfo']) {
       subInfo = headers['subscription-userinfo']
+      rawSubInfo = parts.join(';')
     }
+  }
+
+  // 解析扩展字段（last_update / plan_name / reset_hour 等非标准字段）
+  function parseExtendedFields(raw = '') {
+    const result = {}
+    for (const segment of raw.split(/[;,]/)) {
+      const eqIdx = segment.indexOf('=')
+      if (eqIdx === -1) continue
+      const key = segment.slice(0, eqIdx).trim()
+      const value = segment.slice(eqIdx + 1).trim().replace(/^['"]|['"]$/g, '')
+      result[key] = value
+    }
+    return result
+  }
+
+  // 格式化重置剩余时间：< 24 小时显示小时数，否则显示天数
+  function formatResetTime(hours) {
+    if (hours == null || isNaN(hours) || hours < 0) return ''
+    if (hours < 24) return `${hours}h 后重置`
+    const days = Math.round(hours / 24)
+    return `${days}天后重置`
   }
 
   if (subInfo) {
@@ -85,10 +113,20 @@ async function operator(proxies = [], targetPlatform, context) {
       total,
       usage: { upload, download },
     } = parseFlowHeaders(subInfo)
+
+    // 解析扩展字段
+    const extFields = parseExtendedFields(rawSubInfo)
+    const lastUpdate = extFields['last_update']
+    const planName = extFields['plan_name']
+    const resetHour = extFields['reset_hour'] != null ? parseInt(extFields['reset_hour']) : null
+
     if (args.hideExpire) {
       expires = undefined
     }
-    const date = expires ? new Date(expires * 1000).toLocaleDateString() : ''
+    const date = expires
+      ? new Date(expires * 1000).toLocaleDateString('sv') // YYYY-MM-DD
+      : ''
+
     let remainingDays
     try {
       remainingDays = getRmainingDays({
@@ -97,6 +135,7 @@ async function operator(proxies = [], targetPlatform, context) {
         cycleDays: args.cycleDays,
       })
     } catch (e) { }
+
     let show = upload + download
     if (args.showRemaining) {
       show = total - show
@@ -104,23 +143,60 @@ async function operator(proxies = [], targetPlatform, context) {
     const showT = flowTransfer(Math.abs(show))
     showT.value = show < 0 ? '-' + showT.value : showT.value
     const totalT = flowTransfer(total)
-    let name = `流量 ${showT.value} ${showT.unit} / ${totalT.value} ${totalT.unit}`
-    if (remainingDays) {
-      name = `${name} | ${remainingDays} 天`
+    let name
+
+    if (args.showLastUpdate && lastUpdate) {
+      const shortTime = lastUpdate.slice(0, 16)
+      name = `${shortTime} | ${showT.value} ${showT.unit}`
+
+      const resetStr = formatResetTime(resetHour)
+      if (resetStr) {
+        name = `${name} | ${resetStr}`
+      } else if (extFields['reset_day']) {
+        name = `${name} | 每月${extFields['reset_day']}日重置`
+      }
+
+      if (planName) {
+        name = `${name} | ${planName}`
+      }
+    } else {
+      // 仅在非 showLastUpdate 模式下才需要 remainingDays
+      let remainingDays
+      try {
+        remainingDays = getRmainingDays({
+          resetDay: args.resetDay,
+          startDate: args.startDate,
+          cycleDays: args.cycleDays,
+        })
+      } catch (e) { }
+
+      name = `流量 ${showT.value} ${showT.unit} / ${totalT.value} ${totalT.unit}`
+      if (remainingDays) {
+        name = `${name} | ${remainingDays} 天`
+      }
+      if (date) {
+        name = `${name} | ${date}`
+      }
     }
-    if (date) {
-      name = `${name} | ${date}`
-    }
-    // 获取 proxies 的最后一项
-    const node = proxies[proxies.length - 1] || {
+
+    // 三端兼容协议白名单
+    const COMPATIBLE_TYPES = new Set(['ss', 'trojan', 'vmess', 'vless'])
+
+    // proxies 的最后一项
+    const lastProxy = proxies[proxies.length - 1]
+    const isCompatible = lastProxy && COMPATIBLE_TYPES.has(lastProxy.type?.toLowerCase())
+
+    const dummyNode = {
       type: 'ss',
       server: '1.0.0.1',
-      port: 80,
+      port: 443,
       cipher: 'aes-128-gcm',
       password: 'password',
     }
+
+
     proxies.unshift({
-      ...node,
+      ...(isCompatible ? lastProxy : dummyNode),
       name,
     })
   }
