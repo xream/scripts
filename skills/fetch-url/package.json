@@ -1,0 +1,8 @@
+{
+  "name": "fetch-url",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "user-agents": "^1.0.710"
+  }
+}
