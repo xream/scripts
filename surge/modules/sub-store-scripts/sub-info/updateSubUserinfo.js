@@ -59,7 +59,7 @@ async function operator(proxies = [], targetPlatform, context) {
   if ($options) {
     $options._res = {
       headers: {
-        'subscription-userinfo': subUserInfo,
+        'subscription-userinfo': subUserinfo,
       },
     }
   }
