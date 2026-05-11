@@ -13,6 +13,7 @@
  * - [size] 测速大小(单位 MB). 默认 10
  * - [show_speed] 显示速度. 默认不显示. 注: 即使不开启这个参数, 节点上也会添加一个 _speed 字段
  * - [keep_incompatible] 保留当前客户端不兼容的协议. 默认不保留.
+ * - [include_unsupported_proxy] 传递给运行环境时, 包含官方/商店版不支持的协议. 默认不包含. 若开启, 需要保证你的运行环境确实支持这些协议, 不然会报错
  * - [cache] 使用缓存, 默认不使用缓存
  * 关于缓存时长
  * 当使用相关脚本时, 若在对应的脚本中使用参数(⚠ 别忘了这个, 一般为 cache, 值设为 true 即可)开启缓存
@@ -31,6 +32,7 @@ async function operator(proxies = [], targetPlatform, context) {
   const cacheEnabled = $arguments.cache
   const cache = scriptResourceCache
   const keepIncompatible = $arguments.keep_incompatible
+  const includeUnsupportedProxy = $arguments.include_unsupported_proxy
   const bytes = ($arguments.size || 10) * 1024 * 1024
   const url = `https://speed.cloudflare.com/__down?bytes=${bytes}`
   const target = isLoon ? 'Loon' : isSurge ? 'Surge' : undefined
@@ -63,7 +65,9 @@ async function operator(proxies = [], targetPlatform, context) {
       : undefined
     // $.info(`检测 ${id}`)
     try {
-      const node = ProxyUtils.produce([proxy], target)
+      const node = ProxyUtils.produce([proxy], target, undefined, {
+        'include-unsupported-proxy': includeUnsupportedProxy,
+      })
       if (node) {
         const cached = cache.get(id)
         if (cacheEnabled && cached) {

@@ -25,6 +25,7 @@
  * - [method] 请求方法. 默认 head, 如果测试 URL 不支持, 可设为 get
  * - [show_latency] 显示延迟. 默认不显示. 注: 即使不开启这个参数, 节点上也会添加一个 _latency 字段
  * - [keep_incompatible] 保留当前客户端不兼容的协议. 默认不保留.
+ * - [include_unsupported_proxy] 传递给运行环境时, 包含官方/商店版不支持的协议. 默认不包含. 若开启, 需要保证你的运行环境确实支持这些协议, 不然会报错
  * - [telegram_bot_token] Telegram Bot Token
  * - [telegram_chat_id] Telegram Chat ID
  * - [cache] 使用缓存, 默认不使用缓存
@@ -56,6 +57,7 @@ async function operator(proxies = [], targetPlatform, env) {
 
   const method = $arguments.method || 'head'
   const keepIncompatible = $arguments.keep_incompatible
+  const includeUnsupportedProxy = $arguments.include_unsupported_proxy
   const validStatus = new RegExp($arguments.status || '204')
   const url = decodeURIComponent($arguments.url || 'http://connectivitycheck.platform.hicloud.com/generate_204')
   const ua = decodeURIComponent(
@@ -81,7 +83,9 @@ async function operator(proxies = [], targetPlatform, env) {
 
   proxies.map((proxy, index) => {
     try {
-      const node = ProxyUtils.produce([{ ...proxy }], 'ClashMeta', 'internal')?.[0]
+      const node = ProxyUtils.produce([{ ...proxy }], 'ClashMeta', 'internal', {
+        'include-unsupported-proxy': includeUnsupportedProxy,
+      })?.[0]
       if (node) {
         for (const key in proxy) {
           if (/^_/i.test(key)) {

@@ -32,6 +32,7 @@
  *            当使用 internal 时, 默认为 {{api.countryCode}} {{api.aso}} - {{proxy.name}}
  * - [regex] 使用正则表达式从落地 API 响应(api)中取数据. 格式为 a:x;b:y 此时将使用正则表达式 x 和 y 来从 api 中取数据, 赋值给 a 和 b. 然后可在 format 中使用 {{api.a}} 和 {{api.b}}
  * - [geo] 在节点上附加 _geo 字段, 默认不附加
+ * - [include_unsupported_proxy] 传递给运行环境时, 包含官方/商店版不支持的协议. 默认不包含. 若开启, 需要保证你的运行环境确实支持这些协议, 不然会报错
  * - [incompatible] 在节点上附加 _incompatible 字段来标记当前客户端不兼容该协议, 默认不附加
  * - [remove_incompatible] 移除当前客户端不兼容的协议. 默认不移除.
  * - [remove_failed] 移除失败的节点. 默认不移除.
@@ -57,6 +58,7 @@ async function operator(proxies = [], targetPlatform, context) {
   const remove_failed = $arguments.remove_failed
   const remove_incompatible = $arguments.remove_incompatible
   const incompatibleEnabled = $arguments.incompatible
+  const includeUnsupportedProxy = $arguments.include_unsupported_proxy
   const geoEnabled = $arguments.geo
   const http_meta_host = $arguments.http_meta_host ?? '127.0.0.1'
   const http_meta_port = $arguments.http_meta_port ?? 9876
@@ -87,7 +89,9 @@ async function operator(proxies = [], targetPlatform, context) {
   const internalProxies = []
   proxies.map((proxy, index) => {
     try {
-      const node = ProxyUtils.produce([{ ...proxy }], 'ClashMeta', 'internal')?.[0]
+      const node = ProxyUtils.produce([{ ...proxy }], 'ClashMeta', 'internal', {
+        'include-unsupported-proxy': includeUnsupportedProxy,
+      })?.[0]
       if (node) {
         for (const key in proxy) {
           if (/^_/i.test(key)) {

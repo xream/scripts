@@ -23,6 +23,7 @@
  * - [method] 请求方法. 默认 get
  * - [gpt_prefix] 显示前缀. 默认为 "[GPT] "
  注: 节点上总是会添加一个 _gpt 字段, 可用于脚本筛选. 新增 _gpt_latency 字段, 指响应延迟
+ * - [include_unsupported_proxy] 传递给运行环境时, 包含官方/商店版不支持的协议. 默认不包含. 若开启, 需要保证你的运行环境确实支持这些协议, 不然会报错
  * - [cache] 使用缓存, 默认不使用缓存
  * - [disable_failed_cache/ignore_failed_error] 禁用失败缓存. 即不缓存失败结果
  * 关于缓存时长
@@ -39,6 +40,7 @@ async function operator(proxies = [], targetPlatform, context) {
   const cacheEnabled = $arguments.cache
   const disableFailedCache = $arguments.disable_failed_cache || $arguments.ignore_failed_error
   const cache = scriptResourceCache
+  const includeUnsupportedProxy = $arguments.include_unsupported_proxy
   const http_meta_host = $arguments.http_meta_host ?? '127.0.0.1'
   const http_meta_port = $arguments.http_meta_port ?? 9876
   const http_meta_protocol = $arguments.http_meta_protocol ?? 'http'
@@ -54,7 +56,9 @@ async function operator(proxies = [], targetPlatform, context) {
   const internalProxies = []
   proxies.map((proxy, index) => {
     try {
-      const node = ProxyUtils.produce([{ ...proxy }], 'ClashMeta', 'internal')?.[0]
+      const node = ProxyUtils.produce([{ ...proxy }], 'ClashMeta', 'internal', {
+        'include-unsupported-proxy': includeUnsupportedProxy,
+      })?.[0]
       if (node) {
         for (const key in proxy) {
           if (/^_/i.test(key)) {
