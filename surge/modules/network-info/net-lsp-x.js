@@ -326,7 +326,7 @@ async function getDirectRequestInfo({ PROXIES = [] } = {}) {
   const { CN_IP, CN_INFO } = await getDirectInfo(undefined, $.lodash_get(arg, 'DOMESTIC_IPv4'))
   const { POLICY } = await getRequestInfo(
     new RegExp(
-      `cip\\.cc|for${keyb}\\.${keya}${bay}\\.cn|rmb\\.${keyc}${keyd}\\.com\\.cn|api-v3\\.${keya}${bay}\\.cn|ipservice\\.ws\\.126\\.net|api\\.bilibili\\.com|api\\.live\\.bilibili\\.com|myip\\.ipip\\.net|ip\\.ip233\\.cn|ua${keye}\\.wo${keyf}x\\.cn|ip\\.im|ips\\.market\\.alicloudapi\\.com|api\\.ip\\.plus|ip\\.qtfm\\.cn|dashi\\.163\\.com|api\\.zhuishushenqi\\.com|admin-app\\.edifier\\.com`
+      `cip\\.cc|for${keyb}\\.${keya}${bay}\\.cn|rmb\\.${keyc}${keyd}\\.com\\.cn|api-v3\\.${keya}${bay}\\.cn|ipservice\\.ws\\.126\\.net|api\\.bilibili\\.com|api\\.live\\.bilibili\\.com|myip\\.ipip\\.net|ip\\.ip233\\.cn|ua${keye}\\.wo${keyf}x\\.cn|ip\\.im|ips\\.market\\.alicloudapi\\.com|api\\.ip\\.plus|ip\\.qtfm\\.cn|dashi\\.163\\.com|api\\.zhuishushenqi\\.com|admin-app\\.edifier\\.com|foundation-ipv4\\.youdao\\.com`
     ),
     PROXIES
   )
@@ -600,6 +600,46 @@ async function getDirectInfo(ip, provider) {
     } catch (e) {
       $.logErr(`${msg} 发生错误: ${e.message || e}`)
     }
+  } else if (!ip && provider == 'youdao') {
+    try {
+      const res = await http({
+        url: `https://foundation-ipv4.youdao.com/ip/ipinfo`,
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0',
+        },
+      })
+      let body = String($.lodash_get(res, 'body'))
+      try {
+        body = JSON.parse(body)
+      } catch (e) {}
+
+      const countryCode = $.lodash_get(body, 'data.countryCode')
+      const country = $.lodash_get(body, 'data.country') || ''
+      isCN = countryCode === 'CN' || country === '中国'
+      CN_IP = $.lodash_get(body, 'data.ip')
+      CN_INFO = [
+        [
+          '位置:',
+          getflag(countryCode),
+          country.replace(/\s*中国\s*/, ''),
+          $.lodash_get(body, 'data.province'),
+          $.lodash_get(body, 'data.city'),
+        ]
+          .filter(i => i)
+          .join(' '),
+        ['运营商:', $.lodash_get(body, 'data.operator') || $.lodash_get(body, 'data.company') || '-']
+          .filter(i => i)
+          .join(' '),
+        $.lodash_get(arg, 'ORG') == 1
+          ? ['组织:', $.lodash_get(body, 'data.company') || '-'].filter(i => i).join(' ')
+          : undefined,
+      ]
+        .filter(i => i)
+        .join('\n')
+    } catch (e) {
+      $.logErr(`${msg} 发生错误: ${e.message || e}`)
+    }
   } else if (!ip && provider == '126') {
     try {
       const res = await http({
@@ -816,7 +856,24 @@ async function getDirectInfo(ip, provider) {
 async function getDirectInfoIPv6() {
   let CN_IPv6
   const msg = `使用 ${$.lodash_get(arg, 'DOMESTIC_IPv6') || 'ddnspod'} 查询 IPv6 分流信息`
-  if ($.lodash_get(arg, 'DOMESTIC_IPv6') == 'neu6') {
+  if ($.lodash_get(arg, 'DOMESTIC_IPv6') == 'youdao') {
+    try {
+      const res = await http({
+        url: `https://foundation-ipv6.youdao.com/ip/ipinfo`,
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36 Edg/121.0.0.0',
+        },
+      })
+      let body = String($.lodash_get(res, 'body'))
+      try {
+        body = JSON.parse(body)
+      } catch (e) {}
+      CN_IPv6 = $.lodash_get(body, 'data.ip')
+    } catch (e) {
+      $.logErr(`${msg} 发生错误: ${e.message || e}`)
+    }
+  } else if ($.lodash_get(arg, 'DOMESTIC_IPv6') == 'neu6') {
     try {
       const res = await http({
         url: `https://speed.neu6.edu.cn/getIP.php`,
