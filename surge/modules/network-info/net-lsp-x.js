@@ -334,7 +334,7 @@ async function getProxyRequestInfo({ PROXIES = [] } = {}) {
   const { PROXY_IP, PROXY_INFO, PROXY_PRIVACY } = await getProxyInfo(undefined, $.lodash_get(arg, 'LANDING_IPv4'))
   let result
   if ($.isSurge() || $.isStash()) {
-    result = await getRequestInfo(/ipinfo\.io|ip-api\.com|api-ipv4\.ip\.sb/, PROXIES)
+    result = await getRequestInfo(/ipinfo\.io|ipwho\.is|api\.ipapi\.is|ip-api\.com|api-ipv4\.ip\.sb/, PROXIES)
   } else if ($.isQuanX() || $.isLoon()) {
     result = await getEntranceInfo()
   }
@@ -952,6 +952,102 @@ async function getProxyInfo(ip, provider) {
     } catch (e) {
       $.logErr(`${msg} 发生错误: ${e.message || e}`)
     }
+  } else if (provider == 'ipwhois') {
+    try {
+      const res = await http({
+        ...(ip ? {} : getNodeOpt()),
+
+        url: `https://ipwho.is${ip ? `/${encodeURIComponent(ip)}` : ''}`,
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (iPhone CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1 Edg/109.0.0.0',
+        },
+      })
+      let body = String($.lodash_get(res, 'body'))
+      try {
+        body = JSON.parse(body)
+      } catch (e) {}
+      if ($.lodash_get(body, 'success') === false) throw new Error($.lodash_get(body, 'message') || 'ipwhois 查询失败')
+
+      PROXY_IP = ip || $.lodash_get(body, 'ip')
+      PROXY_INFO = [
+        [
+          '位置:',
+          getflag($.lodash_get(body, 'country_code')),
+          $.lodash_get(body, 'country').replace(/\s*中国\s*/, ''),
+          $.lodash_get(body, 'region'),
+          $.lodash_get(body, 'city'),
+        ]
+          .filter(i => i)
+          .join(' '),
+        ['运营商:', $.lodash_get(body, 'connection.isp') || $.lodash_get(body, 'connection.org') || '-']
+          .filter(i => i)
+          .join(' '),
+        $.lodash_get(arg, 'ORG') == 1
+          ? ['组织:', $.lodash_get(body, 'connection.org') || '-'].filter(i => i).join(' ')
+          : undefined,
+
+        $.lodash_get(arg, 'ASN') == 1
+          ? ['ASN:', $.lodash_get(body, 'connection.asn') || '-'].filter(i => i).join(' ')
+          : undefined,
+      ]
+        .filter(i => i)
+        .join('\n')
+    } catch (e) {
+      $.logErr(`${msg} 发生错误: ${e.message || e}`)
+    }
+  } else if (provider == 'ipapiis') {
+    try {
+      const res = await http({
+        ...(ip ? {} : getNodeOpt()),
+
+        url: `https://api.ipapi.is`,
+        params: { q: ip },
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (iPhone CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1 Edg/109.0.0.0',
+        },
+      })
+      let body = String($.lodash_get(res, 'body'))
+      try {
+        body = JSON.parse(body)
+      } catch (e) {}
+
+      PROXY_IP = ip || $.lodash_get(body, 'ip')
+      PROXY_INFO = [
+        [
+          '位置:',
+          getflag($.lodash_get(body, 'location.country_code')),
+          $.lodash_get(body, 'location.country').replace(/\s*中国\s*/, ''),
+          $.lodash_get(body, 'location.state'),
+          $.lodash_get(body, 'location.city'),
+        ]
+          .filter(i => i)
+          .join(' '),
+        [
+          '运营商:',
+          $.lodash_get(body, 'company.name') ||
+            $.lodash_get(body, 'asn.org') ||
+            $.lodash_get(body, 'asn.descr') ||
+            '-',
+        ]
+          .filter(i => i)
+          .join(' '),
+        $.lodash_get(arg, 'ORG') == 1
+          ? ['组织:', $.lodash_get(body, 'asn.org') || $.lodash_get(body, 'company.name') || '-']
+              .filter(i => i)
+              .join(' ')
+          : undefined,
+
+        $.lodash_get(arg, 'ASN') == 1 ? ['ASN:', $.lodash_get(body, 'asn.asn') || '-'].filter(i => i).join(' ') : undefined,
+      ]
+        .filter(i => i)
+        .join('\n')
+
+      PROXY_PRIVACY = getIpapiisPrivacy(body)
+    } catch (e) {
+      $.logErr(`${msg} 发生错误: ${e.message || e}`)
+    }
   } else {
     try {
       const p = ip ? `/${encodeURIComponent(ip)}` : ''
@@ -1156,6 +1252,17 @@ async function netart(ip, version = 'ipv4') {
     .filter(i => i)
     .join('\n')
   return { IP, INFO, isCN }
+}
+function getIpapiisPrivacy(body) {
+  const privacyMap = {
+    true: '✓',
+    false: '✗',
+  }
+  const privacy = Object.keys(body || {})
+    .filter(key => /^is_/.test(key) && typeof body[key] === 'boolean')
+    .map(key => `${key.replace(/^is_/, '')}: ${privacyMap[body[key]]}`)
+
+  return privacy.length > 0 ? `隐私安全:\n${privacy.join('\n')}` : ''
 }
 function simplifyAddr(addr) {
   if (!addr) return ''
