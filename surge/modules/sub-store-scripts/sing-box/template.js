@@ -8,7 +8,7 @@
 // ...
 // 可选参数: includeUnsupportedProxy 含不支持的协议 SSR 和 Snell. 用法: `&includeUnsupportedProxy=true`
 
-// 支持传入订阅 URL. 参数为 url. 记得 url 需要 encodeURIComponent.
+// 支持传入订阅 URL. 参数为 url. 记得 url 在 URL query 参数中使用需要 encodeURIComponent. 直接使用前端的可视化参数编辑不需要 encodeURIComponent.
 // 例如: http://a.com?token=123 应使用 url=http%3A%2F%2Fa.com%3Ftoken%3D123
 
 // ⚠️ 如果 outbounds 为空, 自动创建 COMPATIBLE(direct) 并插入 防止报错
