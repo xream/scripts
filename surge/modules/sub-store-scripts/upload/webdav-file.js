@@ -14,7 +14,7 @@
  *
  * 这样拆分 base-url / folder / file 是为了减少 WebDAV 目录创建时的无效尝试:
  * base-url 通常是服务固定入口, 例如坚果云的 /dav, 不应该尝试创建;
- * 上传遇到 409 时, 脚本只解析 folder 并逐级创建 folder, 不会从 base-url 的路径开始创建;
+ * 上传遇到 4xx 时, 脚本只解析 folder 并逐级创建 folder, 不会从 base-url 的路径开始创建;
  * folder 为 / 或不填时表示 base-url 已经是目标目录, 不会发起创建目录请求。
  */
 const $ = $substore
@@ -42,8 +42,8 @@ if (publicKey) {
 }
 
 let res = await putContent({ $, fileUrl, username, password, content })
-if (getStatusCode(res) === 409 && $.env.isNode) {
-  $.info('WebDAV 父目录不存在, 尝试自动创建目录')
+if (shouldTryCreateFolder($, res)) {
+  $.info('WebDAV 上传返回 4xx, 尝试自动创建目录')
   await ensureFolderCollections({ $, baseUrl, folder, username, password })
   res = await putContent({ $, fileUrl, username, password, content })
 }
@@ -95,7 +95,7 @@ async function ensureFolderCollections({ $, baseUrl, folder, username, password 
     if ((statusCode >= 200 && statusCode < 300) || statusCode === 405) {
       continue
     }
-    throw responseError(res, `创建 WebDAV 目录失败`)
+    throw responseError(res, `创建 WebDAV 目录失败, 请手动创建目录或检查 WebDAV 设置是否正确`)
   }
 }
 
@@ -221,12 +221,24 @@ function buildHeaders(username, password, extra = {}) {
   return headers
 }
 
+function shouldTryCreateFolder($, res) {
+  return $.env.isNode && isClientErrorStatus(getStatusCode(res))
+}
+
+function isClientErrorStatus(statusCode) {
+  return statusCode >= 400 && statusCode < 500
+}
+
 function assertSuccess($, res, actionName) {
   const statusCode = getStatusCode(res)
   if (statusCode >= 200 && statusCode < 300) return
 
-  if (statusCode === 409 && !$.env.isNode) {
-    throw new Error(`${actionName}失败, 状态码: 409. WebDAV 父目录可能不存在, 当前环境不支持自动创建目录, 请先手动创建`)
+  if (isClientErrorStatus(statusCode) && !$.env.isNode) {
+    throw new Error(`${actionName}失败, 状态码: ${statusCode}. WebDAV 目录可能不存在, 当前环境不支持自动创建目录, 请手动创建目录或检查 WebDAV 设置是否正确`)
+  }
+
+  if (isClientErrorStatus(statusCode)) {
+    throw responseError(res, `${actionName}失败, 请手动创建目录或检查 WebDAV 设置是否正确`)
   }
 
   throw responseError(res, `${actionName}失败`)
