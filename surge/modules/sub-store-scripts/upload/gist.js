@@ -27,7 +27,7 @@ async function operator(proxies = [], targetPlatform, context) {
 
   let files = {}
 
-  let content = ProxyUtils.produce([...proxies], platform)
+  let content = ProxyUtils.produce(clone(proxies), platform)
 
   const manager = new ProxyUtils.Gist({
     token: GITHUB_TOKEN,
@@ -61,4 +61,8 @@ async function operator(proxies = [], targetPlatform, context) {
   }
 
   return proxies
+}
+
+function clone(value) {
+  return JSON.parse(JSON.stringify(value || []))
 }
