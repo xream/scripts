@@ -8,6 +8,7 @@
  * - 兼容 Snell 的 `obfs` 的 `host`
  * - 兼容 Shadow TLS 的 `shadow-tls-sni`
  * - 兼容 `Trojan` 的 `sni`
+ * - 兼容 `AnyTLS` 的 `sni`
  * - 兼容 QuanX, Surge, Loon, Shadowrocket, Stash 等客户端和 Node.js 环境
  * - ⚠️ 不能免的节点请先自己筛选掉(例如筛除掉 非 443 端口的 TLS 节点)
  */
@@ -132,12 +133,13 @@ function operator(proxies = []) {
     const isReality = _.get(p, 'reality-opts')
     const isSnell = _.get(p, 'type') === 'snell'
     const isTrojan = _.get(p, 'type') === 'trojan'
-    // shadow-tls-password: Required
-    const isShadowTLS = _.chain(p).get('shadow-tls-password').size().value() > 0
+    const isAnyTLS = _.get(p, 'type') === 'anytls'
+    const isShadowTLSPlugin = _.get(p, 'plugin') === 'shadow-tls'
+    const isShadowTLS = isShadowTLSPlugin || _.chain(p).get('shadow-tls-password').size().value() > 0
 
-    /* 只修改 vmess, vless, snell, trojan */
-    if (_.includes(['vmess', 'vless', 'snell', 'trojan'], type)) {
-      if (!network && !isReality && !isSnell && !isShadowTLS && !isTrojan) {
+    /* 只修改 vmess, vless, snell, trojan, anytls */
+    if (_.includes(['vmess', 'vless', 'snell', 'trojan', 'anytls'], type)) {
+      if (!network && !isReality && !isSnell && !isShadowTLS && !isTrojan && !isAnyTLS) {
         network = defaultNetwork
         _.set(p, 'network', defaultNetwork)
       }
@@ -149,13 +151,15 @@ function operator(proxies = []) {
           _.set(p, 'name', `${p.name}${hostSuffix}`)
         }
         if (isShadowTLS) {
-          _.set(p, 'shadow-tls-sni', host)
+          _.set(p, isShadowTLSPlugin ? 'plugin-opts.host' : 'shadow-tls-sni', host)
         } else if (isSnell) {
           _.set(p, 'obfs-opts.host', host)
           if (_.get(p, 'version') === 5) {
             /* snell v5 自带 quic (https://kb.nssurge.com/surge-knowledge-base/zh/release-notes/surge-mac-6-release-note#quic-proxy-mode), UDP over UDP 不免. 但是兼容 v4, 客户端设置 version 为 4 即可 */
             _.set(p, 'version', 4)
           }
+        } else if (isAnyTLS) {
+          _.set(p, 'sni', host)
         } else {
           /* 把 非 server 的部分都设置为 host */
           _.set(p, 'servername', host)
@@ -168,7 +172,7 @@ function operator(proxies = []) {
           }
         }
 
-        if (!isReality && !isSnell && !isShadowTLS) {
+        if (!isReality && !isSnell && !isShadowTLS && !isAnyTLS) {
           if (network === 'ws') {
             _.set(p, 'ws-opts.headers.Host', host)
           } else if (network === 'h2') {
@@ -199,7 +203,7 @@ function operator(proxies = []) {
         }
       }
 
-      if (!isReality && !isSnell && !isShadowTLS) {
+      if (!isReality && !isSnell && !isShadowTLS && !isAnyTLS) {
         if (network === 'http') {
           let currentPath = _.get(p, 'http-opts.path')
           if (_.isArray(currentPath)) {
