@@ -3,8 +3,10 @@
  * 混淆转换
  *
  * - 支持修改 `host` 混淆, `path` 路径, `port` 端口, `method` 请求方式(网络为 `http` 时, 可能需要设置此项)
- * - 兼容不同的 network(`vmess`, `vless` 的 `ws`, `h2`, `http` 和其他)
+ * - 兼容不同的 network(`vmess`, `vless` 的 `ws`, `h2`, `http`, `xhttp` 和其他)
  * - 兼容 `vless` `reality` 的 `servername`
+ * - 兼容 `vless` `xhttp` 的 `servername`, `skip-cert-verify`, `xhttp-opts` 下的 `path`, `host`, `headers.Host`,
+ *   以及 `download-settings` 下的 `path`, `host`, `servername`, `skip-cert-verify`, `headers.Host`
  * - 兼容 Snell 的 `obfs` 的 `host`
  * - 兼容 Shadow TLS 的 `shadow-tls-sni`
  * - 兼容 `Trojan` 的 `sni`
@@ -182,6 +184,17 @@ function operator(proxies = []) {
           } else if (network) {
             // 其他? 谁知道是数组还是字符串...先按字符串吧
             _.set(p, `${network}-opts.headers.Host`, host)
+            if (network === 'xhttp') {
+              _.set(p, 'xhttp-opts.host', host)
+              if (_.has(p, 'xhttp-opts.download-settings')) {
+                _.set(p, 'xhttp-opts.download-settings.host', host)
+                _.set(p, 'xhttp-opts.download-settings.headers.Host', host)
+                _.set(p, 'xhttp-opts.download-settings.servername', host)
+                if (_.get(p, 'xhttp-opts.download-settings.tls')) {
+                  _.set(p, 'xhttp-opts.download-settings.skip-cert-verify', true)
+                }
+              }
+            }
           }
         }
       }
@@ -231,6 +244,9 @@ function operator(proxies = []) {
           } else {
             // 其他? 谁知道是数组还是字符串...先按字符串吧
             _.set(p, `${network}-opts.path`, path)
+            if (network === 'xhttp' && _.has(p, 'xhttp-opts.download-settings')) {
+              _.set(p, 'xhttp-opts.download-settings.path', path)
+            }
           }
         }
       }
