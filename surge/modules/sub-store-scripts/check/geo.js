@@ -43,7 +43,7 @@
 
 async function operator(proxies = [], targetPlatform, context) {
   const $ = $substore
-  const { isLoon, isSurge, isNode } = $.env
+  const { isLoon, isSurge, isNode, isEgern } = $.env
   const internal = $arguments.internal
   const regex = $arguments.regex
   let format = $arguments.format || '{{api.country}} {{api.isp}} - {{proxy.name}}'
@@ -68,8 +68,8 @@ async function operator(proxies = [], targetPlatform, context) {
   const surge_http_api_protocol = $arguments.surge_http_api_protocol || 'http'
   const surge_http_api_key = $arguments.surge_http_api_key
   const surge_http_api_enabled = surge_http_api
-  if (!surge_http_api_enabled && !isLoon && !isSurge)
-    throw new Error('请使用 Loon, Surge(ability=http-client-policy) 或 配置 HTTP API')
+  if (!surge_http_api_enabled && !isLoon && !isSurge && !isEgern)
+    throw new Error('请使用 Loon、Surge、Egern 或配置 Surge HTTP API')
 
   const disableFailedCache = $arguments.disable_failed_cache || $arguments.ignore_failed_error
   const remove_failed = $arguments.remove_failed
@@ -82,7 +82,7 @@ async function operator(proxies = [], targetPlatform, context) {
 
   const method = $arguments.method || 'get'
 
-  const target = isLoon ? 'Loon' : isSurge ? 'Surge' : undefined
+  const target = isLoon ? 'Loon' : isEgern ? 'Egern' : isSurge ? 'Surge' : undefined
   const concurrency = parseInt($arguments.concurrency || 10) // 一组并发数
 
   await executeAsyncTasks(
@@ -135,9 +135,18 @@ async function operator(proxies = [], targetPlatform, context) {
       : undefined
     // $.info(`检测 ${id}`)
     try {
-      const node = ProxyUtils.produce([proxy], surge_http_api_enabled ? 'Surge' : target, undefined, {
-        'include-unsupported-proxy': includeUnsupportedProxy,
-      })
+      let node
+      if (isEgern && !surge_http_api_enabled) {
+        node = JSON.stringify(
+          ProxyUtils.produce([proxy], target, 'internal', {
+            'include-unsupported-proxy': includeUnsupportedProxy,
+          })[0]
+        )
+      } else {
+        node = ProxyUtils.produce([proxy], surge_http_api_enabled ? 'Surge' : target, undefined, {
+          'include-unsupported-proxy': includeUnsupportedProxy,
+        })
+      }
       if (node) {
         const cached = cache.get(id)
         if (cacheEnabled && cached) {

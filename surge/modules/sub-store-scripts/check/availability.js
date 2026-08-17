@@ -33,8 +33,8 @@
 
 async function operator(proxies = [], targetPlatform, env) {
   const $ = $substore
-  const { isLoon, isSurge } = $.env
-  if (!isLoon && !isSurge) throw new Error('仅支持 Loon 和 Surge(ability=http-client-policy)')
+  const { isLoon, isSurge, isEgern } = $.env
+  if (!isLoon && !isSurge && !isEgern) throw new Error('仅支持 Loon、Surge 和 Egern')
   const telegram_chat_id = $arguments.telegram_chat_id
   const telegram_bot_token = $arguments.telegram_bot_token
   const cacheEnabled = $arguments.cache
@@ -49,7 +49,7 @@ async function operator(proxies = [], targetPlatform, env) {
     $arguments.ua ||
       'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.3.1 Mobile/15E148 Safari/604.1'
   )
-  const target = isLoon ? 'Loon' : isSurge ? 'Surge' : undefined
+  const target = isLoon ? 'Loon' : isEgern ? 'Egern' : isSurge ? 'Surge' : undefined
   const validProxies = []
   const incompatibleProxies = []
   const failedProxies = []
@@ -110,9 +110,18 @@ async function operator(proxies = [], targetPlatform, env) {
       : undefined
     // $.info(`检测 ${id}`)
     try {
-      const node = ProxyUtils.produce([proxy], target, undefined, {
-        'include-unsupported-proxy': includeUnsupportedProxy,
-      })
+      let node
+      if (isEgern) {
+        node = JSON.stringify(
+          ProxyUtils.produce([proxy], target, 'internal', {
+            'include-unsupported-proxy': includeUnsupportedProxy,
+          })[0]
+        )
+      } else {
+        node = ProxyUtils.produce([proxy], target, undefined, {
+          'include-unsupported-proxy': includeUnsupportedProxy,
+        })
+      }
       if (node) {
         const cached = cache.get(id)
         if (cacheEnabled && cached) {

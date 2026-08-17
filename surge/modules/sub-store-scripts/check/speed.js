@@ -27,15 +27,15 @@
 
 async function operator(proxies = [], targetPlatform, context) {
   const $ = $substore
-  const { isLoon, isSurge } = $.env
-  if (!isLoon && !isSurge) throw new Error('仅支持 Loon 和 Surge(ability=http-client-policy)')
+  const { isLoon, isSurge, isEgern } = $.env
+  if (!isLoon && !isSurge && !isEgern) throw new Error('仅支持 Loon、Surge 和 Egern')
   const cacheEnabled = $arguments.cache
   const cache = scriptResourceCache
   const keepIncompatible = $arguments.keep_incompatible
   const includeUnsupportedProxy = $arguments.include_unsupported_proxy
   const bytes = ($arguments.size || 10) * 1024 * 1024
   const url = `https://speed.cloudflare.com/__down?bytes=${bytes}`
-  const target = isLoon ? 'Loon' : isSurge ? 'Surge' : undefined
+  const target = isLoon ? 'Loon' : isEgern ? 'Egern' : isSurge ? 'Surge' : undefined
   const validProxies = []
   const concurrency = parseInt($arguments.concurrency || 1) // 一组并发数
   await executeAsyncTasks(
@@ -65,9 +65,18 @@ async function operator(proxies = [], targetPlatform, context) {
       : undefined
     // $.info(`检测 ${id}`)
     try {
-      const node = ProxyUtils.produce([proxy], target, undefined, {
-        'include-unsupported-proxy': includeUnsupportedProxy,
-      })
+      let node
+      if (isEgern) {
+        node = JSON.stringify(
+          ProxyUtils.produce([proxy], target, 'internal', {
+            'include-unsupported-proxy': includeUnsupportedProxy,
+          })[0]
+        )
+      } else {
+        node = ProxyUtils.produce([proxy], target, undefined, {
+          'include-unsupported-proxy': includeUnsupportedProxy,
+        })
+      }
       if (node) {
         const cached = cache.get(id)
         if (cacheEnabled && cached) {

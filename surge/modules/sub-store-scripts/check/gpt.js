@@ -32,8 +32,8 @@
 
 async function operator(proxies = [], targetPlatform, context) {
   const $ = $substore
-  const { isLoon, isSurge } = $.env
-  if (!isLoon && !isSurge) throw new Error('仅支持 Loon 和 Surge(ability=http-client-policy)')
+  const { isLoon, isSurge, isEgern } = $.env
+  if (!isLoon && !isSurge && !isEgern) throw new Error('仅支持 Loon、Surge 和 Egern')
   const includeUnsupportedProxy = $arguments.include_unsupported_proxy
   const cacheEnabled = $arguments.cache
   const disableFailedCache = $arguments.disable_failed_cache || $arguments.ignore_failed_error
@@ -41,7 +41,7 @@ async function operator(proxies = [], targetPlatform, context) {
   const gptPrefix = $arguments.gpt_prefix ?? '[GPT] '
   const method = $arguments.method || 'get'
   const url = $arguments.client === 'Android' ? `https://android.chat.openai.com` : `https://ios.chat.openai.com`
-  const target = isLoon ? 'Loon' : isSurge ? 'Surge' : undefined
+  const target = isLoon ? 'Loon' : isEgern ? 'Egern' : isSurge ? 'Surge' : undefined
   const concurrency = parseInt($arguments.concurrency || 10) // 一组并发数
   await executeAsyncTasks(
     proxies.map(proxy => () => check(proxy)),
@@ -72,9 +72,18 @@ async function operator(proxies = [], targetPlatform, context) {
       : undefined
     // $.info(`检测 ${id}`)
     try {
-      const node = ProxyUtils.produce([proxy], target, undefined, {
-        'include-unsupported-proxy': includeUnsupportedProxy,
-      })
+      let node
+      if (isEgern) {
+        node = JSON.stringify(
+          ProxyUtils.produce([proxy], target, 'internal', {
+            'include-unsupported-proxy': includeUnsupportedProxy,
+          })[0]
+        )
+      } else {
+        node = ProxyUtils.produce([proxy], target, undefined, {
+          'include-unsupported-proxy': includeUnsupportedProxy,
+        })
+      }
       if (node) {
         const cached = cache.get(id)
         if (cacheEnabled && cached) {
