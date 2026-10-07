@@ -30,11 +30,20 @@ async function operator(proxies = [], targetPlatform, context) {
   } catch (e) {
     console.log(e)
   }
+  
+  // expireDate
+  const resetDay = body.bw_reset_day_of_month
+  const now = new Date()
+  let month = now.getMonth()
+  if (now.getDate() >= resetDay) {
+    month++
+  }
+  const expireDate = new Date(now.getFullYear(), month, resetDay)
+  
   const upload = 0
   const download = body.bw_counter_b
   const total = body.monthly_bw_limit_b
-  const expire = 0 // 可以没有到期时间
-
+  const expire = Math.floor(expireDate.getTime() / 1000)
   const subUserinfo = `upload=${upload}; download=${download}; total=${total}${expire ? `; expire=${expire}` : ''}`
 
   // 旧版需要写入, 返回响应头里使用这个
